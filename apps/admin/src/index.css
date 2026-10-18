@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+/* Mêmes valeurs que packages/shared/src/theme.ts (vérifié par test/theme.test.ts). */
+@theme {
+  --color-primary: #ff6b35;
+  --color-primary-dark: #e5531f;
+  --color-primary-soft: #fff0ea;
+  --color-navy: #1c1c2e;
+  --color-accent: #4ecdc4;
+  --color-danger: #e5484d;
+  --color-warning: #f5a524;
+  --color-surface: #ffffff;
+  --color-background: #f6f7f9;
+  --color-border: #e4e6eb;
+  --color-muted: #6b6f80;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --radius-card: 12px;
+}
+
+body {
+  @apply bg-background text-navy antialiased;
+}

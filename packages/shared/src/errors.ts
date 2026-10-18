@@ -1,0 +1,47 @@
+// Codes d'erreur stables renvoyés par l'API et traduits côté client (errors.<CODE>).
+
+export const ERROR_CODES = [
+  'VALIDATION_ERROR',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'RATE_LIMITED',
+  'INTERNAL_ERROR',
+  'MAINTENANCE',
+  'EMAIL_TAKEN',
+  'PHONE_TAKEN',
+  'INVALID_CREDENTIALS',
+  'EMAIL_NOT_VERIFIED',
+  'ACCOUNT_SUSPENDED',
+  'INVALID_CODE',
+  'CODE_EXPIRED',
+  'TOO_MANY_ATTEMPTS',
+  'TOKEN_REUSED',
+  'CARRIER_NOT_VERIFIED',
+  'INVALID_TRANSITION',
+  'PARCEL_ALREADY_ASSIGNED',
+  'ACTIVE_PARCEL_LIMIT',
+  'ACTIVE_TRIP_LIMIT',
+  'OFFER_ALREADY_ACTIVE',
+  'OWN_PARCEL',
+  'BLOCKED',
+  'COUNTER_LIMIT_REACHED',
+  'VEHICLE_NOT_ACCEPTED',
+  'ALREADY_REPORTED',
+  'DISPUTE_ALREADY_OPEN',
+  'DELIVERY_IN_PROGRESS',
+  'DELIVERY_CODE_LOCKED',
+  'PERMISSION_DENIED',
+  'TOTP_REQUIRED',
+  'PARCEL_UNAVAILABLE',
+] as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[number];
+
+export interface ApiErrorBody {
+  error: {
+    code: ErrorCode;
+    message: string;
+    details?: Record<string, unknown>;
+  };
+}

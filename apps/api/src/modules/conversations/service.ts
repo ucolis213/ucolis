@@ -1,0 +1,253 @@
+// Messagerie (F13) : une conversation par paire d'utilisateurs et par colis, plus une conversation
+// générale par paire. Envoi optimiste dédoublonné par clientId.
+
+import { Types } from 'mongoose';
+import type { ConversationDto, FileRef, MessageDto } from '@ucolis/shared';
+import type { Deps } from '../../deps';
+import { AppError } from '../../lib/errors';
+import { LIMITS, consume } from '../../lib/rateLimit';
+import { isBlockedBetween } from '../me/service';
+import { ParcelModel } from '../parcels/model';
+import { UserModel, type UserLean } from '../users/model';
+import { toUserSummary } from '../users/serializers';
+import { ConversationModel, MessageModel, type ConversationLean, type MessageLean } from './model';
+
+export const MESSAGES_PAGE = 30;
+export const pairKeyOf = (a: string, b: string) => [a, b].sort().join(':');
+export const conversationRoom = (id: string) => `conversation:${id}`;
+
+export function toMessageDto(m: MessageLean): MessageDto {
+  return {
+    id: m._id.toString(),
+    conversationId: m.conversation.toString(),
+    authorId: m.author ? m.author.toString() : null,
+    type: m.type,
+    text: m.deletedByStaff ? null : (m.text ?? null),
+    image: m.deletedByStaff ? null : ((m.image as FileRef | null) ?? null),
+    systemKey: m.systemKey ?? null,
+    systemParams: (m.systemParams as Record<string, string | number> | null) ?? null,
+    clientId: m.clientId ?? null,
+    readBy: (m.readBy ?? []).map((r) => r.user!.toString()),
+    deleted: !!m.deletedByStaff,
+    createdAt: m.createdAt.toISOString(),
+  };
+}
+
+export interface SendInput {
+  clientId: string;
+  type: 'text' | 'image';
+  text?: string;
+  image?: FileRef;
+}
+
+export function createConversationService(deps: Deps) {
+  const sendLimiter = deps.limiters('messages', LIMITS.messages);
+  const newConvLimiter = deps.limiters('conversations', LIMITS.conversationsPerDay);
+
+  async function loadFor(userId: string, id: string): Promise<ConversationLean> {
+    const c = (await ConversationModel.findById(id).lean()) as ConversationLean | null;
+    if (!c || !c.participants.some((p) => p.toString() === userId)) {
+      throw new AppError(404, 'NOT_FOUND', 'Conversation introuvable');
+    }
+    return c;
+  }
+
+  const otherOf = (c: ConversationLean, userId: string) =>
+    c.participants.find((p) => p.toString() !== userId)!.toString();
+
+  async function toDtos(convs: ConversationLean[], userId: string): Promise<ConversationDto[]> {
+    const others = convs.map((c) => otherOf(c, userId));
+    const [users, parcels] = await Promise.all([
+      UserModel.find({ _id: { $in: others } }).lean(),
+      ParcelModel.find({ _id: { $in: convs.map((c) => c.parcel).filter(Boolean) } }, { title: 1, status: 1, reference: 1 }).lean(),
+    ]);
+    const u = new Map(users.map((x) => [x._id.toString(), x as UserLean]));
+    const p = new Map(parcels.map((x) => [x._id.toString(), x]));
+    return convs.map((c) => {
+      const parcel = c.parcel ? p.get(c.parcel.toString()) : null;
+      const unread = c.unread as unknown as Record<string, number> | undefined;
+      return {
+        id: c._id.toString(),
+        other: toUserSummary(u.get(otherOf(c, userId))!),
+        parcel: parcel ? { id: parcel._id.toString(), title: parcel.title, status: parcel.status, reference: parcel.reference } : null,
+        lastMessage: {
+          text: c.lastMessage?.text ?? null,
+          type: c.lastMessage?.type ?? null,
+          authorId: c.lastMessage?.author ? c.lastMessage.author.toString() : null,
+          at: c.lastMessage?.at ? c.lastMessage.at.toISOString() : null,
+        },
+        unread: unread?.[userId] ?? 0,
+        muted: (c.mutedBy ?? []).some((m) => m.toString() === userId),
+        updatedAt: c.updatedAt.toISOString(),
+      };
+    });
+  }
+
+  /** Crée la conversation ou renvoie l'existante (unique par paire et par colis). */
+  async function ensure(a: string, b: string, parcelId: string | null, createdBy: string | null) {
+    const pairKey = pairKeyOf(a, b);
+    const parcel = parcelId ? new Types.ObjectId(parcelId) : null;
+    const existing = await ConversationModel.findOne({ pairKey, parcel }).lean();
+    if (existing) return { conversation: existing as ConversationLean, created: false };
+    try {
+      const created = await ConversationModel.create({
+        participants: [a, b].sort().map((id) => new Types.ObjectId(id)),
+        parcel,
+        pairKey,
+        createdBy,
+      });
+      return { conversation: created.toObject({ flattenMaps: true }) as unknown as ConversationLean, created: true };
+    } catch (err) {
+      if ((err as { code?: number }).code !== 11000) throw err;
+      return { conversation: (await ConversationModel.findOne({ pairKey, parcel }).lean()) as ConversationLean, created: false };
+    }
+  }
+
+  async function store(c: ConversationLean, authorId: string | null, data: Partial<MessageLean>) {
+    const now = deps.now();
+    const message = (await MessageModel.create({ conversation: c._id, author: authorId, ...data })).toObject() as MessageLean;
+    const recipients = c.participants.map(String).filter((p) => p !== authorId);
+    const inc = Object.fromEntries(recipients.map((r) => [`unread.${r}`, 1]));
+    const preview = data.type === 'image' ? '📷' : (data.text ?? data.systemKey ?? '');
+    await ConversationModel.updateOne(
+      { _id: c._id },
+      {
+        $set: { lastMessage: { text: preview.slice(0, 120), type: data.type, author: authorId, at: now }, deletedFor: [] },
+        $inc: inc,
+      },
+    );
+    const dto = toMessageDto(message);
+    deps.realtime.toRoom(conversationRoom(c._id.toString()), 'message:new', dto);
+    for (const r of recipients) deps.realtime.toUser(r, 'message:new', dto);
+    await deps.bus.emit('message.created', {
+      messageId: dto.id,
+      conversationId: c._id.toString(),
+      authorId,
+      recipients,
+      preview: preview.slice(0, 120),
+      system: data.type === 'system',
+    });
+    return dto;
+  }
+
+  return {
+    ensure,
+    toDtos,
+
+    async find(a: string, b: string, parcelId: string | null) {
+      const c = await ConversationModel.findOne(
+        { pairKey: pairKeyOf(a, b), parcel: parcelId ? new Types.ObjectId(parcelId) : null },
+        { _id: 1 },
+      ).lean();
+      return c?._id.toString() ?? null;
+    },
+
+    async open(userId: string, otherId: string, parcelId?: string) {
+      if (userId === otherId) throw new AppError(400, 'VALIDATION_ERROR', 'Conversation avec soi-même');
+      const other = await UserModel.findById(otherId, { status: 1 }).lean();
+      if (!other || other.status === 'deleted') throw new AppError(404, 'NOT_FOUND', 'Utilisateur introuvable');
+      if (await isBlockedBetween(userId, otherId)) throw new AppError(403, 'BLOCKED', 'Utilisateur bloqué');
+      if (parcelId) {
+        const parcel = await ParcelModel.findById(parcelId, { sender: 1 }).lean();
+        if (!parcel) throw new AppError(404, 'NOT_FOUND', 'Colis introuvable');
+        // « Poser une question » : l'un des deux est l'expéditeur du colis.
+        if (![userId, otherId].includes(parcel.sender.toString())) {
+          throw new AppError(403, 'FORBIDDEN', 'Conversation hors du colis');
+        }
+      }
+      const pairKey = pairKeyOf(userId, otherId);
+      const exists = await ConversationModel.exists({ pairKey, parcel: parcelId ?? null });
+      if (!exists && !parcelId) await consume(newConvLimiter, userId);
+      const { conversation } = await ensure(userId, otherId, parcelId ?? null, userId);
+      return (await toDtos([conversation], userId))[0]!;
+    },
+
+    async list(userId: string) {
+      const convs = (await ConversationModel.find({
+        participants: userId,
+        deletedFor: { $ne: new Types.ObjectId(userId) },
+        'lastMessage.at': { $ne: null },
+      })
+        .sort({ 'lastMessage.at': -1 })
+        .limit(100)
+        .lean()) as ConversationLean[];
+      return { items: await toDtos(convs, userId) };
+    },
+
+    async get(userId: string, id: string) {
+      return (await toDtos([await loadFor(userId, id)], userId))[0]!;
+    },
+
+    async messages(userId: string, id: string, before?: string) {
+      await loadFor(userId, id);
+      const filter: Record<string, unknown> = { conversation: id };
+      if (before) {
+        const pivot = await MessageModel.findById(before, { createdAt: 1 }).lean();
+        if (pivot) filter.createdAt = { $lt: pivot.createdAt };
+      }
+      const items = (await MessageModel.find(filter).sort({ createdAt: -1, _id: -1 }).limit(MESSAGES_PAGE + 1).lean()) as MessageLean[];
+      return {
+        items: items.slice(0, MESSAGES_PAGE).map(toMessageDto),
+        hasMore: items.length > MESSAGES_PAGE,
+      };
+    },
+
+    async send(userId: string, id: string, input: SendInput) {
+      const c = await loadFor(userId, id);
+      const existing = await MessageModel.findOne({ conversation: id, clientId: input.clientId }).lean();
+      if (existing) return toMessageDto(existing as MessageLean);
+      await consume(sendLimiter, userId);
+      if (await isBlockedBetween(userId, otherOf(c, userId))) {
+        throw new AppError(403, 'BLOCKED', 'Utilisateur bloqué');
+      }
+      try {
+        return await store(c, userId, {
+          type: input.type,
+          text: input.type === 'text' ? (input.text ?? '').trim() : null,
+          image: input.type === 'image' ? (input.image ?? null) : null,
+          clientId: input.clientId,
+        } as Partial<MessageLean>);
+      } catch (err) {
+        if ((err as { code?: number }).code !== 11000) throw err;
+        const dup = await MessageModel.findOne({ conversation: id, clientId: input.clientId }).lean();
+        return toMessageDto(dup as MessageLean);
+      }
+    },
+
+    /** Message système automatique (ex. « Offre acceptée à 3 250 DA »), traduit côté client. */
+    async system(conversationId: string, systemKey: string, systemParams: Record<string, string | number> = {}) {
+      const c = (await ConversationModel.findById(conversationId).lean()) as ConversationLean | null;
+      if (!c) return null;
+      return store(c, null, { type: 'system', systemKey, systemParams } as Partial<MessageLean>);
+    },
+
+    async read(userId: string, id: string) {
+      await loadFor(userId, id);
+      const now = deps.now();
+      await MessageModel.updateMany(
+        { conversation: id, author: { $ne: new Types.ObjectId(userId) }, 'readBy.user': { $ne: new Types.ObjectId(userId) } },
+        { $push: { readBy: { user: userId, at: now } } },
+      );
+      await ConversationModel.updateOne({ _id: id }, { $set: { [`unread.${userId}`]: 0 } });
+      deps.realtime.toRoom(conversationRoom(id), 'messages:read', { conversationId: id, userId, at: now.toISOString() });
+      await deps.bus.emit('conversation.read', { conversationId: id, userId });
+    },
+
+    async mute(userId: string, id: string, muted: boolean) {
+      await loadFor(userId, id);
+      await ConversationModel.updateOne(
+        { _id: id },
+        muted ? { $addToSet: { mutedBy: new Types.ObjectId(userId) } } : { $pull: { mutedBy: new Types.ObjectId(userId) } },
+      );
+      return this.get(userId, id);
+    },
+
+    async isMuted(userId: string, conversationId: string) {
+      return !!(await ConversationModel.exists({ _id: conversationId, mutedBy: new Types.ObjectId(userId) }));
+    },
+
+    assertParticipant: loadFor,
+  };
+}
+
+export type ConversationService = ReturnType<typeof createConversationService>;

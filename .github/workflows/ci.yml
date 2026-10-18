@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Binaire MongoDB de mongodb-memory-server (tests de l'API).
+      - uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Types
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
+        env:
+          MONGOMS_DOWNLOAD_DIR: /home/runner/.cache/mongodb-binaries
+
+      - name: Build API et back-office
+        run: pnpm turbo run build --filter=@ucolis/api --filter=@ucolis/admin

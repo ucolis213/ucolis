@@ -1,0 +1,7 @@
+{
+  "CFBundleDisplayName": "UCOLIS",
+  "NSLocationWhenInUseUsageDescription": "يشارك UCOLIS موقعك مع المرسل فقط أثناء توصيل بدأته.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "يشارك UCOLIS موقعك مع المرسل فقط أثناء توصيل بدأته، بما في ذلك في الخلفية.",
+  "NSCameraUsageDescription": "يستخدم UCOLIS الكاميرا لتصوير طرودك ووثائقك.",
+  "NSPhotoLibraryUsageDescription": "يصل UCOLIS إلى صورك لعرض طرودك وإرسال وثائقك."
+}

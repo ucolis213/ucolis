@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+dist
+.expo
+coverage
+packages/shared/src/geo/wilayas.json

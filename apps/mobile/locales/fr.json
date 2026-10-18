@@ -1,0 +1,7 @@
+{
+  "CFBundleDisplayName": "UCOLIS",
+  "NSLocationWhenInUseUsageDescription": "UCOLIS partage votre position avec l'expéditeur uniquement pendant une livraison que vous avez démarrée.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "UCOLIS partage votre position avec l'expéditeur uniquement pendant une livraison que vous avez démarrée, y compris en arrière-plan.",
+  "NSCameraUsageDescription": "UCOLIS utilise l'appareil photo pour photographier vos colis et vos documents.",
+  "NSPhotoLibraryUsageDescription": "UCOLIS accède à vos photos pour illustrer vos colis et envoyer vos documents."
+}
