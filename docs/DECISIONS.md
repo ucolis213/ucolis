@@ -118,3 +118,28 @@ sur appareil.
 Avec `node-linker=hoisted`, une installation partielle (`pnpm add`, `expo install --fix`) échoue en EPERM pendant
 qu'Expo s'exécute depuis `node_modules`. On écrit les versions attendues (`expo install --check`) dans `package.json`,
 puis on réinstalle à partir d'un `node_modules` vide.
+
+## 2026-10-20 — Sélecteur d'adresse façon VTC
+
+### Parcours de choix des adresses
+Sur le modèle de Yassir : un écran de recherche avec les champs Départ et Arrivée reliés, « Ma position actuelle »,
+adresses récentes et « Choisir sur la carte » ; sur la carte, le repère est fixe au centre et l'utilisateur fait
+glisser la carte dessous (adresse résolue quand la carte s'arrête, choix impossible tant que la carte est trop
+dézoomée). Les adresses récentes (6 au plus) restent sur l'appareil et sont effacées à la déconnexion. La wilaya, la
+commune et le champ de précisions restent sur l'étape, conformément au PRD.
+
+### Géocodage gratuit par OpenStreetMap
+Choix d'un service gratuit plutôt que Google (carte bancaire obligatoire). Mesures du 20 octobre 2026 :
+Photon (photon.komoot.io) trouve les lieux connus (Ardis, Hôpital Mustapha Pacha, Gare de l'Agha) mais répond en 8 à
+10 s et n'indexe pas les noms arabes ; Nominatim répond en moins d'une seconde, en français et en arabe, mais sa
+politique d'usage interdit la recherche pendant la frappe et impose 1 requête par seconde au plus. D'où :
+- recherche : communes de shared/geo affichées tout de suite côté mobile, lieux et rues de Photon ajoutés à leur
+  arrivée (cache Redis 7 jours) ; recherche en arabe servie par le référentiel seul ;
+- adresse d'un point : Nominatim (cache Redis 7 jours, une requête par seconde et par processus) ;
+- panne ou absence de résultat : repli sur shared/geo, réponse non mise en cache.
+Commune et wilaya viennent toujours du référentiel. `GOOGLE_MAPS_API_KEY` devient facultative en production ; si elle
+est fournie, Google remplace OpenStreetMap sans changement côté mobile. `PHOTON_URL` et `NOMINATIM_URL` permettent
+d'héberger nos propres instances.
+À faire avant le lancement : héberger Photon (extrait Algérie) ou passer à Google Places avec plafonds de quota, la
+lenteur du Photon public n'étant pas acceptable en production ; à plusieurs instances de l'API, la limite Nominatim
+devra être partagée (Redis) ou l'instance auto-hébergée.

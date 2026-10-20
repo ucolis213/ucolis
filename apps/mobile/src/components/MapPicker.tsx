@@ -1,17 +1,19 @@
-// Choix d'une adresse sur une carte : repère déplaçable, recherche d'adresse (proxy API), bouton
-// « Ma position ». La wilaya et la commune sont déduites du point (commune au centre le plus proche).
+// Choix d'un point sur la carte : le repère reste fixe au centre et l'on fait glisser la carte dessous ;
+// l'adresse du point (géocodage inverse par l'API, repli local) s'affiche dès que la carte s'arrête.
+// La wilaya et la commune sont déduites du point (commune au centre le plus proche).
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import MapView, { type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { nearestCommune, type LatLng } from '@ucolis/shared';
 import { api } from '../api/client';
 import { placeLabel } from '../format';
-import { colors, fontFamily, MIN_TOUCH, radii, shadow, space } from '../theme';
+import { toPlace } from '../state/addressBook';
+import { backIcon, colors, MIN_TOUCH, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
 
@@ -22,178 +24,214 @@ export interface PickedPlace {
   location: LatLng;
 }
 
-type GeoResult = PickedPlace;
+type GeoResult = PickedPlace & { name?: string };
 
 const ALGERIA: Region = { latitude: 34.5, longitude: 3, latitudeDelta: 9, longitudeDelta: 9 };
+const STREET_DELTA = 0.01;
+/** Au-delà, la carte est trop éloignée pour désigner un point précis. */
+const MAX_PICK_DELTA = 0.2;
+const PIN_SIZE = 44;
 
-export function MapPicker({
-  visible,
-  title,
-  initial,
-  onClose,
-  onPick,
-}: {
+const regionAt = (p: LatLng): Region => ({
+  latitude: p.lat,
+  longitude: p.lng,
+  latitudeDelta: STREET_DELTA,
+  longitudeDelta: STREET_DELTA,
+});
+
+function localPlace(point: LatLng): GeoResult {
+  const near = nearestCommune(point);
+  return {
+    address: placeLabel({ wilayaCode: near.wilayaCode, commune: near.communeCode }),
+    wilayaCode: near.wilayaCode,
+    commune: near.communeCode,
+    location: point,
+  };
+}
+
+interface MapPickerProps {
   visible: boolean;
   title: string;
   initial?: LatLng | null;
   onClose: () => void;
   onPick: (p: PickedPlace) => void;
-}) {
+}
+
+export function MapPicker({ visible, ...props }: MapPickerProps) {
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={props.onClose}>
+      {/* Contenu créé à chaque ouverture : la carte repart du point initial, sans état résiduel. */}
+      {visible && <MapPickerContent {...props} />}
+    </Modal>
+  );
+}
+
+function MapPickerContent({ title, initial, onClose, onPick }: Omit<MapPickerProps, 'visible'>) {
   const { t } = useTranslation(['parcel', 'common']);
   const map = useRef<MapView>(null);
-  const [point, setPoint] = useState<LatLng | null>(initial ?? null);
-  const [address, setAddress] = useState('');
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<GeoResult[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [region, setRegion] = useState<Region>(initial ? regionAt(initial) : ALGERIA);
+  const [place, setPlace] = useState<GeoResult | null>(null);
+  const [locating, setLocating] = useState(false);
+  const zoomedIn = region.latitudeDelta <= MAX_PICK_DELTA;
+  // L'adresse affichée correspond-elle au centre actuel de la carte ?
+  const resolving =
+    zoomedIn &&
+    (place?.location.lat !== region.latitude || place?.location.lng !== region.longitude);
 
+  // Sans point initial : dernière position connue, sans demander d'autorisation.
   useEffect(() => {
-    if (visible) setPoint(initial ?? null);
-  }, [visible, initial]);
+    if (initial) return;
+    void (async () => {
+      const perm = await Location.getForegroundPermissionsAsync();
+      if (!perm.granted) return;
+      const last = await Location.getLastKnownPositionAsync();
+      if (last)
+        map.current?.animateToRegion(
+          regionAt({ lat: last.coords.latitude, lng: last.coords.longitude }),
+          400,
+        );
+    })();
+  }, [initial]);
 
-  // Adresse lisible du point (géocodage inverse par l'API, repli local).
+  // Adresse du centre une fois la carte immobile (délai pour ne pas interroger l'API à chaque glissement).
   useEffect(() => {
-    if (!point) return;
+    if (!zoomedIn) return;
+    const point = { lat: region.latitude, lng: region.longitude };
+    let cancelled = false;
     const id = setTimeout(async () => {
+      let found: GeoResult;
       try {
-        const r = await api.get<GeoResult>(`/geo/reverse?lat=${point.lat}&lng=${point.lng}`);
-        setAddress(r.address);
+        found = await api.get<GeoResult>(`/geo/reverse?lat=${point.lat}&lng=${point.lng}`);
       } catch {
-        const near = nearestCommune(point);
-        setAddress(placeLabel({ wilayaCode: near.wilayaCode, commune: near.communeCode }));
+        found = localPlace(point);
       }
-    }, 400);
-    return () => clearTimeout(id);
-  }, [point]);
-
-  useEffect(() => {
-    if (query.trim().length < 2) return setResults([]);
-    const id = setTimeout(async () => {
-      try {
-        setResults((await api.get<{ items: GeoResult[] }>(`/geo/search?q=${encodeURIComponent(query.trim())}`)).items);
-      } catch {
-        setResults([]);
-      }
-    }, 400);
-    return () => clearTimeout(id);
-  }, [query]);
-
-  function moveTo(p: LatLng) {
-    setPoint(p);
-    map.current?.animateToRegion({ latitude: p.lat, longitude: p.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 400);
-  }
+      if (!cancelled) setPlace({ ...found, location: point });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [zoomedIn, region.latitude, region.longitude]);
 
   async function myPosition() {
-    setBusy(true);
+    setLocating(true);
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
-      if (!perm.granted) return;
+      if (!perm.granted) return Alert.alert(t('locationDenied'));
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      moveTo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      map.current?.animateToRegion(
+        regionAt({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        400,
+      );
     } finally {
-      setBusy(false);
+      setLocating(false);
     }
   }
 
   function confirm() {
-    if (!point) return;
-    const near = nearestCommune(point);
-    onPick({ address: address || placeLabel({ wilayaCode: near.wilayaCode, commune: near.communeCode }), wilayaCode: near.wilayaCode, commune: near.communeCode, location: point });
+    if (place) onPick(toPlace(place));
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.root}>
-        <View style={styles.header}>
-          <AppText size="lg" weight="bold" style={styles.flex}>
-            {title}
-          </AppText>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common:cancel')}>
-            <Ionicons name="close" size={26} color={colors.navy} />
-          </Pressable>
+    <SafeAreaView style={styles.root}>
+      <View style={styles.header}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={12}
+          style={styles.back}
+          accessibilityRole="button"
+          accessibilityLabel={t('common:back')}
+        >
+          <Ionicons name={backIcon()} size={24} color={colors.navy} />
+        </Pressable>
+        <AppText size="lg" weight="bold" style={styles.flex} numberOfLines={1}>
+          {title}
+        </AppText>
+      </View>
+      <View style={styles.flex}>
+        <MapView
+          ref={map}
+          style={StyleSheet.absoluteFill}
+          initialRegion={initial ? regionAt(initial) : ALGERIA}
+          onRegionChangeComplete={setRegion}
+          showsUserLocation
+          showsMyLocationButton={false}
+          toolbarEnabled={false}
+        />
+        <View style={styles.pinLayer} pointerEvents="none">
+          <Ionicons name="location" size={PIN_SIZE} color={colors.primary} style={styles.pin} />
         </View>
-        <View style={styles.search}>
-          <Ionicons name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('searchAddress')}
-            placeholderTextColor={colors.textSubtle}
-            style={[styles.flex, styles.searchInput, { fontFamily: fontFamily() }]}
-          />
-        </View>
-        {results.length > 0 && (
-          <FlatList
-            style={styles.results}
-            data={results}
-            keyExtractor={(r, i) => `${r.address}-${i}`}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.result}
-                onPress={() => {
-                  setResults([]);
-                  setQuery('');
-                  setAddress(item.address);
-                  moveTo(item.location);
-                }}
-              >
-                <Ionicons name="location-outline" size={18} color={colors.primary} />
-                <AppText size="sm" style={styles.flex}>
-                  {item.address}
+        <Pressable
+          style={styles.locate}
+          onPress={myPosition}
+          accessibilityRole="button"
+          accessibilityLabel={t('common:myPosition')}
+        >
+          {locating ? (
+            <ActivityIndicator color={colors.navy} />
+          ) : (
+            <Ionicons name="locate" size={22} color={colors.navy} />
+          )}
+        </Pressable>
+      </View>
+      <View style={styles.footer}>
+        <View style={styles.addressRow}>
+          {resolving ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={zoomedIn ? colors.primary : colors.textSubtle}
+            />
+          )}
+          <View style={styles.flex}>
+            {!zoomedIn ? (
+              <AppText size="sm" color={colors.textMuted}>
+                {t('moveMapHint')}
+              </AppText>
+            ) : place && !resolving ? (
+              <>
+                {place.name && (
+                  <AppText weight="semibold" numberOfLines={1}>
+                    {place.name}
+                  </AppText>
+                )}
+                <AppText
+                  size="sm"
+                  numberOfLines={2}
+                  color={place.name ? colors.textMuted : colors.navy}
+                >
+                  {place.address}
                 </AppText>
-              </Pressable>
-            )}
-          />
-        )}
-        <View style={styles.flex}>
-          <MapView
-            ref={map}
-            style={StyleSheet.absoluteFill}
-            initialRegion={point ? { latitude: point.lat, longitude: point.lng, latitudeDelta: 0.05, longitudeDelta: 0.05 } : ALGERIA}
-            onPress={(e) => setPoint({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })}
-          >
-            {point && (
-              <Marker
-                coordinate={{ latitude: point.lat, longitude: point.lng }}
-                draggable
-                onDragEnd={(e) => setPoint({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })}
-                pinColor={colors.primary}
-              />
-            )}
-          </MapView>
-          <Pressable style={styles.locate} onPress={myPosition} accessibilityRole="button" accessibilityLabel={t('common:myPosition')}>
-            <Ionicons name={busy ? 'hourglass-outline' : 'locate'} size={22} color={colors.navy} />
-          </Pressable>
+              </>
+            ) : null}
+          </View>
         </View>
-        <View style={styles.footer}>
-          <AppText size="sm" numberOfLines={2} color={point ? colors.navy : colors.textMuted}>
-            {point ? address : t('chooseOnMap')}
-          </AppText>
-          <Button label={t('confirmLocation')} onPress={confirm} disabled={!point} />
-        </View>
-      </SafeAreaView>
-    </Modal>
+        <Button
+          label={t('confirmLocation')}
+          onPress={confirm}
+          disabled={!zoomedIn || !place || resolving}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
   flex: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', padding: space(4) },
-  search: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space(2),
-    marginHorizontal: space(4),
-    marginBottom: space(2),
-    paddingHorizontal: space(3),
-    borderRadius: radii.input,
-    backgroundColor: colors.background,
+    paddingHorizontal: space(2),
+    paddingVertical: space(2),
   },
-  searchInput: { minHeight: MIN_TOUCH, color: colors.navy, textAlign: 'auto' },
-  results: { maxHeight: 220, marginHorizontal: space(4) },
-  result: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  back: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+  // La pointe du repère désigne exactement le centre de la carte.
+  pinLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  pin: { marginTop: -PIN_SIZE },
   locate: {
     position: 'absolute',
     end: space(4),
@@ -207,4 +245,5 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   footer: { padding: space(4), gap: space(3) },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), minHeight: 44 },
 });

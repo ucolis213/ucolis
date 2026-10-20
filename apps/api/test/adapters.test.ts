@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import pino from 'pino';
 import { createMemoryCache, createRedisCache } from '../src/lib/cache';
 import { createCloudinaryFileStore } from '../src/lib/files';
-import { createGoogleGeocoder, createLocalGeocoder } from '../src/lib/geocoder';
+import { createGoogleGeocoder, createLocalGeocoder, createOsmGeocoder } from '../src/lib/geocoder';
 import { createBrevoMailer, createLogMailer } from '../src/lib/mailer';
 import { createLogger } from '../src/lib/logger';
 import { toCsv } from '../src/lib/csv';
@@ -71,6 +71,77 @@ describe('géocodage Google', () => {
     await expect(geo.search('Oran', 'fr')).rejects.toThrow('REQUEST_DENIED');
     expect(await createLocalGeocoder().search('x', 'fr')).toEqual([]);
     expect((await createLocalGeocoder().search('وهران', 'ar')).length).toBeGreaterThan(0);
+  });
+});
+
+describe('géocodage OpenStreetMap', () => {
+  const urls = { photon: 'https://photon.test', nominatim: 'https://nominatim.test' };
+  const feature = (name: string, lat: number, lng: number, countrycode = 'DZ', street?: string) => ({
+    geometry: { coordinates: [lng, lat] },
+    properties: { name, countrycode, street },
+  });
+
+  it('cherche par Photon en Algérie, nomme commune et wilaya depuis le référentiel, et met en cache', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        features: [
+          feature('Hôpital Mustapha Pacha', 36.7606, 3.0525, 'DZ', 'Rue Nouvelle'),
+          feature('Hôpital Mustapha Pacha', 36.7606, 3.0525, 'DZ', 'Rue Nouvelle'),
+          feature('Hopital Moulay Youssef', 34.01, -6.83, 'MA'),
+        ],
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const geo = createOsmGeocoder(urls, createMemoryCache());
+    const results = await geo.search('Hopital Mustapha', 'fr');
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ name: 'Hôpital Mustapha Pacha', wilayaCode: '16' });
+    expect(results[0]!.address).toMatch(/^Hôpital Mustapha Pacha, Rue Nouvelle, .+, Alger$/);
+    expect(String(fetchMock.mock.calls[0]![0])).toMatch(/^https:\/\/photon\.test\/api\?.*bbox=/);
+    await geo.search('hopital mustapha ', 'fr');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('donne l’adresse d’un point par Nominatim, une requête par seconde au plus', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ name: 'نهج مرابط عثمان', address: { road: 'نهج مرابط عثمان', suburb: 'المرادية', country_code: 'dz' } }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ name: '', address: { country_code: 'ma' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const geo = createOsmGeocoder(urls, createMemoryCache());
+    const rev = await geo.reverse({ lat: 36.7525, lng: 3.042 }, 'ar');
+    expect(rev).toMatchObject({ name: 'نهج مرابط عثمان', location: { lat: 36.7525, lng: 3.042 }, wilayaCode: '16' });
+    expect(rev.address.startsWith('نهج مرابط عثمان، ') || rev.address.startsWith('نهج مرابط عثمان, ')).toBe(true);
+    expect(String(fetchMock.mock.calls[0]![0])).toMatch(/^https:\/\/nominatim\.test\/reverse\?.*accept-language=ar/);
+    // Deuxième point : attend la seconde suivante avant d'appeler Nominatim.
+    const second = geo.reverse({ lat: 35.7, lng: -0.63 }, 'fr');
+    await vi.advanceTimersByTimeAsync(500);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(600);
+    expect((await second).wilayaCode).toBe('31');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Même point : servi par le cache.
+    await geo.reverse({ lat: 36.7525, lng: 3.042 }, 'ar');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it('se replie sur le référentiel en panne, sans résultat ou en arabe', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ features: [] }))
+      .mockRejectedValueOnce(new Error('réseau'))
+      .mockResolvedValueOnce(new Response('', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const geo = createOsmGeocoder(urls, createMemoryCache(), { nominatimIntervalMs: 0 });
+    expect((await geo.search('Sétif', 'fr'))[0]!.wilayaCode).toBe('19');
+    expect((await geo.reverse({ lat: 35.7, lng: -0.63 }, 'fr')).wilayaCode).toBe('31');
+    expect((await geo.search('Oran', 'fr'))[0]!.wilayaCode).toBe('31');
+    expect((await geo.search('وهران', 'ar'))[0]!.wilayaCode).toBe('31');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 

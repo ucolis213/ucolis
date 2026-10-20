@@ -8,6 +8,7 @@ import type { AuthResponse, Intent, Me } from '@ucolis/shared';
 import { api, refreshSession, setSessionLostListener } from '../api/client';
 import { tokens } from '../api/tokens';
 import { getDeviceId } from '../device';
+import { clearRecents } from '../state/addressBook';
 
 type Status = 'loading' | 'guest' | 'authenticated';
 
@@ -75,6 +76,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           await api.post('/auth/logout', { deviceId: await getDeviceId() }).catch(() => undefined);
         }
         await tokens.clear();
+        await clearRecents();
         reset();
       },
       setUser: (u) => setUserState(u),

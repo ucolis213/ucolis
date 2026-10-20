@@ -8,7 +8,6 @@ const optionalInDev = [
   'CLOUDINARY_API_SECRET',
   'BREVO_API_KEY',
   'EXPO_ACCESS_TOKEN',
-  'GOOGLE_MAPS_API_KEY',
   'SENTRY_DSN',
 ] as const;
 
@@ -28,7 +27,10 @@ const envSchema = z
     CLOUDINARY_API_SECRET: z.string().default(''),
     BREVO_API_KEY: z.string().default(''),
     EXPO_ACCESS_TOKEN: z.string().default(''),
+    // Facultative : sans clé, le géocodage passe par OpenStreetMap (Photon et Nominatim).
     GOOGLE_MAPS_API_KEY: z.string().default(''),
+    PHOTON_URL: z.url().default('https://photon.komoot.io'),
+    NOMINATIM_URL: z.url().default('https://nominatim.openstreetmap.org'),
     SENTRY_DSN: z.string().default(''),
     CORS_ORIGINS: z
       .string()

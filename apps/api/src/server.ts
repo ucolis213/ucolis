@@ -8,7 +8,7 @@ import type { Deps } from './deps';
 import { EventBus } from './events/bus';
 import { createRedisCache } from './lib/cache';
 import { createCloudinaryFileStore } from './lib/files';
-import { createGoogleGeocoder, createLocalGeocoder } from './lib/geocoder';
+import { createGoogleGeocoder, createOsmGeocoder } from './lib/geocoder';
 import { createLogger } from './lib/logger';
 import { createBrevoMailer, createLogMailer } from './lib/mailer';
 import { limiterFactory } from './lib/rateLimit';
@@ -45,7 +45,7 @@ export function buildDeps(env: Env, redis: Redis, logger: Logger): Deps {
     cache,
     geocoder: env.GOOGLE_MAPS_API_KEY
       ? createGoogleGeocoder(env.GOOGLE_MAPS_API_KEY, cache)
-      : createLocalGeocoder(),
+      : createOsmGeocoder({ photon: env.PHOTON_URL.replace(/\/$/, ''), nominatim: env.NOMINATIM_URL.replace(/\/$/, '') }, cache),
     limiters: limiterFactory(redis),
     bus: new EventBus(logger),
     realtime: createDeferredRealtime(),

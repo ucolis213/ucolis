@@ -136,7 +136,7 @@ Le projet est un monorepo TypeScript géré avec pnpm et Turborepo. Il contient 
 | État client mobile | Contextes React (session, langue, socket) + Zustand persisté pour le brouillon de colis | — |
 | Formulaires | react-hook-form + zod, schémas importés de shared | Validation identique côté client et serveur |
 | Cartes | react-native-maps : Google Maps sur Android, Apple Plans sur iOS | Sélecteur d'adresse, détail, suivi |
-| Géocodage | Google Geocoding API, appelée par l'API (clé jamais embarquée) | Adresse lisible à partir d'un point |
+| Géocodage | Appelé par l'API uniquement : OpenStreetMap par défaut (Photon pour la recherche, Nominatim pour l'adresse d'un point), gratuit et sans clé ; Google si une clé est configurée (jamais embarquée) ; repli sur shared/geo | Recherche d'adresses et de lieux, adresse lisible à partir d'un point |
 | Géolocalisation | expo-location + expo-task-manager | Position en arrière-plan pendant la livraison |
 | Notifications | expo-notifications ; côté API expo-server-sdk | Push et centre de notifications |
 | Stockage sécurisé | expo-secure-store | Jeton de rafraîchissement, identifiant d'appareil |
@@ -288,7 +288,7 @@ Critères d'acceptation : un transporteur non vérifié reçoit 403 CARRIER_NOT_
 
 ### F6 — Publication d'un colis (assistant en 4 étapes)
 
-1. **Trajet** : adresses de départ et d'arrivée choisies sur une carte, avec un repère déplaçable, une recherche d'adresse et le bouton « Ma position ». La wilaya et la commune sont déduites du point (commune dont le centre est le plus proche, dans shared/geo) et restent corrigeables à la main. Un champ libre de précision accompagne chaque adresse (rue, repère, étage).
+1. **Trajet** : adresses de départ et d'arrivée choisies comme dans une application de VTC : deux champs reliés (Départ, Arrivée), suggestions pendant la frappe (communes de shared/geo immédiatement, lieux et rues par l'API ensuite), « Ma position actuelle », adresses récentes de l'appareil (effacées à la déconnexion) et « Choisir sur la carte », où le repère reste fixe au centre et l'on fait glisser la carte dessous. La wilaya et la commune sont déduites du point (commune dont le centre est le plus proche, dans shared/geo) et restent corrigeables à la main. Un champ libre de précision accompagne chaque adresse (rue, repère, étage).
 2. **Colis** :
    - Titre (5–80 caractères), catégorie (documents, clothing, electronics, food_non_perishable, furniture, appliances, auto_parts, other), description (1 000 caractères au maximum).
    - Poids saisi en g ou kg, stocké en kg (0,1 à 30 000). Dimensions saisies en cm ou m, stockées en cm (1 à 1 500 par côté), avec calcul automatique du volume en m³.
@@ -697,7 +697,7 @@ Conventions :
 | Blocage | GET /me/blocked ; POST /me/blocked/:userId ; DELETE /me/blocked/:userId | Authentifié |
 | Uploads | POST /uploads/signature avec { purpose } (parcel_photo, avatar, message_image, identity_doc, pro_doc, dispute_photo, delivery_proof, vehicle_photo) | Renvoie une signature Cloudinary limitée au dossier, au type et à la taille autorisés pour cet usage |
 | Utilisateurs publics | GET /users/:id ; GET /users/:id/reviews ; GET /users/:id/trips | Public, profil filtré |
-| Géo | GET /geo/reverse?lat=&lng= ; GET /geo/search?q= | Authentifié, proxy Google avec cache Redis de 30 jours |
+| Géo | GET /geo/reverse?lat=&lng= ; GET /geo/search?q= | Authentifié ; proxy OpenStreetMap (cache Redis de 7 jours, Nominatim limité à 1 requête par seconde) ou Google (cache de 30 jours) ; repli sur shared/geo |
 | Prix | POST /pricing/suggest | Public, même fonction que shared |
 | Colis | GET /parcels (filtres et tri de F7) ; GET /parcels/:id ; POST /parcels ; PATCH /parcels/:id ; POST /parcels/:id/duplicate (pro) ; POST /parcels/:id/cancel ; GET /me/parcels?status= | Liste et détail publics ; écriture par le propriétaire |
 | Livraison | POST /parcels/:id/start ; POST /parcels/:id/delivery-code ({ code }) ; POST /parcels/:id/declare-delivered ; POST /parcels/:id/confirm-delivery ; POST /parcels/:id/withdraw ; GET /parcels/:id/delivery-code (expéditeur seulement) ; GET /parcels/:id/tracking | Selon F11 et F12 |
