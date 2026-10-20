@@ -92,6 +92,8 @@
     "edit": "تعديل",
     "delete": "حذف",
     "close": "إغلاق",
+    "enlargePhoto": "تكبير الصورة",
+    "photoCounter": "{{current}} / {{total}}",
     "ok": "حسنًا",
     "saved": "تم الحفظ",
     "seeMore": "عرض المزيد",

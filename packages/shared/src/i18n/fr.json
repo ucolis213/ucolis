@@ -92,6 +92,8 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "close": "Fermer",
+    "enlargePhoto": "Agrandir la photo",
+    "photoCounter": "{{current}} / {{total}}",
     "ok": "OK",
     "saved": "Enregistré",
     "seeMore": "Voir plus",

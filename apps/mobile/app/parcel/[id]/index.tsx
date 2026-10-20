@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import {
   parcelActionsFor,
   type ConversationDto,
+  type FileRef,
   type ParcelAction,
   type ParcelDto,
   type ParcelViewer,
@@ -23,6 +24,7 @@ import { Badge, StatusBadge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { confirm } from '@/components/ConfirmDialog';
 import { KeyValue, SectionCard } from '@/components/FormBits';
+import { PhotoViewer } from '@/components/PhotoViewer';
 import { PromptModal } from '@/components/PromptModal';
 import { LoadingSkeleton } from '@/components/QueryView';
 import { RouteMap } from '@/components/RouteMap';
@@ -83,6 +85,7 @@ export default function ParcelDetail() {
   const { user } = useSession();
   const startDraft = useParcelDraft((s) => s.start);
   const [cancelPrompt, setCancelPrompt] = useState(false);
+  const [photoViewer, setPhotoViewer] = useState<{ photos: FileRef[]; index: number } | null>(null);
   const p = query.data;
 
   // Le partage GPS s'arrête dès que le colis quitte in_transit.
@@ -257,8 +260,15 @@ export default function ParcelDetail() {
     >
       {p.photos.length > 0 && (
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-          {p.photos.map((ph) => (
-            <Image key={ph.publicId} source={{ uri: cdn(ph.url, 900) }} style={{ width: WIDTH, height: WIDTH * 0.66 }} contentFit="cover" accessibilityIgnoresInvertColors />
+          {p.photos.map((ph, i) => (
+            <Pressable
+              key={ph.publicId}
+              onPress={() => setPhotoViewer({ photos: p.photos, index: i })}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={t('common:enlargePhoto')}
+            >
+              <Image source={{ uri: cdn(ph.url, 900) }} style={{ width: WIDTH, height: WIDTH * 0.66 }} contentFit="cover" accessibilityIgnoresInvertColors />
+            </Pressable>
           ))}
         </ScrollView>
       )}
@@ -339,7 +349,15 @@ export default function ParcelDetail() {
 
         {p.deliveryProof && (
           <SectionCard title={t('proofPhoto')}>
-            {p.deliveryProof.photo && <Image source={{ uri: cdn(p.deliveryProof.photo.url, 600) }} style={styles.proof} contentFit="cover" />}
+            {p.deliveryProof.photo && (
+              <Pressable
+                onPress={() => setPhotoViewer({ photos: [p.deliveryProof!.photo!], index: 0 })}
+                accessibilityRole="imagebutton"
+                accessibilityLabel={t('common:enlargePhoto')}
+              >
+                <Image source={{ uri: cdn(p.deliveryProof.photo.url, 600) }} style={styles.proof} contentFit="cover" />
+              </Pressable>
+            )}
             {p.deliveryProof.note && <AppText size="sm">{p.deliveryProof.note}</AppText>}
           </SectionCard>
         )}
@@ -365,6 +383,8 @@ export default function ParcelDetail() {
           />
         )}
       </View>
+
+      <PhotoViewer photos={photoViewer?.photos ?? []} index={photoViewer?.index ?? null} onClose={() => setPhotoViewer(null)} />
 
       <PromptModal
         visible={cancelPrompt}
