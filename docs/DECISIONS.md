@@ -95,3 +95,26 @@ staff lise des noms et non des identifiants. Chaque lecture reste journalisée a
 ### Rendu Markdown minimal
 FAQ, CGU et confidentialité sont rendues par un interprète minimal (titres, listes, paragraphes) côté mobile et en
 aperçu dans le back-office, sans dépendance. La FAQ se découpe en entrées sur les titres `## Question`.
+
+## 2026-10-20 — Passage à Expo SDK 57
+
+### SDK 57 au lieu de 54
+Expo Go sur l'App Store ne prend en charge que le dernier SDK (57) : le projet en SDK 54 ne s'ouvrait pas sur iPhone.
+Montée 54 → 55 → 56 → 57 : React Native 0.86, React 19.2.3 (back-office aligné pour qu'une seule copie de React soit
+installée dans le monorepo), TypeScript 6 côté mobile. PRD mis à jour.
+Conséquences : iOS 16.4 minimum depuis le SDK 56 (iPhone 7, 6s et SE de 1re génération exclus) ; `edgeToEdgeEnabled`
+retiré (bord à bord obligatoire) ; `"types": ["jest"]` déclaré dans le tsconfig mobile (TypeScript 6 n'inclut plus les
+`@types` automatiquement) ; `pnpm-lock.yaml` régénéré (les résolutions héritées gardaient des pairs en version 55).
+Le SDK 58 est sorti le 15 octobre 2026 ; Expo Go pour le SDK 58 arrivera « dans quelques semaines » : il faudra alors
+passer au SDK 58 ou utiliser un build de développement.
+
+### Règles React Compiler en avertissement
+`eslint-config-expo` 57 active `react-hooks/set-state-in-effect`, `react-hooks/refs` et `react-hooks/purity`, qui
+signalent 13 emplacements existants (formulaires d'édition, MapPicker, PromptModal, States, socket, suivi). Ils sont
+rétrogradés en avertissements dans `apps/mobile/eslint.config.js` ; leur correction fera l'objet d'un lot dédié, testé
+sur appareil.
+
+### Installation sous Windows
+Avec `node-linker=hoisted`, une installation partielle (`pnpm add`, `expo install --fix`) échoue en EPERM pendant
+qu'Expo s'exécute depuis `node_modules`. On écrit les versions attendues (`expo install --check`) dans `package.json`,
+puis on réinstalle à partir d'un `node_modules` vide.
