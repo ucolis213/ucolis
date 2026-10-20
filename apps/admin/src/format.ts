@@ -18,7 +18,7 @@ export function date(v: string | Date | null | undefined) {
 
 export function dateTime(v: string | Date | null | undefined) {
   if (!v) return '—';
-  return new Date(v).toLocaleString('fr-DZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(v).toLocaleString('fr-DZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 }
 
 export const price = (v: number | null | undefined) => (v === null || v === undefined ? '—' : formatPrice(v, 'fr'));

@@ -5,6 +5,9 @@ import { currentLocale } from './i18n';
 
 const dateLocale = () => (currentLocale() === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-DZ');
 
+/** Heures sur 24 h dans les deux langues, quel que soit le réglage 12 h de l'appareil. */
+const TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+
 export function formatDate(iso: string | Date, opts: Intl.DateTimeFormatOptions = {}) {
   return new Date(iso).toLocaleDateString(dateLocale(), {
     day: 'numeric',
@@ -18,13 +21,12 @@ export function formatDateTime(iso: string | Date) {
   return new Date(iso).toLocaleString(dateLocale(), {
     day: 'numeric',
     month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
+    ...TIME,
   });
 }
 
 export function formatTime(iso: string | Date) {
-  return new Date(iso).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString(dateLocale(), TIME);
 }
 
 /** « il y a 3 min », « hier », etc. */

@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from '@ucolis/shared';
 import { parseFaq } from '../src/components/Markdown';
 import { normalizeSearch } from '../src/components/Select';
+import { formatDateTime, formatTime } from '../src/format';
 import { startupRoute } from '../src/hooks/useAppConfig';
 import { pickLocale } from '../src/i18n';
 
@@ -61,5 +62,14 @@ describe('parseFaq', () => {
       { question: 'Comment publier ?', answer: 'Touchez Publier.' },
       { question: 'Qui paie ?', answer: '- En espèces\n- À la livraison' },
     ]);
+  });
+});
+
+describe('format des heures', () => {
+  it('affiche les heures sur 24 h', () => {
+    const d = new Date(2026, 9, 20, 16, 28);
+    expect(formatTime(d)).toMatch(/16[:h]28/);
+    expect(formatDateTime(d)).toMatch(/16[:h]28/);
+    expect(formatTime(d)).not.toMatch(/PM|AM/i);
   });
 });
