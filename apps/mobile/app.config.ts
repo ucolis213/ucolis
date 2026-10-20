@@ -29,7 +29,6 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'dz.ucolis.app',
-    edgeToEdgeEnabled: true,
     permissions: [
       'ACCESS_COARSE_LOCATION',
       'ACCESS_FINE_LOCATION',
