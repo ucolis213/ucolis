@@ -37,7 +37,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   requireCarrierVerification: true,
   minAppVersion: '1.0.0',
   maintenance: { enabled: false, message: { fr: '', ar: '' } },
-  support: { email: 'support@ucolis.dz', whatsapp: '+213550000000' },
+  support: { email: 'support@ucolis.com', whatsapp: '+213550000000' },
   termsVersion: '2026-10-01',
 };
 

@@ -12,7 +12,7 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
-export function createBrevoMailer(apiKey: string, sender = { name: 'UCOLIS', email: 'no-reply@ucolis.dz' }): Mailer {
+export function createBrevoMailer(apiKey: string, sender = { name: 'UCOLIS', email: 'no-reply@ucolis.com' }): Mailer {
   return {
     async send(mail) {
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {
