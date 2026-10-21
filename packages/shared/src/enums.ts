@@ -6,6 +6,8 @@ export type Locale = (typeof LOCALES)[number];
 
 export const INTENTS = ['sender', 'carrier', 'both'] as const;
 export type Intent = (typeof INTENTS)[number];
+/** Comptes qui transportent : « transporteur » ou « les deux ». */
+export const CARRIER_INTENTS: readonly Intent[] = ['carrier', 'both'];
 
 export const ACCOUNT_TYPES = ['individual', 'professional'] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];

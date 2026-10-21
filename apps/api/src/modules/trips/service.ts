@@ -55,7 +55,12 @@ export function occurrences(first: Date, weekdays: number[], until: Date): Date[
 }
 
 const tripView = (t: TripLean) => ({ ...t, departureAt: t.departureAt, vehicle: { type: t.vehicle!.type } });
-const parcelView = (p: ParcelLean) => ({ ...p, desiredDate: p.desiredDate });
+const parcelView = (p: ParcelLean) => ({
+  ...p,
+  weightKg: p.weightKg ?? null,
+  volumeM3: p.volumeM3 ?? null,
+  desiredDate: p.desiredDate ?? null,
+});
 
 export function createTripService(deps: Deps, parcels: ParcelService) {
   const requestLimiter = deps.limiters('trip-requests', LIMITS.tripRequestsPerDay);
@@ -204,7 +209,10 @@ export function createTripService(deps: Deps, parcels: ParcelService) {
         status: 'active',
         'hidden.isHidden': { $ne: true },
         carrier: { $ne: p.sender },
-        departureAt: { $gte: new Date(p.desiredDate.getTime() - 2 * DAY), $lte: new Date(p.desiredDate.getTime() + 2 * DAY) },
+        // Sans date souhaitée : tout trajet à venir.
+        departureAt: p.desiredDate
+          ? { $gte: new Date(p.desiredDate.getTime() - 2 * DAY), $lte: new Date(p.desiredDate.getTime() + 2 * DAY) }
+          : { $gte: deps.now() },
         $or: [{ 'from.wilayaCode': p.pickup.wilayaCode }, { stops: p.pickup.wilayaCode }],
       }).lean()) as TripLean[];
       return trips.filter((t) => isParcelCompatibleWithTrip(parcelView(p), tripView(t)));

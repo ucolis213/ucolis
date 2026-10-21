@@ -42,7 +42,7 @@ export function Reviews() {
                 rowKey={(r) => r.id}
                 columns={[
                   { header: 'Note', cell: (r) => <Stars value={r.rating} /> },
-                  { header: 'Commentaire', cell: (r) => <div className="max-w-md">{r.comment ?? '—'}{r.reply && <div className="mt-1 text-xs text-muted">↳ {r.reply.text}</div>}</div> },
+                  { header: 'Commentaire', cell: (r) => <div className="max-w-md">{r.comment ?? '-'}{r.reply && <div className="mt-1 text-xs text-muted">↳ {r.reply.text}</div>}</div> },
                   { header: 'Auteur', cell: (r) => <Link className="underline" to={`/users/${r.author.id}`}>{r.author.displayName}</Link> },
                   { header: 'Date', cell: (r) => date(r.publishedAt ?? r.createdAt) },
                   { header: 'État', cell: (r) => (r.hidden ? <Pill tone="danger">Masqué</Pill> : r.publishedAt ? <Pill tone="success">Publié</Pill> : <Pill>En attente</Pill>) },

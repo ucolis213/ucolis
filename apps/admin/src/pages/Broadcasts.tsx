@@ -126,7 +126,7 @@ export function Broadcasts() {
                 { header: 'Titre', cell: (b) => <div><div>{b.title.fr}</div><div dir="rtl" className="text-xs text-muted">{b.title.ar}</div></div> },
                 { header: 'Segment', cell: (b) => (b.segment.kind === 'wilaya' ? wilaya(b.segment.wilayaCode) : SEGMENTS.find((s) => s.value === b.segment.kind)?.label) },
                 { header: 'Envoi', cell: (b) => (b.sentAt ? dateTime(b.sentAt) : `Programmé : ${dateTime(b.scheduledAt)}`) },
-                { header: 'Destinataires', cell: (b) => (b.sentAt ? b.recipients : '—') },
+                { header: 'Destinataires', cell: (b) => (b.sentAt ? b.recipients : '-') },
               ]}
             />
           )}

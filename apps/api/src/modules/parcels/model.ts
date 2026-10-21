@@ -28,6 +28,15 @@ const placeSchema = new Schema(
   { _id: false },
 );
 
+const dimensionsSchema = new Schema(
+  {
+    length: { type: Number, required: true },
+    width: { type: Number, required: true },
+    height: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
 const statusEntrySchema = new Schema(
   {
     from: { type: String, enum: [...PARCEL_STATUSES, null], default: null },
@@ -48,18 +57,15 @@ const parcelSchema = new Schema(
     description: { type: String, default: '', maxlength: 1000 },
     category: { type: String, enum: PARCEL_CATEGORIES, required: true },
     fragile: { type: Boolean, default: false },
-    weightKg: { type: Number, required: true, min: 0.1, max: 30_000 },
-    dimensionsCm: {
-      length: { type: Number, required: true },
-      width: { type: Number, required: true },
-      height: { type: Number, required: true },
-    },
-    volumeM3: { type: Number, required: true },
+    // Poids, dimensions, volume et date à null : non précisés (publication rapide).
+    weightKg: { type: Number, default: null, min: 0.1, max: 30_000 },
+    dimensionsCm: { type: dimensionsSchema, default: null },
+    volumeM3: { type: Number, default: null },
     vehicleTypes: { type: [String], enum: VEHICLE_TYPES, required: true },
     pickup: { type: placeSchema, required: true },
     dropoff: { type: placeSchema, required: true },
     distanceKm: { type: Number, required: true },
-    desiredDate: { type: Date, required: true },
+    desiredDate: { type: Date, default: null },
     timeSlot: { type: String, enum: TIME_SLOTS, default: 'any' },
     flexibleDates: { type: Boolean, default: false },
     urgent: { type: Boolean, default: false },

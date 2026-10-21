@@ -67,6 +67,7 @@ export async function anonymizeUser(deps: Deps, userId: string) {
         'pro.logo': null,
         'pro.documents': [],
         'carrierVerification.documents': {},
+        lastPosition: null,
         deletionRequestedAt: null,
       },
     },

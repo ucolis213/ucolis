@@ -1,4 +1,5 @@
-// Étape 4 : 1 à 5 photos (galerie ou caméra), compressées, envoyées par upload signé, réordonnables.
+// Étape 4 : jusqu'à 5 photos facultatives (galerie ou caméra), compressées, envoyées par upload signé,
+// réordonnables.
 
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -24,7 +25,7 @@ export default function PhotosStep() {
   return (
     <WizardFrame step="photos" onNext={next}>
       <AppText size="sm" color={colors.textMuted}>
-        {t('photosHint')}
+        {t('photosOptionalHint')}
       </AppText>
       <PhotoGrid photos={draft.photos} onChange={(photos) => update({ photos })} />
       {error && (

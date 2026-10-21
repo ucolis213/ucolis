@@ -28,7 +28,7 @@ const SocketContext = createContext<SocketValue>({
 });
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const { status, signOut } = useSession();
+  const { status, signOut, refreshMe } = useSession();
   const queryClient = useQueryClient();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -53,8 +53,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       if (err.message === 'UNAUTHENTICATED' && (await refreshSession())) s.connect();
     });
     s.on('counters', (c: Counters) => setCounters(c));
-    s.on('notification:new', (_n: NotificationDto) => {
+    s.on('notification:new', (n: NotificationDto) => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      // Vérification, statut pro, suspension : le profil en mémoire décide de ce que l'interface autorise.
+      if (n.category === 'account') void refreshMe();
     });
     s.on('message:new', (m: MessageDto) => {
       void queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -90,7 +92,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setSocket(null);
       setConnected(false);
     };
-  }, [status, queryClient]);
+  }, [status, queryClient, refreshMe]);
 
   const value = useMemo(() => ({ socket, connected, counters }), [socket, connected, counters]);
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

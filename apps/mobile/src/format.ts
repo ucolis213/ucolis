@@ -1,5 +1,6 @@
 // Formats d'affichage : dates selon la langue, chiffres occidentaux dans les deux langues.
 
+import i18n from 'i18next';
 import { formatPrice, getCommune, getWilaya, placeName } from '@ucolis/shared';
 import { currentLocale } from './i18n';
 
@@ -29,15 +30,19 @@ export function formatTime(iso: string | Date) {
   return new Date(iso).toLocaleTimeString(dateLocale(), TIME);
 }
 
-/** « il y a 3 min », « hier », etc. */
+/**
+ * « Il y a 3 min », « Hier », etc., pour un instant passé ; au-delà d'une semaine, la date.
+ * Textes traduits : Hermes ne fournit pas Intl.RelativeTimeFormat.
+ */
 export function formatRelative(iso: string | Date, now = new Date()) {
-  const diff = (new Date(iso).getTime() - now.getTime()) / 1000;
-  const rtf = new Intl.RelativeTimeFormat(currentLocale() === 'ar' ? 'ar-u-nu-latn' : 'fr', { numeric: 'auto' });
-  const abs = Math.abs(diff);
-  if (abs < 60) return rtf.format(Math.round(diff), 'second');
-  if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
-  if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
-  return rtf.format(Math.round(diff / 86400), 'day');
+  const seconds = Math.max(0, (now.getTime() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return i18n.t('common:relative.justNow');
+  if (seconds < 3600) return i18n.t('common:relative.minutesAgo', { count: Math.floor(seconds / 60) });
+  if (seconds < 86400) return i18n.t('common:relative.hoursAgo', { count: Math.floor(seconds / 3600) });
+  const days = Math.floor(seconds / 86400);
+  if (days === 1) return i18n.t('common:relative.yesterday');
+  if (days < 7) return i18n.t('common:relative.daysAgo', { count: days });
+  return formatDate(iso, { year: undefined });
 }
 
 export const price = (amount: number) => formatPrice(amount, currentLocale());

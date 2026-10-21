@@ -14,6 +14,7 @@ import { Screen } from '@/components/Screen';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { isCarrierIntent, useSession } from '@/session/SessionContext';
 import { useFilters } from '@/state/filters';
+import { newParcelRoute } from '@/state/parcelDraft';
 import { colors, MIN_TOUCH, radii, shadow, space } from '@/theme';
 
 /** Compteurs de l'accueil : colis actifs, offres actives, livraisons en cours. */
@@ -36,10 +37,10 @@ export default function Home() {
   const { t } = useTranslation(['common', 'parcel']);
   const { user, isGuest } = useSession();
   const requireAuth = useRequireAuth();
-  const setFilters = useFilters((s) => s.setParcels);
+  const resetFilters = useFilters((s) => s.resetParcels);
   const counters = useHomeCounters(!isGuest);
-  // Dernières annonces sur la wilaya de l'utilisateur (départ ou arrivée).
-  const latest = useParcels(user ? { fromWilaya: user.wilayaCode, limit: 5 } : { limit: 5 });
+  // Dernières annonces, toutes wilayas confondues (voir DECISIONS.md, 21 octobre 2026).
+  const latest = useParcels({ limit: 5 });
   const showTrip = isGuest || isCarrierIntent(user?.intent);
   const carrierPending = user && isCarrierIntent(user.intent) && user.carrierVerification.status !== 'approved';
 
@@ -68,7 +69,7 @@ export default function Home() {
       </Pressable>
 
       <View style={styles.actions}>
-        <ActionCard primary icon="cube" label={t('home.publishParcel')} onPress={() => requireAuth(() => router.push('/parcel/new/route'), { returnTo: '/parcel/new/route' })} />
+        <ActionCard primary icon="cube" label={t('home.publishParcel')} onPress={() => requireAuth(() => router.push(newParcelRoute()), { returnTo: '/parcel/new/quick' })} />
         {showTrip && (
           <ActionCard icon="car" label={t('home.proposeTrip')} onPress={() => requireAuth(() => router.push('/trip/new'), { returnTo: '/trip/new' })} />
         )}
@@ -92,7 +93,8 @@ export default function Home() {
           color={colors.primaryDark}
           accessibilityRole="link"
           onPress={() => {
-            if (user) setFilters({ fromWilaya: user.wilayaCode });
+            // La liste prolonge l'accueil : aucun filtre, les plus récentes d'abord.
+            resetFilters();
             router.push('/listings');
           }}
         >

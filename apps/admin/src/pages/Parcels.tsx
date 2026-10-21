@@ -86,9 +86,10 @@ interface ParcelDetailDto {
     photos: FileRef[];
     pickup: Place;
     dropoff: Place;
-    weightKg: number;
+    // null : non précisé (publication rapide).
+    weightKg: number | null;
     distanceKm: number;
-    desiredDate: string;
+    desiredDate: string | null;
     suggestedPrice: number;
     statusHistory: { from: string | null; to: string; byType: string; at: string; reason: string | null }[];
     cancellation: { by: string | null; reason: string | null } | null;
@@ -155,12 +156,12 @@ export function ParcelDetail() {
               <Card title="Annonce">
                 <KeyValue
                   items={[
-                    ['Description', p.description || '—'],
+                    ['Description', p.description || '-'],
                     ['Départ', place(p.pickup)],
                     ['Arrivée', place(p.dropoff)],
                     ['Distance', `${Math.round(p.distanceKm)} km`],
-                    ['Poids', `${p.weightKg} kg`],
-                    ['Date souhaitée', date(p.desiredDate)],
+                    ['Poids', p.weightKg === null ? 'Non précisé' : `${p.weightKg} kg`],
+                    ['Date souhaitée', p.desiredDate ? date(p.desiredDate) : 'Flexible'],
                     ['Prix demandé', price(p.requestedPrice)],
                     ['Prix conseillé', price(p.suggestedPrice)],
                     ['Prix final', price(p.finalPrice)],
@@ -180,11 +181,11 @@ export function ParcelDetail() {
               <Card title="Parties">
                 <KeyValue
                   items={[
-                    ['Expéditeur', d.sender ? <Link key="s" className="text-primary-dark underline" to={`/users/${d.sender.id}`}>{d.sender.displayName}</Link> : '—'],
-                    ['Transporteur', d.carrier ? <Link key="c" className="text-primary-dark underline" to={`/users/${d.carrier.id}`}>{d.carrier.displayName}</Link> : '—'],
-                    ['Conversation', d.conversationId ? <Link key="v" className="text-primary-dark underline" to={`/conversations/${d.conversationId}`}>Lire (accès journalisé)</Link> : '—'],
-                    ['Annulation', p.cancellation?.reason ?? '—'],
-                    ['Preuve de livraison', p.deliveryProof?.photo ? <PrivateFileButton key="pf" file={p.deliveryProof.photo} label="Voir la photo" /> : (p.deliveryProof?.note ?? '—')],
+                    ['Expéditeur', d.sender ? <Link key="s" className="text-primary-dark underline" to={`/users/${d.sender.id}`}>{d.sender.displayName}</Link> : '-'],
+                    ['Transporteur', d.carrier ? <Link key="c" className="text-primary-dark underline" to={`/users/${d.carrier.id}`}>{d.carrier.displayName}</Link> : '-'],
+                    ['Conversation', d.conversationId ? <Link key="v" className="text-primary-dark underline" to={`/conversations/${d.conversationId}`}>Lire (accès journalisé)</Link> : '-'],
+                    ['Annulation', p.cancellation?.reason ?? '-'],
+                    ['Preuve de livraison', p.deliveryProof?.photo ? <PrivateFileButton key="pf" file={p.deliveryProof.photo} label="Voir la photo" /> : (p.deliveryProof?.note ?? '-')],
                   ]}
                 />
               </Card>

@@ -76,8 +76,8 @@ export function UserDetail() {
                     ['Téléphone', u.phone],
                     ['Localisation', `${commune(u.commune)}, ${wilaya(u.wilayaCode)}`],
                     ['Profil', INTENT_LABELS[u.intent] ?? u.intent],
-                    ['Entreprise', u.companyName ?? '—'],
-                    ['Bio', u.bio || '—'],
+                    ['Entreprise', u.companyName ?? '-'],
+                    ['Bio', u.bio || '-'],
                     ['Inscrit le', date(u.createdAt)],
                     ['Dernière activité', dateTime(u.lastSeenAt)],
                     ...(u.suspension ? ([['Suspension', `${u.suspension.reason ?? ''} (jusqu’au ${u.suspension.until ? date(u.suspension.until) : 'levée manuelle'})`]] as [string, string][]) : []),
@@ -92,8 +92,8 @@ export function UserDetail() {
                     ['Colis transportés', u.stats.parcelsCarried],
                     ['Désistements', u.stats.withdrawals],
                     ['Litiges perdus', u.stats.disputesLost],
-                    ['Taux de réussite', u.stats.successRate === null ? '—' : `${u.stats.successRate} %`],
-                    ['Véhicules', u.vehicles.length ? u.vehicles.map((v) => `${v.brand} ${v.model} (${v.plate})`).join(', ') : '—'],
+                    ['Taux de réussite', u.stats.successRate === null ? '-' : `${u.stats.successRate} %`],
+                    ['Véhicules', u.vehicles.length ? u.vehicles.map((v) => `${v.brand} ${v.model} (${v.plate})`).join(', ') : '-'],
                   ]}
                 />
               </Card>
@@ -146,7 +146,7 @@ export function UserDetail() {
                   columns={[
                     { header: 'Sens', cell: (r) => (r.mine ? 'Donné' : 'Reçu') },
                     { header: 'Note', cell: (r) => <Stars value={r.rating} /> },
-                    { header: 'Commentaire', cell: (r) => r.comment ?? '—' },
+                    { header: 'Commentaire', cell: (r) => r.comment ?? '-' },
                     { header: 'État', cell: (r) => (r.hidden ? <Pill tone="danger">Masqué</Pill> : r.publishedAt ? 'Publié' : 'En attente') },
                   ]}
                 />
@@ -172,7 +172,7 @@ export function UserDetail() {
                   columns={[
                     { header: 'Motif', cell: (x) => label('parcel.disputeReasons', x.reason) },
                     { header: 'Statut', cell: (x) => x.status },
-                    { header: 'Issue', cell: (x) => x.outcome ?? '—' },
+                    { header: 'Issue', cell: (x) => x.outcome ?? '-' },
                     { header: 'Date', cell: (x) => date(x.createdAt) },
                   ]}
                 />
@@ -182,8 +182,8 @@ export function UserDetail() {
                   rows={d.devices}
                   rowKey={(x) => x.id}
                   columns={[
-                    { header: 'Appareil', cell: (x) => x.deviceName ?? '—' },
-                    { header: 'Plateforme', cell: (x) => x.platform ?? '—' },
+                    { header: 'Appareil', cell: (x) => x.deviceName ?? '-' },
+                    { header: 'Plateforme', cell: (x) => x.platform ?? '-' },
                     { header: 'Dernière activité', cell: (x) => dateTime(x.lastActiveAt) },
                   ]}
                 />

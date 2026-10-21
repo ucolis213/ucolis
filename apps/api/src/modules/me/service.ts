@@ -1,9 +1,11 @@
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import {
+  CARRIER_INTENTS,
   MANDATORY_CATEGORIES,
   isOwnedUpload,
   type FileRef,
+  type LatLng,
   type PreferencesInput,
   type UpdateMeInput,
 } from '@ucolis/shared';
@@ -36,6 +38,14 @@ export function createMeService(deps: Deps, otp: OtpService, sessions: SessionSe
   return {
     async get(userId: string) {
       return toMe(await load(userId));
+    },
+
+    /** Dernière position d'un transporteur ; ignorée pour un compte expéditeur seul. */
+    async updatePosition(userId: string, point: LatLng) {
+      await UserModel.updateOne(
+        { _id: userId, intent: { $in: CARRIER_INTENTS } },
+        { $set: { lastPosition: { location: { type: 'Point', coordinates: [point.lng, point.lat] }, at: deps.now() } } },
+      );
     },
 
     async updateProfile(userId: string, input: UpdateMeInput) {

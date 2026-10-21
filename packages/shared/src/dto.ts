@@ -155,8 +155,9 @@ export interface ParcelCardDto {
   pickup: Pick<PlaceDto, 'wilayaCode' | 'commune' | 'location'>;
   dropoff: Pick<PlaceDto, 'wilayaCode' | 'commune' | 'location'>;
   distanceKm: number;
-  weightKg: number;
-  desiredDate: string;
+  /** null : non précisé (publication rapide), comme dimensionsCm, volumeM3 et desiredDate. */
+  weightKg: number | null;
+  desiredDate: string | null;
   timeSlot: TimeSlot;
   requestedPrice: number;
   offersCount: number;
@@ -207,8 +208,8 @@ export interface ParcelDto extends ParcelCardDto {
   photos: FileRef[];
   pickup: PlaceDto;
   dropoff: PlaceDto;
-  dimensionsCm: { length: number; width: number; height: number };
-  volumeM3: number;
+  dimensionsCm: { length: number; width: number; height: number } | null;
+  volumeM3: number | null;
   vehicleTypes: VehicleType[];
   flexibleDates: boolean;
   paymentArrangement: PaymentArrangement;
@@ -344,4 +345,16 @@ export interface SavedSearchDto {
   filters: Record<string, unknown>;
   notify: boolean;
   createdAt: string;
+}
+
+/** Consommation Cloudinary du mois (tableau de bord du back-office). Volumes en octets. */
+export interface StorageUsageDto {
+  plan: string;
+  updatedAt: string | null;
+  /** Crédits du mois ; limit et percent à null si le plan n'en a pas. */
+  credits: { used: number; limit: number | null; percent: number | null };
+  storage: { bytes: number; credits: number };
+  bandwidth: { bytes: number; credits: number };
+  transformations: { count: number; credits: number };
+  objects: number;
 }

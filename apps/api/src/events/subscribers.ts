@@ -283,17 +283,29 @@ export function registerSubscribers(
     const p = (await ParcelModel.findById(e.parcelId).lean()) as ParcelLean | null;
     if (!p) return;
     const now = deps.now();
+    const notified = new Set<string>();
     for (const t of await s.trips.tripsForParcel(p)) {
       const claimed = await TripModel.updateOne(
         { _id: t._id, $or: [{ lastMatchNotifiedAt: null }, { lastMatchNotifiedAt: { $lte: new Date(now.getTime() - 3600_000) } }] },
         { lastMatchNotifiedAt: now },
       );
       if (!claimed.modifiedCount) continue;
+      notified.add(t.carrier.toString());
       await notify({
         type: 'trip_parcel_match',
         to: t.carrier.toString(),
         params: { route: `${getWilaya(p.pickup.wilayaCode)?.fr ?? ''} → ${getWilaya(p.dropoff.wilayaCode)?.fr ?? ''}`, parcelTitle: p.title },
         data: { parcelId: e.parcelId, tripId: t._id.toString() },
+      });
+    }
+    // Transporteurs proches du départ (position récente ou commune du profil), sauf ceux déjà prévenus par un trajet.
+    for (const c of await s.alerts.nearbyCarriers(p, notified)) {
+      await notify({
+        type: 'nearby_parcel',
+        to: c.userId,
+        params: { parcelTitle: p.title, km: c.km },
+        data: { parcelId: e.parcelId },
+        skipPush: c.skipPush,
       });
     }
     await s.alerts.onParcel(p);

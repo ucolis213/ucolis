@@ -51,7 +51,7 @@ export function Reports() {
                   { header: 'Auteur', cell: (r) => r.reporter?.displayName ?? 'Compte supprimé' },
                   { header: 'Date', cell: (r) => dateTime(r.createdAt) },
                   { header: 'Statut', cell: (r) => STATUS_LABELS[r.status] ?? r.status },
-                  { header: 'Pris par', cell: (r) => (r.claim && new Date(r.claim.until) > new Date() ? r.claim.name : '—') },
+                  { header: 'Pris par', cell: (r) => (r.claim && new Date(r.claim.until) > new Date() ? r.claim.name : '-') },
                 ]}
               />
               <Pagination page={d.page} limit={d.limit} total={d.total} onPage={list.setPage} />
@@ -120,7 +120,7 @@ export function ReportDetail() {
               <KeyValue
                 items={[
                   ['Motif', label('common.report.reasons', r.reason)],
-                  ['Description', r.description || '—'],
+                  ['Description', r.description || '-'],
                   ['Signalé le', dateTime(r.createdAt)],
                   ['Auteur', r.reporter ? <Link key="a" className="underline" to={`/users/${r.reporter}`}>Voir le profil</Link> : 'Compte supprimé'],
                   ['Cible', link ? <Link key="c" className="text-primary-dark underline" to={link.to}>{link.text}</Link> : 'Supprimée'],

@@ -1,12 +1,13 @@
 // Discussion (F13) : envoi optimiste dédoublonné par clientId, nouvel essai en cas d'échec,
 // « en train d'écrire » (3 s), accusé « Vu », anciens messages par pages de 30, messages système traduits.
+// Une photo choisie reste en aperçu (retirable) jusqu'à l'envoi ; un toucher sur une photo l'ouvre en plein écran.
 
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionSheetIOS, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TYPING_TIMEOUT_MS, formatNotificationParams, formatPrice, type FileRef, type MessageDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
@@ -16,6 +17,7 @@ import { AppText } from '@/components/AppText';
 import { Avatar, cdn } from '@/components/Avatar';
 import { confirm } from '@/components/ConfirmDialog';
 import { askSource, pickImages } from '@/components/PhotoPicker';
+import { PhotoViewer } from '@/components/PhotoViewer';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { formatTime } from '@/format';
@@ -26,6 +28,7 @@ import { colors, fontFamily, MIN_TOUCH, radii, space } from '@/theme';
 
 type Page = { items: MessageDto[]; hasMore: boolean };
 type Local = MessageDto & { local?: 'sending' | 'failed' };
+type Attachment = { uri: string; width?: number; height?: number };
 
 const newClientId = () => `m-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -39,6 +42,9 @@ export default function Conversation() {
   const messages = useMessages(id);
   const [text, setText] = useState('');
   const [pending, setPending] = useState<Local[]>([]);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [viewer, setViewer] = useState<number | null>(null);
   const [typing, setTyping] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
@@ -48,6 +54,12 @@ export default function Conversation() {
     const known = new Set(server.map((m) => m.clientId).filter(Boolean));
     return [...pending.filter((p) => !known.has(p.clientId)), ...server];
   }, [messages.data, pending]);
+
+  // Photos de la discussion dans l'ordre chronologique, pour feuilleter dans la visionneuse.
+  const photos = useMemo(
+    () => items.filter((m) => m.type === 'image' && m.image && !m.local && !m.deleted).map((m) => m.image!).reverse(),
+    [items],
+  );
 
   const markRead = useCallback(() => {
     if (socket?.connected) socket.emit('conversation:read', { conversationId: id });
@@ -129,27 +141,37 @@ export default function Conversation() {
     } as Local;
   }
 
-  function sendText() {
+  async function sendMessage() {
     const value = text.trim();
-    if (!value) return;
-    setText('');
+    if ((!value && !attachment) || uploading) return;
     socket?.emit('typing', { conversationId: id, isTyping: false });
-    const clientId = newClientId();
-    void send(draft({ clientId, id: clientId, text: value }));
+    if (attachment) {
+      setUploading(true);
+      try {
+        const image: FileRef = await uploadFile('message_image', { uri: await compressImage(attachment.uri, attachment.width, attachment.height) });
+        setAttachment(null);
+        const clientId = newClientId();
+        void send(draft({ clientId, id: clientId, type: 'image', image }));
+      } catch (err) {
+        // La photo reste en aperçu pour un nouvel essai.
+        Alert.alert(errorMessage(t, err));
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+    if (value) {
+      setText('');
+      const clientId = newClientId();
+      void send(draft({ clientId, id: clientId, text: value }));
+    }
   }
 
-  async function sendImage() {
+  async function pickPhoto() {
     const source = await askSource();
     if (!source) return;
     const [asset] = await pickImages(source, 1);
-    if (!asset) return;
-    try {
-      const image: FileRef = await uploadFile('message_image', { uri: await compressImage(asset.uri, asset.width, asset.height) });
-      const clientId = newClientId();
-      void send(draft({ clientId, id: clientId, type: 'image', image }));
-    } catch (err) {
-      Alert.alert(errorMessage(t, err));
-    }
+    if (asset) setAttachment({ uri: asset.uri, width: asset.width, height: asset.height });
   }
 
   function menu() {
@@ -216,12 +238,25 @@ export default function Conversation() {
               showAvatar={item.authorId !== user?.id && items[index - 1]?.authorId !== item.authorId}
               avatar={c ? { file: c.other.avatar, name: c.other.displayName } : null}
               onRetry={() => send(item)}
+              onOpenImage={() => setViewer(photos.findIndex((p) => p.publicId === item.image?.publicId))}
               onReport={() => router.push({ pathname: '/report', params: { type: 'message', id: item.id } })}
             />
           )}
         />
-        <View style={styles.composer}>
-          <Pressable onPress={sendImage} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel={t('photo')}>
+        {attachment && (
+          <View style={styles.attachment}>
+            <View>
+              <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} contentFit="cover" />
+              {!uploading && (
+                <Pressable onPress={() => setAttachment(null)} hitSlop={10} style={styles.removeAttachment} accessibilityRole="button" accessibilityLabel={t('removePhoto')}>
+                  <Ionicons name="close" size={16} color="#FFFFFF" />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        )}
+        <View style={[styles.composer, !!attachment && { borderTopWidth: 0 }]}>
+          <Pressable onPress={pickPhoto} disabled={uploading} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel={t('photo')}>
             <Ionicons name="image-outline" size={24} color={colors.textMuted} />
           </Pressable>
           <TextInput
@@ -233,11 +268,16 @@ export default function Conversation() {
             maxLength={2000}
             style={[styles.input, { fontFamily: fontFamily() }]}
           />
-          <Pressable onPress={sendText} style={[styles.send, !text.trim() && { opacity: 0.4 }]} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel={t('common:send')}>
-            <Ionicons name="send" size={18} color="#FFFFFF" style={{ transform: [{ scaleX: currentLocale() === 'ar' ? -1 : 1 }] }} />
+          <Pressable onPress={sendMessage} style={[styles.send, !((!!text.trim() || !!attachment) && !uploading) && !uploading && { opacity: 0.4 }]} disabled={!((!!text.trim() || !!attachment) && !uploading)} accessibilityRole="button" accessibilityLabel={t('common:send')}>
+            {uploading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Ionicons name="send" size={18} color="#FFFFFF" style={{ transform: [{ scaleX: currentLocale() === 'ar' ? -1 : 1 }] }} />
+            )}
           </Pressable>
         </View>
       </Screen>
+      <PhotoViewer photos={photos} index={viewer !== null && viewer >= 0 ? viewer : null} onClose={() => setViewer(null)} />
     </KeyboardAvoidingView>
   );
 }
@@ -249,6 +289,7 @@ function Bubble({
   showAvatar,
   avatar,
   onRetry,
+  onOpenImage,
   onReport,
 }: {
   m: Local;
@@ -257,6 +298,7 @@ function Bubble({
   showAvatar: boolean;
   avatar: { file: FileRef | null; name: string } | null;
   onRetry: () => void;
+  onOpenImage: () => void;
   onReport: () => void;
 }) {
   const { t } = useTranslation('chat');
@@ -285,7 +327,16 @@ function Bubble({
             {t('deletedMessage')}
           </AppText>
         ) : m.type === 'image' && m.image ? (
-          <Image source={{ uri: m.image.url.startsWith('http') ? cdn(m.image.url, 600) : m.image.url }} style={styles.image} contentFit="cover" />
+          <Pressable onPress={m.local ? undefined : onOpenImage} onLongPress={!mine && !m.local ? onReport : undefined} accessibilityRole="imagebutton" accessibilityLabel={t('common:enlargePhoto')}>
+            <Image source={{ uri: m.image.url.startsWith('http') ? cdn(m.image.url, 600) : m.image.url }} style={styles.image} contentFit="cover" />
+          </Pressable>
+        ) : m.type === 'image' ? (
+          <View style={styles.expired}>
+            <Ionicons name="image-outline" size={18} color={mine ? 'rgba(255,255,255,0.8)' : colors.textMuted} />
+            <AppText size="sm" color={mine ? 'rgba(255,255,255,0.8)' : colors.textMuted}>
+              {t('imageExpired')}
+            </AppText>
+          </View>
         ) : (
           <AppText color={mine ? '#FFFFFF' : colors.navy}>{m.text}</AppText>
         )}
@@ -311,6 +362,10 @@ const styles = StyleSheet.create({
   mine: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   other: { backgroundColor: colors.surface, borderBottomLeftRadius: 4 },
   image: { width: 200, height: 200, borderRadius: radii.input },
+  expired: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+  attachment: { paddingHorizontal: space(3), paddingTop: space(3), backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, alignItems: 'flex-start' },
+  attachmentImage: { width: 84, height: 84, borderRadius: radii.input },
+  removeAttachment: { position: 'absolute', top: -6, end: -6, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space(2), padding: space(3), backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   iconBtn: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   input: { flex: 1, maxHeight: 120, minHeight: MIN_TOUCH, paddingHorizontal: space(3), paddingVertical: space(2.5), borderRadius: radii.card, backgroundColor: colors.background, color: colors.navy, textAlign: 'auto' },

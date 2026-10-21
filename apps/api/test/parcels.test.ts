@@ -47,6 +47,60 @@ describe('publication', () => {
     expect(res.status).toBe(400);
   });
 
+  it('publie en mode rapide : détails non précisés, tout véhicule, prix suggéré sur la seule distance', async () => {
+    const ctx = makeTestApp();
+    const amina = await verifiedUser(ctx);
+    const { pickup, dropoff } = parcelInput(amina.id);
+    const quick = { mode: 'quick', pickup, dropoff, title: 'Carton de livres', requestedPrice: 2000, prohibitedItemsDeclared: true };
+    const res = await ctx.http().post('/api/v1/parcels').set(amina.auth).send({ ...quick, weightKg: 999 });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      weightKg: null,
+      dimensionsCm: null,
+      volumeM3: null,
+      desiredDate: null,
+      category: 'other',
+      paymentArrangement: 'other',
+      photos: [],
+      coverPhoto: null,
+    });
+    expect(res.body.vehicleTypes).toHaveLength(8);
+    const full = await createParcel(ctx, amina);
+    expect(res.body.suggestedPrice).toBeLessThan(full.suggestedPrice);
+    // Sans date : expiration à la fin de la fenêtre de publication (60 jours).
+    const days = (new Date(res.body.expiresAt).getTime() - Date.now()) / 86_400_000;
+    expect(Math.round(days)).toBe(60);
+
+    // Toujours visible avec un filtre de dates, écartée par un filtre de poids.
+    const from = new Date(Date.now() + 86_400_000).toISOString();
+    const dated = await ctx.http().get('/api/v1/parcels').query({ dateFrom: from });
+    expect(dated.body.items.map((p: { id: string }) => p.id)).toContain(res.body.id);
+    const heavy = await ctx.http().get('/api/v1/parcels').query({ maxWeight: 50 });
+    expect(heavy.body.items.map((p: { id: string }) => p.id)).not.toContain(res.body.id);
+
+    // Le mode rapide garde les règles communes.
+    const bad = await ctx.http().post('/api/v1/parcels').set(amina.auth).send({ ...quick, prohibitedItemsDeclared: false });
+    expect(bad.status).toBe(400);
+  });
+
+  it('modifie une annonce rapide, puis la complète sans photo', async () => {
+    const ctx = makeTestApp();
+    const amina = await verifiedUser(ctx);
+    const { pickup, dropoff } = parcelInput(amina.id);
+    const quick = await ctx
+      .http()
+      .post('/api/v1/parcels')
+      .set(amina.auth)
+      .send({ mode: 'quick', pickup, dropoff, title: 'Carton de livres', requestedPrice: 2000, prohibitedItemsDeclared: true });
+    const patch = (id: string, body: object) => ctx.http().patch(`/api/v1/parcels/${id}`).set(amina.auth).send(body);
+
+    expect((await patch(quick.body.id, { title: 'Deux cartons de livres', photos: [] })).status).toBe(200);
+    const completed = await patch(quick.body.id, parcelInput(amina.id, { photos: [] }));
+    expect(completed.status).toBe(200);
+    expect(completed.body).toMatchObject({ weightKg: 5, volumeM3: 0.036, category: 'clothing', photos: [] });
+    expect(completed.body.desiredDate).not.toBeNull();
+  });
+
   it('renvoie 422 ACTIVE_PARCEL_LIMIT à la sixième publication active d’un particulier', async () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);

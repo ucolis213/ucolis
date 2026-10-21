@@ -61,7 +61,13 @@ export function ParcelCard({
             {placeLabel(parcel.pickup)} → {placeLabel(parcel.dropoff)}
           </AppText>
           <AppText size="xs" color={colors.textMuted}>
-            {distance(parcel.distanceKm)} · {weight(parcel.weightKg)} · {formatDate(parcel.desiredDate, { year: undefined })}
+            {[
+              distance(parcel.distanceKm),
+              parcel.weightKg !== null && weight(parcel.weightKg),
+              parcel.desiredDate ? formatDate(parcel.desiredDate, { year: undefined }) : t('flexibleDate'),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </AppText>
           <View style={styles.badges}>
             {showStatus && <StatusBadge status={parcel.status} />}

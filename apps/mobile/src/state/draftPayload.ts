@@ -5,6 +5,7 @@ import {
   parcelOptionsSchema,
   parcelPhotosSchema,
   parcelRouteSchema,
+  quickParcelSchema,
   volumeM3FromCm,
 } from '@ucolis/shared';
 import type { ParcelDraft } from './parcelDraft';
@@ -39,7 +40,19 @@ export const optionsPayload = (d: ParcelDraft) => ({
   requestedPrice: d.requestedPrice ?? undefined,
 });
 
+/** Publication rapide : trajet, titre, description, prix, déclaration et photos facultatives. */
+export const quickPayload = (d: ParcelDraft) => ({
+  mode: 'quick' as const,
+  ...routePayload(d),
+  title: d.title,
+  description: d.description,
+  requestedPrice: d.requestedPrice ?? undefined,
+  prohibitedItemsDeclared: d.prohibitedItemsDeclared,
+  photos: d.photos,
+});
+
 export const fullPayload = (d: ParcelDraft) => ({
+  mode: 'full' as const,
   ...routePayload(d),
   ...detailsPayload(d),
   ...optionsPayload(d),
@@ -52,9 +65,11 @@ export const draftVolume = (d: ParcelDraft) => {
 };
 
 /** Erreurs zod de l'étape, indexées par chemin (« pickup », « dimensionsCm.length »…). */
-export function stepErrors(step: 'route' | 'details' | 'options' | 'photos', d: ParcelDraft): Record<string, string> {
+export function stepErrors(step: 'quick' | 'route' | 'details' | 'options' | 'photos', d: ParcelDraft): Record<string, string> {
   const result =
-    step === 'route'
+    step === 'quick'
+      ? quickParcelSchema.safeParse(quickPayload(d))
+      : step === 'route'
       ? parcelRouteSchema.safeParse(routePayload(d))
       : step === 'details'
         ? parcelDetailsSchema.safeParse(detailsPayload(d))

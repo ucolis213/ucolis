@@ -49,7 +49,7 @@ export default function Devices() {
                 color={colors.navy}
               />
               <View style={styles.flex}>
-                <AppText weight="semibold">{s.deviceName ?? s.platform ?? '—'}</AppText>
+                <AppText weight="semibold">{s.deviceName ?? s.platform ?? '-'}</AppText>
                 <AppText size="xs" color={s.current ? colors.primaryDark : colors.textMuted}>
                   {s.current ? t('thisDevice') : t('lastActive', { date: formatDateTime(s.lastActiveAt) })}
                 </AppText>

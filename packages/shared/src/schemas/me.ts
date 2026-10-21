@@ -4,6 +4,7 @@ import { NOTIFICATION_CATEGORIES } from '../notifications';
 import {
   emailSchema,
   fileRefSchema,
+  latLngSchema,
   nameSchema,
   otpCodeSchema,
   passwordSchema,
@@ -51,6 +52,12 @@ export const pushTokenSchema = z.object({
 });
 
 export const deletionRequestSchema = z.object({ password: z.string().min(1, 'validation.required') });
+
+/** PUT /me/position : dernière position d'un transporteur, envoyée à l'ouverture de l'application. */
+export const positionSchema = latLngSchema;
+
+/** Au-delà, la position est jugée trop ancienne : la commune du profil la remplace. */
+export const POSITION_MAX_AGE_HOURS = 24;
 
 export const acceptTermsSchema = z.object({ version: z.string().min(1) });
 

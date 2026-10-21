@@ -23,8 +23,11 @@ import {
   transferSuperAdminSchema,
   updateStaffSchema,
   verificationDecisionSchema,
+  UPLOAD_RULES,
   type AppSettingKey,
   type Permission,
+  type StorageUsageDto,
+  type UploadPurpose,
 } from '@ucolis/shared';
 import type { Deps } from '../../deps';
 import { audit } from '../../lib/audit';
@@ -103,6 +106,17 @@ export function adminRoutes(deps: Deps, services: Services) {
     res.json(await dashboardStats(deps));
   });
 
+  /** Consommation Cloudinary du mois, gardée 15 min en cache (l'Admin API est limitée en nombre d'appels). */
+  r.get('/storage-usage', requirePermission('dashboard.view'), async (_req, res) => {
+    const key = 'admin:storage-usage';
+    let usage = await deps.cache.get<StorageUsageDto>(key);
+    if (!usage) {
+      usage = await deps.files.usage();
+      if (usage) await deps.cache.set(key, usage, 15 * 60);
+    }
+    res.json({ usage });
+  });
+
   // --- Utilisateurs -----------------------------------------------------------------------------
   r.get('/users', requirePermission('users.view'), validate(adminUsersQuerySchema, 'query'), async (req, res) => {
     const q = validQuery<z.infer<typeof adminUsersQuerySchema>>(req);
@@ -166,6 +180,7 @@ export function adminRoutes(deps: Deps, services: Services) {
         timestamp: now,
         expiresAt: now + 300,
         format: isPdf ? 'pdf' : 'jpg',
+        type: UPLOAD_RULES[folder as UploadPurpose].access,
       }),
       expiresAt: new Date((now + 300) * 1000).toISOString(),
     });

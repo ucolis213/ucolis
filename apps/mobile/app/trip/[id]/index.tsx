@@ -143,7 +143,7 @@ function ProposeModal({ visible, tripId, trip, onClose }: { visible: boolean; tr
       const details = await Promise.all(list.items.map((p) => api.get<ParcelDto>(`/parcels/${p.id}`)));
       return details.filter((p) =>
         isParcelCompatibleWithTrip(
-          { ...p, desiredDate: new Date(p.desiredDate) },
+          { ...p, desiredDate: p.desiredDate ? new Date(p.desiredDate) : null },
           { ...trip, departureAt: new Date(trip.departureAt), vehicle: { type: trip.vehicle.type } },
         ),
       );

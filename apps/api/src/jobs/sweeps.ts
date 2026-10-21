@@ -3,11 +3,12 @@
 
 import { ACTIVE_OFFER_STATUSES } from '@ucolis/shared';
 import type { Deps } from '../deps';
+import { ConversationModel, MessageModel } from '../modules/conversations/model';
 import { OfferModel } from '../modules/offers/model';
 import { ParcelModel, type ParcelLean } from '../modules/parcels/model';
 import { transitionParcel } from '../modules/parcels/transitions';
 import { TripModel } from '../modules/trips/model';
-import { ReviewModel } from '../modules/trust/model';
+import { DisputeModel, ReportModel, ReviewModel } from '../modules/trust/model';
 import { anonymizeUser } from '../modules/users/anonymize';
 import { UserModel } from '../modules/users/model';
 import type { Services } from '../services';
@@ -195,6 +196,66 @@ export const purgeDeletedAccounts: Sweep = async (deps) => {
   return done;
 };
 
+/** Statuts définitifs d'une annonce : ses photos ne servent plus qu'à l'historique. */
+const FINISHED_PARCEL_STATUSES = ['delivered', 'cancelled', 'expired'];
+
+/**
+ * Ménage des anciennes images (réglage mediaRetention) pour rester dans le quota Cloudinary.
+ * Photos d'une annonce terminée depuis parcelPhotosDays, images de messages envoyées depuis messageImagesDays.
+ * Jamais pendant un signalement ouvert ou un litige ; photos de litige et preuves de livraison gardées.
+ */
+export const purgeOldMedia: Sweep = async (deps) => {
+  const { mediaRetention } = await deps.settings.getAll();
+  const now = deps.now().getTime();
+  const parcels = await purgeParcelPhotos(deps, new Date(now - mediaRetention.parcelPhotosDays * DAY));
+  const messages = await purgeMessageImages(deps, new Date(now - mediaRetention.messageImagesDays * DAY));
+  return parcels + messages;
+};
+
+async function purgeParcelPhotos(deps: Deps, cutoff: Date) {
+  const reported = await ReportModel.distinct('targetId', { targetType: 'parcel', status: 'open' });
+  // updatedAt suit toujours le dernier changement de statut : l'annonce est terminée depuis au moins cutoff.
+  const due = (await ParcelModel.find(
+    { status: { $in: FINISHED_PARCEL_STATUSES }, 'photos.0': { $exists: true }, updatedAt: { $lte: cutoff }, _id: { $nin: reported } },
+    { photos: 1 },
+  )
+    .limit(BATCH)
+    .lean()) as Pick<ParcelLean, '_id' | 'photos'>[];
+  for (const p of due) {
+    // Une annonce dupliquée réutilise les mêmes fichiers : on ne détruit que ceux qu'aucune autre ne garde.
+    const ids = p.photos.map((f) => f.publicId);
+    const shared = new Set<string>(await ParcelModel.distinct('photos.publicId', { _id: { $ne: p._id }, 'photos.publicId': { $in: ids } }));
+    await deps.files.destroy(p.photos.filter((f) => !shared.has(f.publicId)), 'upload');
+    await ParcelModel.updateOne({ _id: p._id }, { $set: { photos: [] } });
+  }
+  return due.length;
+}
+
+async function purgeMessageImages(deps: Deps, cutoff: Date) {
+  const [reportedConversations, reportedMessages, disputedParcels] = await Promise.all([
+    ReportModel.distinct('targetId', { targetType: 'conversation', status: 'open' }),
+    ReportModel.distinct('targetId', { targetType: 'message', status: 'open' }),
+    DisputeModel.distinct('parcel', { status: { $in: ['open', 'in_review'] } }),
+  ]);
+  const disputedConversations = await ConversationModel.distinct('_id', { parcel: { $in: disputedParcels } });
+  const due = await MessageModel.find(
+    {
+      image: { $ne: null },
+      createdAt: { $lte: cutoff },
+      conversation: { $nin: [...reportedConversations, ...disputedConversations] },
+      _id: { $nin: reportedMessages },
+    },
+    { image: 1 },
+  )
+    .limit(BATCH)
+    .lean();
+  if (!due.length) return 0;
+  await deps.files.destroy(due.map((m) => m.image!), 'upload');
+  // Le message reste (type image, sans fichier) : l'application affiche « Photo expirée ».
+  await MessageModel.updateMany({ _id: { $in: due.map((m) => m._id) } }, { $set: { image: null } });
+  return due.length;
+}
+
 /** Diffusions programmées arrivées à échéance. */
 export const sendScheduledBroadcasts: Sweep = async (_deps, services) => services.content.sendDue();
 
@@ -210,5 +271,6 @@ export const SCHEDULE: { name: string; pattern: string; run: Sweep }[] = [
   { name: 'complete-trips', pattern: '10 * * * *', run: completeTrips },
   { name: 'flush-alerts', pattern: '*/10 * * * *', run: flushAlerts },
   { name: 'purge-deleted-accounts', pattern: '0 3 * * *', run: purgeDeletedAccounts },
+  { name: 'purge-old-media', pattern: '40 * * * *', run: purgeOldMedia },
   { name: 'scheduled-broadcasts', pattern: '* * * * *', run: sendScheduledBroadcasts },
 ];

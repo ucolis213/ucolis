@@ -61,7 +61,7 @@ export type OfferDetail = OfferDto & { parcelTitle: string; parcelStatus: string
 export const useOffer = (id: string) =>
   useQuery({ queryKey: ['offer', id], queryFn: () => api.get<OfferDetail>(`/offers/${id}`) });
 
-export type MyOffer = OfferDto & { parcel: { id: string; title: string; status: string; from: { wilayaCode: string; commune: string }; to: { wilayaCode: string; commune: string }; desiredDate: string } | null };
+export type MyOffer = OfferDto & { parcel: { id: string; title: string; status: string; from: { wilayaCode: string; commune: string }; to: { wilayaCode: string; commune: string }; desiredDate: string | null } | null };
 export function useMyOffers(tab: string) {
   return useInfiniteQuery({
     queryKey: ['me', 'offers', tab],

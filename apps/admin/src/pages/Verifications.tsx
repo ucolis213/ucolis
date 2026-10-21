@@ -95,7 +95,7 @@ export function IdentityDetail() {
                 ['Permis valable jusqu’au', date(d.licenseExpiresAt)],
                 ['Assurance valable jusqu’au', date(d.insuranceExpiresAt)],
                 ['Wilaya', `${commune(d.user.commune)}, ${wilaya(d.user.wilayaCode)}`],
-                ['Véhicules', d.vehicles.map((v) => `${label('parcel.vehicleTypes', v.type)} ${v.brand} ${v.model} · ${v.plate} · ${v.capacityKg} kg`).join(' ; ') || '—'],
+                ['Véhicules', d.vehicles.map((v) => `${label('parcel.vehicleTypes', v.type)} ${v.brand} ${v.model} · ${v.plate} · ${v.capacityKg} kg`).join(' ; ') || '-'],
                 ...(d.decisionReason ? ([['Dernier refus', d.decisionReason]] as [string, string][]) : []),
               ]}
             />
@@ -245,7 +245,7 @@ export function ProDetail() {
                     ['Forme juridique', label('profile.legalForms', a.legalForm)],
                     ['Registre de commerce', a.rcNumber],
                     ['NIF', a.nif],
-                    ['NIS', a.nis ?? '—'],
+                    ['NIS', a.nis ?? '-'],
                     ['Adresse', `${a.address}, ${commune(a.commune)}, ${wilaya(a.wilayaCode)}`],
                     ['Titulaire du compte', `${d.user.firstName} ${d.user.lastName}`],
                     ['Soumis le', dateTime(a.submittedAt)],

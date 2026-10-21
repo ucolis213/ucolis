@@ -3,6 +3,7 @@ import { PARCEL_STATUSES, type ParcelStatus } from '@ucolis/shared';
 import { useAdminQuery } from '../api/hooks';
 import { useSession } from '../auth/session';
 import { ParcelStatusPill } from '../components/domain';
+import { StorageUsageCard } from '../components/StorageUsage';
 import { Card, PageHeader, QueryState } from '../components/ui';
 import { hours, price } from '../format';
 
@@ -40,10 +41,10 @@ export function Dashboard() {
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
               <Tile label="Montant livré (déclaratif)" value={price(s.deliveredAmount)} />
-              <Tile label="Taux de livraison" value={s.deliveryRate === null ? '—' : `${s.deliveryRate} %`} />
+              <Tile label="Taux de livraison" value={s.deliveryRate === null ? '-' : `${s.deliveryRate} %`} />
               <Tile
                 label="Délai médian avant 1re offre"
-                value={s.medianMinutesToFirstOffer === null ? '—' : s.medianMinutesToFirstOffer < 120 ? `${Math.round(s.medianMinutesToFirstOffer)} min` : `${Math.round(s.medianMinutesToFirstOffer / 60)} h`}
+                value={s.medianMinutesToFirstOffer === null ? '-' : s.medianMinutesToFirstOffer < 120 ? `${Math.round(s.medianMinutesToFirstOffer)} min` : `${Math.round(s.medianMinutesToFirstOffer / 60)} h`}
               />
             </div>
 
@@ -63,6 +64,8 @@ export function Dashboard() {
                 })}
               </div>
             </Card>
+
+            <StorageUsageCard />
 
             <Card title="Colis par statut">
               <div className="flex flex-wrap gap-2">

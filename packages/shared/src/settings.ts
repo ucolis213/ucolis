@@ -12,6 +12,16 @@ export interface AppSettings {
     activeTripsPro: number;
     maxCounterOffers: number;
   };
+  /**
+   * Transporteurs prévenus d'un nouveau colis près d'eux : rayon autour du départ, et nombre de push par
+   * transporteur sur 24 h (au-delà, notification dans l'application seulement).
+   */
+  nearbyParcels: { radiusKm: number; dailyPushLimit: number };
+  /**
+   * Conservation des images (jours) : photos d'une annonce terminée (livrée, annulée, expirée), compté depuis la fin,
+   * et images des messages, compté depuis l'envoi. Les photos de litige et les preuves de livraison sont gardées.
+   */
+  mediaRetention: { parcelPhotosDays: number; messageImagesDays: number };
   autoConfirmHours: number;
   parcelExpiryDays: number;
   reviewWindowDays: number;
@@ -31,6 +41,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     activeTripsPro: 10,
     maxCounterOffers: 3,
   },
+  nearbyParcels: { radiusKm: 30, dailyPushLimit: 5 },
+  mediaRetention: { parcelPhotosDays: 90, messageImagesDays: 180 },
   autoConfirmHours: 72,
   parcelExpiryDays: 7,
   reviewWindowDays: 14,
@@ -100,6 +112,8 @@ export const APP_SETTING_SCHEMAS: Record<AppSettingKey, z.ZodType> = {
     activeTripsPro: positiveInt,
     maxCounterOffers: positiveInt,
   }),
+  nearbyParcels: z.object({ radiusKm: positiveInt.max(200), dailyPushLimit: z.number().int().min(0).max(50) }),
+  mediaRetention: z.object({ parcelPhotosDays: z.number().int().min(30).max(3650), messageImagesDays: z.number().int().min(30).max(3650) }),
   autoConfirmHours: positiveInt.max(24 * 30),
   parcelExpiryDays: positiveInt.max(90),
   reviewWindowDays: positiveInt.max(90),

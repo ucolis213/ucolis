@@ -71,15 +71,16 @@ export const tripRoute = (t: { from: { wilayaCode: string }; to: { wilayaCode: s
 
 /**
  * Compatibilité colis / trajet (F9) : wilayas de départ et d'arrivée dans l'ordre sur l'itinéraire,
- * poids dans la capacité, véhicule accepté, date souhaitée à ±2 jours du départ.
+ * poids dans la capacité, véhicule accepté, date souhaitée à ±2 jours du départ. Un poids, un volume ou une
+ * date non précisés (publication rapide) ne limitent pas la compatibilité.
  */
 export function isParcelCompatibleWithTrip(
   parcel: {
     pickup: { wilayaCode: string };
     dropoff: { wilayaCode: string };
-    weightKg: number;
-    volumeM3: number;
-    desiredDate: Date;
+    weightKg: number | null;
+    volumeM3: number | null;
+    desiredDate: Date | null;
     vehicleTypes: readonly VehicleType[];
   },
   trip: {
@@ -96,8 +97,9 @@ export function isParcelCompatibleWithTrip(
   const from = route.indexOf(parcel.pickup.wilayaCode);
   const to = route.lastIndexOf(parcel.dropoff.wilayaCode);
   if (from < 0 || to < 0 || from >= to) return false;
-  if (parcel.weightKg > trip.capacityKg || parcel.volumeM3 > trip.capacityM3) return false;
+  if ((parcel.weightKg ?? 0) > trip.capacityKg || (parcel.volumeM3 ?? 0) > trip.capacityM3) return false;
   if (!parcel.vehicleTypes.includes(trip.vehicle.type)) return false;
+  if (!parcel.desiredDate) return true;
   const days = Math.abs(parcel.desiredDate.getTime() - trip.departureAt.getTime()) / 86_400_000;
   return days <= TRIP_DATE_TOLERANCE_DAYS;
 }

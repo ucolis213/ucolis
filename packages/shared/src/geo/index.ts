@@ -68,6 +68,15 @@ export function haversineKm(a: LatLng, b: LatLng): number {
   return Math.round(2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h)) * 10) / 10;
 }
 
+/** Codes des communes dont le centre est à km au plus du point (transporteurs proches d'un départ). */
+export function communesWithinKm(point: LatLng, km: number): string[] {
+  const codes: string[] = [];
+  for (const w of WILAYAS) {
+    for (const c of w.communes) if (haversineKm(point, c.center) <= km) codes.push(c.code);
+  }
+  return codes;
+}
+
 /** Commune dont le centre est le plus proche du point (F6, étape Trajet). */
 export function nearestCommune(point: LatLng): { wilayaCode: string; communeCode: string } {
   let best = { wilayaCode: '', communeCode: '', d: Infinity };

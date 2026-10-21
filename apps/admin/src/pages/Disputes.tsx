@@ -45,7 +45,7 @@ export function Disputes() {
                   { header: 'Ouvert le', cell: (x) => dateTime(x.createdAt) },
                   { header: 'Réponse', cell: (x) => (x.response ? 'Reçue' : `Attendue avant ${dateTime(x.responseDeadline)}`) },
                   { header: 'Statut', cell: (x) => <Pill tone={STATUS[x.status]?.tone}>{STATUS[x.status]?.label ?? x.status}</Pill> },
-                  { header: 'Pris par', cell: (x) => (x.claim && new Date(x.claim.until) > new Date() ? x.claim.name : '—') },
+                  { header: 'Pris par', cell: (x) => (x.claim && new Date(x.claim.until) > new Date() ? x.claim.name : '-') },
                 ]}
               />
               <Pagination page={d.page} limit={d.limit} total={d.total} onPage={list.setPage} />
@@ -98,7 +98,7 @@ export function DisputeDetail() {
         const x = d.dispute;
         const who = (uid: string) => {
           const u = d.people[uid];
-          return u ? <Link className="text-primary-dark underline" to={`/users/${uid}`}>{u.displayName}</Link> : '—';
+          return u ? <Link className="text-primary-dark underline" to={`/users/${uid}`}>{u.displayName}</Link> : '-';
         };
         const accepted = d.offers.find((o) => o.status === 'accepted');
         return (
@@ -123,7 +123,7 @@ export function DisputeDetail() {
                     ['Motif', label('parcel.disputeReasons', x.reason)],
                     ['Description', x.description],
                     ['Ouvert le', dateTime(x.createdAt)],
-                    ['Photos', x.photos.length ? <span key="p" className="flex flex-wrap gap-2">{x.photos.map((f, i) => <PrivateFileButton key={f.publicId} file={f} label={`Photo ${i + 1}`} />)}</span> : '—'],
+                    ['Photos', x.photos.length ? <span key="p" className="flex flex-wrap gap-2">{x.photos.map((f, i) => <PrivateFileButton key={f.publicId} file={f} label={`Photo ${i + 1}`} />)}</span> : '-'],
                   ]}
                 />
               </Card>
@@ -133,7 +133,7 @@ export function DisputeDetail() {
                     items={[
                       ['Reçue le', dateTime(x.response.at)],
                       ['Texte', x.response.text],
-                      ['Photos', x.response.photos.length ? <span key="p" className="flex flex-wrap gap-2">{x.response.photos.map((f, i) => <PrivateFileButton key={f.publicId} file={f} label={`Photo ${i + 1}`} />)}</span> : '—'],
+                      ['Photos', x.response.photos.length ? <span key="p" className="flex flex-wrap gap-2">{x.response.photos.map((f, i) => <PrivateFileButton key={f.publicId} file={f} label={`Photo ${i + 1}`} />)}</span> : '-'],
                     ]}
                   />
                 ) : (
@@ -148,8 +148,8 @@ export function DisputeDetail() {
                   items={[
                     ['Trajet', `${commune(d.parcel.pickup.commune)} (${wilaya(d.parcel.pickup.wilayaCode)}) → ${commune(d.parcel.dropoff.commune)} (${wilaya(d.parcel.dropoff.wilayaCode)})`],
                     ['Prix convenu', price(d.parcel.finalPrice)],
-                    ['Offre acceptée', accepted ? `${accepted.carrier.displayName} · ${price(accepted.finalPrice ?? accepted.price)} · ${accepted.vehicle.plate}` : '—'],
-                    ['Preuve de livraison', d.parcel.deliveryProof?.photo ? <PrivateFileButton key="pf" file={d.parcel.deliveryProof.photo} label="Voir la photo" /> : (d.parcel.deliveryProof?.note ?? '—')],
+                    ['Offre acceptée', accepted ? `${accepted.carrier.displayName} · ${price(accepted.finalPrice ?? accepted.price)} · ${accepted.vehicle.plate}` : '-'],
+                    ['Preuve de livraison', d.parcel.deliveryProof?.photo ? <PrivateFileButton key="pf" file={d.parcel.deliveryProof.photo} label="Voir la photo" /> : (d.parcel.deliveryProof?.note ?? '-')],
                   ]}
                 />
                 <ol className="mt-4 space-y-1 text-sm">
@@ -172,7 +172,7 @@ export function DisputeDetail() {
 
             {x.status === 'resolved' ? (
               <Card title="Décision">
-                <KeyValue items={[['Issue', x.outcome === 'delivered' ? 'Livraison confirmée' : 'Livraison annulée'], ['Note', x.decisionNote ?? '—'], ['Tranché le', dateTime(x.resolvedAt)]]} />
+                <KeyValue items={[['Issue', x.outcome === 'delivered' ? 'Livraison confirmée' : 'Livraison annulée'], ['Note', x.decisionNote ?? '-'], ['Tranché le', dateTime(x.resolvedAt)]]} />
               </Card>
             ) : (
               <Card title="Trancher">

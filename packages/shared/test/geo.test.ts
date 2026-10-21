@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   WILAYAS,
+  communesWithinKm,
   getCommune,
   getWilaya,
   haversineKm,
@@ -48,5 +49,14 @@ describe('référentiel géographique', () => {
       wilayaCode: '16',
       communeCode: '16001',
     });
+  });
+
+  it('liste les communes à une distance donnée d’un point', () => {
+    const alger = { lat: 36.771, lng: 3.061 };
+    const near = communesWithinKm(alger, 30);
+    expect(near).toContain('16001');
+    expect(near.every((c) => haversineKm(alger, getCommune(c)!.center) <= 30)).toBe(true);
+    expect(near.some((c) => c.startsWith('31'))).toBe(false); // Oran, à 350 km
+    expect(communesWithinKm(alger, 5).length).toBeLessThan(near.length);
   });
 });

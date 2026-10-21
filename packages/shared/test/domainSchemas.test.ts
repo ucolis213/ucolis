@@ -66,6 +66,10 @@ describe('compatibilité colis / trajet (F9)', () => {
     expect(isParcelCompatibleWithTrip({ ...parcel, vehicleTypes: ['moto'] }, trip)).toBe(false);
     expect(isParcelCompatibleWithTrip({ ...parcel, desiredDate: inDays(6) }, trip)).toBe(false);
   });
+
+  it('accepte une publication rapide sans poids, volume ni date', () => {
+    expect(isParcelCompatibleWithTrip({ ...parcel, weightKg: null, volumeM3: null, desiredDate: null }, trip)).toBe(true);
+  });
 });
 
 describe('trajet', () => {

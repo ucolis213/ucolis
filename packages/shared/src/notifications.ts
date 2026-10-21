@@ -68,6 +68,7 @@ export const NOTIFICATION_TYPES = {
   new_message: def('messages', 'conversation'),
   new_listing_match: def('alerts_trips', 'listings'),
   trip_parcel_match: def('alerts_trips', 'parcel'),
+  nearby_parcel: def('alerts_trips', 'parcel'),
   trip_request_received: def('alerts_trips', 'parcel'),
   trip_request_declined: def('alerts_trips', 'parcel'),
   favorite_unavailable: def('alerts_trips', 'parcel'),

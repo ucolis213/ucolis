@@ -4,7 +4,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Dimensions, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +37,7 @@ import { distance, formatDate, formatDateTime, placeLabel, price, weight } from 
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useSession } from '@/session/SessionContext';
 import { draftFromParcel } from '@/state/draftFromParcel';
-import { useParcelDraft } from '@/state/parcelDraft';
+import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
 import { colors, radii, space } from '@/theme';
 import { stopTracking } from '@/tracking/location';
 
@@ -119,6 +119,8 @@ export default function ParcelDetail() {
   }
 
   const viewer = p.viewer.role as ParcelViewer;
+  // Sans poids : annonce publiée en mode rapide.
+  const quick = p.weightKg === null;
   const actions = parcelActionsFor(viewer, p.status, {
     hasCounterOffer: p.viewer.myOffer?.status === 'countered',
     hasReviewed: p.viewer.hasReviewed,
@@ -180,7 +182,7 @@ export default function ParcelDetail() {
         return router.push({ pathname: '/parcel/[id]/offers', params: { id: p!.id } });
       case 'edit':
         startDraft(draftFromParcel(p!), p!.id);
-        return router.push('/parcel/new/route');
+        return router.push(draftEntryRoute(p!.weightKg === null ? 'quick' : 'full'));
       case 'cancel_listing':
       case 'cancel_delivery':
         return setCancelPrompt(true);
@@ -307,15 +309,30 @@ export default function ParcelDetail() {
           <KeyValue label={t('common:to')} value={placeLabel(p.dropoff)} />
           {(viewer === 'sender' || viewer === 'assigned_carrier') && <KeyValue label="" value={p.dropoff.address + (p.dropoff.details ? ` · ${p.dropoff.details}` : '')} />}
           <KeyValue label={t('common:distance')} value={distance(p.distanceKm)} />
-          <KeyValue label={t('desiredDate')} value={`${formatDate(p.desiredDate)} · ${t(`common:timeSlots.${p.timeSlot}`)}${p.flexibleDates ? ' (±2)' : ''}`} />
-          <KeyValue label={t('paymentArrangement')} value={t(`common:payment.${p.paymentArrangement}`)} />
+          <KeyValue
+            label={t('desiredDate')}
+            value={
+              p.desiredDate
+                ? `${formatDate(p.desiredDate)} · ${t(`common:timeSlots.${p.timeSlot}`)}${p.flexibleDates ? ' (±2)' : ''}`
+                : t('flexibleDate')
+            }
+          />
+          <KeyValue label={t('paymentArrangement')} value={quick ? t('notSpecified') : t(`common:payment.${p.paymentArrangement}`)} />
         </SectionCard>
 
+        {/* Publication rapide : catégorie et véhicules posés par l'API, poids et dimensions non précisés. */}
         <SectionCard title={t('characteristics')}>
-          <KeyValue label={t('category')} value={t(`categories.${p.category}`)} />
-          <KeyValue label={t('weight')} value={weight(p.weightKg)} />
-          <KeyValue label={t('dimensions')} value={`${p.dimensionsCm.length} × ${p.dimensionsCm.width} × ${p.dimensionsCm.height} cm · ${p.volumeM3} m³`} />
-          <KeyValue label={t('vehicleTypesLabel')} value={p.vehicleTypes.map((v) => t(`vehicleTypes.${v}`)).join(', ')} />
+          {!quick && <KeyValue label={t('category')} value={t(`categories.${p.category}`)} />}
+          <KeyValue label={t('weight')} value={p.weightKg === null ? t('notSpecified') : weight(p.weightKg)} />
+          <KeyValue
+            label={t('dimensions')}
+            value={
+              p.dimensionsCm
+                ? `${p.dimensionsCm.length} × ${p.dimensionsCm.width} × ${p.dimensionsCm.height} cm · ${p.volumeM3} m³`
+                : t('notSpecified')
+            }
+          />
+          {!quick && <KeyValue label={t('vehicleTypesLabel')} value={p.vehicleTypes.map((v) => t(`vehicleTypes.${v}`)).join(', ')} />}
           {p.description ? <AppText size="sm">{p.description}</AppText> : null}
         </SectionCard>
 
@@ -376,8 +393,9 @@ export default function ParcelDetail() {
             onPress={() =>
               run(async () => {
                 const data = await api.post<Partial<ParcelDto>>(`/parcels/${p.id}/duplicate`);
-                startDraft(draftFromParcel(data, false));
-                router.push('/parcel/new/route' as Href);
+                const draft = draftFromParcel(data, false);
+                startDraft(draft);
+                router.push(draftEntryRoute(draft.mode ?? 'full'));
               })
             }
           />

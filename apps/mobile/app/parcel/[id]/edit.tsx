@@ -6,7 +6,7 @@ import { useParcel } from '@/api/queries';
 import { LoadingSkeleton } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { draftFromParcel } from '@/state/draftFromParcel';
-import { useParcelDraft } from '@/state/parcelDraft';
+import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
 
 export default function EditParcel() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,5 +26,5 @@ export default function EditParcel() {
       </Screen>
     );
   }
-  return <Redirect href="/parcel/new/route" />;
+  return <Redirect href={draftEntryRoute(parcel.data?.weightKg == null ? 'quick' : 'full')} />;
 }

@@ -4,11 +4,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 import type { AuthResponse, Intent, Me } from '@ucolis/shared';
 import { api, refreshSession, setSessionLostListener } from '../api/client';
 import { tokens } from '../api/tokens';
 import { getDeviceId } from '../device';
 import { clearRecents } from '../state/addressBook';
+import { useParcelDraft } from '../state/parcelDraft';
+import { resetReportedPosition } from '../tracking/nearbyPosition';
 
 type Status = 'loading' | 'guest' | 'authenticated';
 
@@ -60,6 +63,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => setSessionLostListener(null);
   }, [refreshMe, reset]);
 
+  // Retour au premier plan : le staff a pu changer le profil entre-temps (vérification, statut pro).
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshMe();
+    });
+    return () => sub.remove();
+  }, [status, refreshMe]);
+
   const value = useMemo<SessionValue>(
     () => ({
       status,
@@ -77,6 +89,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         }
         await tokens.clear();
         await clearRecents();
+        useParcelDraft.getState().clear();
+        resetReportedPosition();
         reset();
       },
       setUser: (u) => setUserState(u),

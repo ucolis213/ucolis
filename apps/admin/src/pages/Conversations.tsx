@@ -41,7 +41,7 @@ export function Conversations() {
                 empty="Aucune conversation."
                 columns={[
                   { header: 'Participants', cell: (c) => c.participants.map((p) => p?.displayName ?? 'Compte supprimé').join(' · ') },
-                  { header: 'Dernier message', cell: (c) => <span className="line-clamp-1 max-w-sm">{c.lastMessage?.text ?? '—'}</span> },
+                  { header: 'Dernier message', cell: (c) => <span className="line-clamp-1 max-w-sm">{c.lastMessage?.text ?? '-'}</span> },
                   { header: 'Date', cell: (c) => dateTime(c.lastMessage?.at) },
                 ]}
               />

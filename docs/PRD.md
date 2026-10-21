@@ -230,7 +230,7 @@ L'application est découpée en 18 modules. Chaque module liste ses fonctions, l
 - Maintenance : si maintenance = true, un écran dédié affiche le message configuré.
 - Onboarding : 3 diapositives à la première ouverture, avec choix de la langue sur la première. Le drapeau `@ucolis/onboarding_done` est mémorisé dans AsyncStorage.
 - Mode invité : Accueil et Annonces sont accessibles. Les onglets Publier, Messages et Profil affichent un écran « Connectez-vous ». Toute action protégée ouvre une feuille de connexion. Après connexion, l'action reprend là où elle s'était arrêtée (paramètre returnTo).
-- Accueil connecté : salutation ; compteurs (colis actifs, offres actives, livraisons en cours) ; boutons « Publier un colis » et « Proposer un trajet » (le second si intent inclut transporteur). S'y ajoutent un raccourci vers les livraisons en cours et les dernières annonces sur les wilayas de l'utilisateur. Une bannière apparaît si l'email n'est pas vérifié ou si la vérification transporteur est incomplète.
+- Accueil connecté : salutation ; compteurs (colis actifs, offres actives, livraisons en cours) ; boutons « Envoyer un colis » et « Proposer un trajet » (le second si intent inclut transporteur). S'y ajoutent un raccourci vers les livraisons en cours et les dernières annonces, toutes wilayas confondues ; « Tout voir » ouvre la liste sans filtre, triée de la plus récente à la plus ancienne. Une bannière apparaît si l'email n'est pas vérifié ou si la vérification transporteur est incomplète.
 - Navigation : 5 onglets en bas (Accueil, Annonces, Publier, Messages avec badge de non-lus, Profil). Une cloche avec badge dans l'en-tête de l'Accueil et des Annonces ouvre le centre de notifications.
 
 Critères d'acceptation : un invité voit les annonces sans compte ; l'onboarding ne réapparaît jamais après avoir été vu ; une offre tentée en invité reprend après connexion ; une version trop ancienne ne peut pas dépasser l'écran de mise à jour.
@@ -286,7 +286,11 @@ Critères d'acceptation : aucune route utilisateur ne peut écrire accountType n
 
 Critères d'acceptation : un transporteur non vérifié reçoit 403 CARRIER_NOT_VERIFIED sur toute offre ou tout trajet ; une assurance expirée fait passer le dossier à expired le jour même.
 
-### F6 — Publication d'un colis (assistant en 4 étapes)
+### F6 — Publication d'un colis (rapide par défaut, ou assistant en 4 étapes)
+
+**Publication rapide (par défaut).** Un seul écran : adresses de départ et d'arrivée (même sélecteur que l'étape Trajet), titre, description facultative, prix demandé (pré-rempli avec le prix suggéré sur la seule distance), photos facultatives et déclaration des objets interdits. Poids, dimensions et date restent « non précisés », tout véhicule convient et le règlement est à convenir. Un bouton « Ajouter plus de détails » ouvre l'assistant complet ci-dessous avec le même brouillon. Détails dans `docs/DECISIONS.md` (21 octobre 2026).
+
+**Publication complète (assistant en 4 étapes) :**
 
 1. **Trajet** : adresses de départ et d'arrivée choisies comme dans une application de VTC : deux champs reliés (Départ, Arrivée), suggestions pendant la frappe (communes de shared/geo immédiatement, lieux et rues par l'API ensuite), « Ma position actuelle », adresses récentes de l'appareil (effacées à la déconnexion) et « Choisir sur la carte », où le repère reste fixe au centre et l'on fait glisser la carte dessous. La wilaya et la commune sont déduites du point (commune dont le centre est le plus proche, dans shared/geo) et restent corrigeables à la main. Un champ libre de précision accompagne chaque adresse (rue, repère, étage).
 2. **Colis** :
@@ -301,7 +305,7 @@ Critères d'acceptation : un transporteur non vérifié reçoit 403 CARRIER_NOT_
    - Destinataire (nom et téléphone), facultatif mais recommandé.
    - Règlement convenu : cash_on_pickup, cash_on_delivery, paid_by_recipient ou other. Le paiement se fait hors de l'application.
    - Prix demandé, pré-rempli avec le prix suggéré et marqué « estimé ». Minimum 100 DA. Un avertissement non bloquant s'affiche au-dessus de 3 fois le prix suggéré.
-4. **Photos** : 1 à 5, depuis la galerie ou la caméra. Chaque photo est redimensionnée à 1 600 px de côté maximum et compressée en JPEG qualité 0,7, puis envoyée directement sur Cloudinary par upload signé, avec une barre de progression. Les photos se réordonnent ; la première sert de couverture.
+4. **Photos** : facultatives, 5 au maximum, depuis la galerie ou la caméra. Chaque photo est redimensionnée à 1 600 px de côté maximum et compressée en JPEG qualité 0,7, puis envoyée directement sur Cloudinary par upload signé, avec une barre de progression. Les photos se réordonnent ; la première sert de couverture.
 
 Un récapitulatif précède la publication. Chaque étape est validée avant la suivante. En cas d'erreur à l'envoi, l'assistant revient à l'étape fautive avec le champ en erreur. Le brouillon est sauvegardé localement et proposé à la reprise si l'application a été fermée.
 
@@ -404,6 +408,7 @@ Critères d'acceptation : deux acceptations concurrentes produisent exactement u
 - Une seule demande par colis et par trajet. Un expéditeur envoie au plus 10 demandes par jour.
 - Correspondances automatiques :
   - À la publication d'un colis, les transporteurs dont un trajet actif est compatible reçoivent « Un colis correspond à votre trajet ».
+  - À la publication d'un colis, les transporteurs proches du départ reçoivent « Nouveau colis près de vous » (distance en km). Proche : dernière position du transporteur, envoyée à l'ouverture de l'application puis toutes les 15 min, si elle date de moins de 24 h, sinon la commune de son profil, dans un rayon réglable (nearbyParcels.radiusKm, 30 km). Au plus nearbyParcels.dailyPushLimit push (5) par transporteur sur 24 h ; au-delà, notification dans l'application seulement. Ni l'expéditeur, ni les comptes bloqués, ni les transporteurs déjà prévenus par un trajet.
   - À la publication d'un trajet, l'application affiche les colis compatibles déjà publiés.
   - Ces notifications sont regroupées : au plus 1 par trajet et par heure.
 
@@ -532,7 +537,7 @@ Application web responsive, servie à part de l'application mobile. Chaque page 
 | Page | Permission | Contenu et actions |
 |---|---|---|
 | Connexion | — | Email, mot de passe, code TOTP ; première connexion par lien d'invitation avec configuration de la 2FA |
-| Tableau de bord | dashboard.view | Utilisateurs (total, actifs sur 30 jours, nouveaux ce mois, suspendus) ; colis par statut ; montant total déclaré des livraisons ; taux de livraison ; délai médian avant la première offre ; files en attente avec l'âge du plus ancien dossier |
+| Tableau de bord | dashboard.view | Utilisateurs (total, actifs sur 30 jours, nouveaux ce mois, suspendus) ; colis par statut ; montant total déclaré des livraisons ; taux de livraison ; délai médian avant la première offre ; files en attente avec l'âge du plus ancien dossier ; consommation Cloudinary du mois (crédits, stockage, bande passante, transformations ; alerte à 80 % et 95 %) |
 | Utilisateurs | users.view | Recherche ; filtres statut, intent, type de compte, wilaya, vérifié ; fiche avec profil, colis, offres, trajets, avis, signalements, litiges, appareils ; suspendre avec motif et durée ; réactiver ; supprimer |
 | Vérifications identité | verifications.identity | File pending, la plus ancienne en premier ; visionneuse de pièces avec zoom et rotation ; valider ou refuser avec motif |
 | Statut pro | verifications.pro | File des dossiers ; liste de contrôle ; valider, refuser ou révoquer avec motif |
@@ -603,19 +608,19 @@ email (unique), firstName, lastName, passwordHash, role (super_admin, moderator)
 | title, description | string | 5–80 ; 1 000 au maximum |
 | category | enum | voir F6 |
 | fragile | boolean | — |
-| weightKg | number | 0,1–30 000 |
-| dimensionsCm | objet | length, width, height, 1–1 500 |
-| volumeM3 | number | calculé |
+| weightKg | number ou null | 0,1–30 000 ; null en publication rapide |
+| dimensionsCm | objet ou null | length, width, height, 1–1 500 ; null en publication rapide |
+| volumeM3 | number ou null | calculé |
 | vehicleTypes[] | enum | au moins 1 |
 | pickup, dropoff | objet | address, details, wilayaCode, commune, location (GeoJSON Point [lng, lat]) |
 | distanceKm | number | calculé (Haversine) |
-| desiredDate | Date | — |
+| desiredDate | Date ou null | null : date flexible (publication rapide) |
 | timeSlot | enum | morning, afternoon, evening, any |
 | flexibleDates, urgent | boolean | — |
 | recipient | objet | name, phone ; visibles par l'expéditeur, et par le transporteur retenu à partir de assigned |
 | paymentArrangement | enum | voir F6 |
 | requestedPrice, suggestedPrice, finalPrice | number (DA entiers) | finalPrice figé à l'acceptation |
-| photos[] | File | 1–5 |
+| photos[] | File | 0–5 |
 | status | enum | open, negotiating, assigned, in_transit, delivered_pending, delivered, cancelled, expired, disputed |
 | statusHistory[] | objet | from, to, byType (user, staff, system), by, at, reason |
 | assignedCarrier, acceptedOffer | ObjectId | null avant acceptation |
@@ -718,6 +723,7 @@ Conventions :
 |---|---|---|
 | Auth staff | POST /auth/login (mot de passe puis TOTP) ; POST /auth/accept-invite ; POST /auth/refresh ; POST /auth/logout ; GET /me | — |
 | Tableau de bord | GET /stats | dashboard.view |
+| Consommation Cloudinary | GET /storage-usage | dashboard.view |
 | Utilisateurs | GET /users ; GET /users/:id ; POST /users/:id/suspend ; POST /users/:id/reactivate ; DELETE /users/:id | users.view, users.suspend, users.delete |
 | Vérifications | GET /verifications/identity ; POST /verifications/identity/:userId/decision ; GET /verifications/pro ; POST /verifications/pro/:userId/decision ; POST /verifications/pro/:userId/revoke ; GET /files/:publicId (URL signée de 5 min) | verifications.identity, verifications.pro |
 | Colis et trajets | GET /parcels ; GET /parcels/:id ; POST /parcels/:id/force-status ; POST /parcels/:id/hide ; DELETE /parcels/:id ; GET /trips ; POST /trips/:id/hide ; DELETE /trips/:id | parcels.view, parcels.moderate |
@@ -781,6 +787,7 @@ Chaque événement ci-dessous crée une notification dans l'application et, sauf
 | new_message | Nouveau message (pas de push si la conversation est ouverte à l'écran ou en sourdine) | Destinataire | Messages | Conversation |
 | new_listing_match | Nouvelles annonces pour une alerte, regroupées | Propriétaire de l'alerte | Alertes et trajets | Annonces filtrées |
 | trip_parcel_match | Un colis correspond à un de vos trajets | Transporteur | Alertes et trajets | Colis |
+| nearby_parcel | Nouveau colis près de vous | Transporteur | Alertes et trajets | Colis |
 | trip_request_received | Un expéditeur propose son colis sur votre trajet | Transporteur | Alertes et trajets | Colis, avec bouton Faire une offre |
 | trip_request_declined | Le transporteur décline la proposition | Expéditeur | Alertes et trajets | Colis |
 | favorite_unavailable | Un colis favori est attribué, annulé ou expiré | Utilisateur | Alertes et trajets | Colis |
@@ -807,7 +814,7 @@ Toutes ces exigences sont obligatoires dès la v1. Chacune se vérifie par un te
 | Autorisations | Chaque route vérifie l'acteur (propriétaire du colis, transporteur retenu, participant) ou la permission staff. Les tests couvrent un accès refusé par route d'écriture |
 | Fichiers | Upload signé, limité par usage (type MIME, 10 Mo, dossier). Les pièces d'identité et les justificatifs pro sont en authenticated et servis par URL signée de 5 min, uniquement au staff habilité et au titulaire |
 | Intégrité | Machines à états strictes dans shared ; transactions pour les opérations multi-documents ; index uniques pour une offre active par colis, un avis par colis et par auteur, un litige ouvert par colis, un seul super-administrateur |
-| Jobs | BullMQ avec plusieurs tentatives et délai croissant : expiration des annonces (toutes les heures), validation automatique, fin des trajets, expiration des pièces (chaque jour), double aveugle des avis, suppression de comptes après le délai de grâce, push regroupés. Chaque job est idempotent |
+| Jobs | BullMQ avec plusieurs tentatives et délai croissant : expiration des annonces (toutes les heures), validation automatique, fin des trajets, expiration des pièces (chaque jour), double aveugle des avis, suppression de comptes après le délai de grâce, ménage des anciennes images (réglage mediaRetention : photos d'annonces terminées depuis 90 jours, images de messages de plus de 180 jours, sauf signalement ou litige en cours), push regroupés. Chaque job est idempotent |
 | Vie privée | Position partagée seulement en in_transit. Téléphone visible seulement entre les parties d'une livraison. Email et téléphone masqués au staff sans users.view_pii. Accès aux conversations et aux données personnelles journalisés. Conformité visée à la loi algérienne 18-07 sur la protection des données personnelles |
 | Permissions de l'appareil | Localisation au premier plan et en arrière-plan, caméra, photos, notifications. Chaque demande est précédée d'un écran explicatif et justifiée par un texte (NSLocationAlwaysAndWhenInUseUsageDescription, etc.) en français et en arabe |
 | Temps réel | Position chez l'expéditeur en moins de 15 s ; messages en moins de 1 s sur une bonne connexion ; reconnexion automatique avec re-synchronisation des compteurs et des messages manqués |
@@ -833,7 +840,7 @@ L'interface reste simple et lisible en plein soleil sur un téléphone d'entrée
 | danger | #E5484D | Erreurs, annulation, litige |
 | warning | #F5A524 | Urgent, en attente |
 | surface | #FFFFFF ; fond #F6F7F9 | Cartes et fond d'écran |
-| Typographie | Inter (latin) et Noto Sans Arabic (arabe) | Tailles 12, 14, 16, 20, 24, 32 |
+| Typographie | Inter (latin) et IBM Plex Sans Arabic (arabe) | Tailles 12, 14, 16, 20, 24, 32 |
 | Rayons et espacements | Rayon 12 (cartes), 999 (puces) ; espacements par pas de 4 | — |
 
 Composants partagés à construire en premier : Button, TextField, Select (wilaya et commune), Chip, Badge (Pro, Identité, Urgent, Fragile, statut), ParcelCard, TripCard, OfferCard, UserRow (avatar, nom, note, badges), StatusTimeline, EmptyState, ErrorState, Skeleton, BottomSheet, ConfirmDialog, PhotoPicker, MapPicker, PriceInput, RatingStars. La couleur de chaque statut de colis est déclarée une seule fois.

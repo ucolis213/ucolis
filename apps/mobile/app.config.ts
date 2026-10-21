@@ -2,8 +2,11 @@
 
 import type { ExpoConfig } from 'expo/config';
 
+// Textes des autorisations iOS : ils doivent décrire chaque usage réel de la position.
+const LOCATION_WHEN_IN_USE_FR =
+  "UCOLIS utilise votre position pour remplir une adresse et, si vous êtes transporteur, pour vous signaler les colis à enlever près de vous. Pendant une livraison démarrée, elle est partagée avec l'expéditeur.";
 const LOCATION_FR =
-  "UCOLIS partage votre position avec l'expéditeur uniquement pendant une livraison que vous avez démarrée, y compris en arrière-plan, pour qu'il suive son colis en temps réel.";
+  "UCOLIS partage votre position avec l'expéditeur uniquement pendant une livraison que vous avez démarrée, y compris en arrière-plan, pour qu'il suive son colis en temps réel. Le reste du temps, elle ne sert qu'application ouverte, pour les colis proches de vous.";
 
 const config: ExpoConfig = {
   name: 'UCOLIS',
@@ -21,7 +24,7 @@ const config: ExpoConfig = {
     infoPlist: {
       CFBundleAllowMixedLocalizations: true,
       UIBackgroundModes: ['location', 'remote-notification'],
-      NSLocationWhenInUseUsageDescription: LOCATION_FR,
+      NSLocationWhenInUseUsageDescription: LOCATION_WHEN_IN_USE_FR,
       NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_FR,
       NSCameraUsageDescription: 'UCOLIS utilise l’appareil photo pour photographier vos colis et vos documents.',
       NSPhotoLibraryUsageDescription: 'UCOLIS accède à vos photos pour illustrer vos colis et envoyer vos documents.',
@@ -52,6 +55,7 @@ const config: ExpoConfig = {
       'expo-location',
       {
         locationAlwaysAndWhenInUsePermission: LOCATION_FR,
+        locationWhenInUsePermission: LOCATION_WHEN_IN_USE_FR,
         isAndroidBackgroundLocationEnabled: true,
         isAndroidForegroundServiceEnabled: true,
       },

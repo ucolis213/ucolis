@@ -10,6 +10,14 @@ import { Button, Card, PageHeader, QueryState, ReasonDialog } from '../component
 const LABELS: Record<AppSettingKey, { title: string; hint: string }> = {
   pricing: { title: 'Barème du prix conseillé', hint: 'Tarifs par km et par kg, minimum, majorations (urgent, fragile).' },
   limits: { title: 'Plafonds', hint: 'Annonces et trajets actifs par type de compte, contre-offres par offre.' },
+  nearbyParcels: {
+    title: 'Colis proches des transporteurs',
+    hint: 'radiusKm : rayon autour du départ (position récente du transporteur, sinon commune du profil). dailyPushLimit : push par transporteur sur 24 h, au-delà notification dans l’application seulement.',
+  },
+  mediaRetention: {
+    title: 'Conservation des images (jours)',
+    hint: 'parcelPhotosDays : photos d’une annonce livrée, annulée ou expirée, comptés depuis la fin. messageImagesDays : images des messages, comptés depuis l’envoi. 30 jours minimum. Jamais pendant un signalement ou un litige ; photos de litige et preuves de livraison gardées.',
+  },
   autoConfirmHours: { title: 'Confirmation automatique (heures)', hint: 'Délai après la déclaration de livraison.' },
   parcelExpiryDays: { title: 'Expiration des annonces (jours)', hint: 'Sans transporteur retenu.' },
   reviewWindowDays: { title: 'Fenêtre des avis (jours)', hint: 'Après la livraison.' },

@@ -13,9 +13,10 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import i18n, { initI18n } from '@/i18n';
 import { listenToNotificationTaps, registerForPush } from '@/notifications/push';
 import { SocketProvider, useSocket } from '@/realtime/socket';
-import { SessionProvider, useSession } from '@/session/SessionContext';
+import { SessionProvider, isCarrierIntent, useSession } from '@/session/SessionContext';
 import { colors, fontAssets } from '@/theme';
 import { flushPendingPosition } from '@/tracking/location';
+import { useNearbyPosition } from '@/tracking/nearbyPosition';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -27,10 +28,14 @@ const queryClient = new QueryClient({
 const PERSISTED = new Set(['parcels', 'parcel', 'trips', 'trip', 'conversations', 'app-config', 'user']);
 const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'ucolis.query-cache' });
 
-/** Effets liés à la session : push après connexion, envoi des positions en attente au retour du réseau. */
+/**
+ * Effets liés à la session : push après connexion, position des transporteurs (colis proches), envoi des
+ * positions de livraison en attente au retour du réseau.
+ */
 function SessionEffects() {
-  const { status } = useSession();
+  const { status, user } = useSession();
   const { connected } = useSocket();
+  useNearbyPosition(status === 'authenticated' && isCarrierIntent(user?.intent));
   useEffect(() => listenToNotificationTaps(), []);
   useEffect(() => {
     if (status === 'authenticated') registerForPush().catch(() => undefined);

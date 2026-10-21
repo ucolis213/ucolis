@@ -69,7 +69,7 @@ export function Staff() {
                 columns={[
                   { header: 'Nom', cell: (s) => <div><div className="font-medium">{s.firstName} {s.lastName}</div><div className="text-xs text-muted">{s.email}</div></div> },
                   { header: 'Rôle', cell: (s) => (s.role === 'super_admin' ? <Pill tone="primary">Super-admin</Pill> : 'Modérateur') },
-                  { header: 'Permissions', cell: (s) => (s.role === 'super_admin' ? 'Toutes' : <span className="text-xs">{s.permissions.map((p) => PERMISSION_LABELS[p]).join(', ') || '—'}</span>) },
+                  { header: 'Permissions', cell: (s) => (s.role === 'super_admin' ? 'Toutes' : <span className="text-xs">{s.permissions.map((p) => PERMISSION_LABELS[p]).join(', ') || '-'}</span>) },
                   { header: 'Statut', cell: (s) => <Pill tone={s.status === 'active' ? 'success' : s.status === 'invited' ? 'warning' : 'neutral'}>{STATUS_LABELS[s.status]}</Pill> },
                   { header: 'Dernière connexion', cell: (s) => dateTime(s.lastLoginAt) },
                   {

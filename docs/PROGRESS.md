@@ -35,8 +35,53 @@ Contrôles : `tsc`, lint, build Vite, 9 tests Vitest (menu, thème, client HTTP)
 Reste : tests de bout en bout Playwright.
 
 ## État global
-`pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 77 tests, couverture ≈ 99 % ; API 146 ;
-admin 9 ; mobile 11).
+`pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 80 tests, couverture ≈ 99 % ; API 151 ;
+admin 9 ; mobile 22).
+
+## Journal du 21 octobre 2026
+
+### Code
+- Publication rapide d'un colis, mode par défaut : trajet, titre, description, prix, photos facultatives
+  (`app/parcel/new/quick.tsx`). « Ajouter plus de détails » ouvre l'assistant complet avec le même brouillon ; retour
+  possible depuis l'étape Trajet. Voir `DECISIONS.md`.
+- Photos facultatives (0 à 5) dans les deux modes.
+- API : `mode` dans `POST /parcels` ; poids, dimensions, volume et date à `null` pour une annonce rapide ; filtres,
+  alertes, compatibilité des trajets et back-office adaptés.
+- Sélecteur de trajet extrait dans `RoutePicker`, publication commune dans `usePublishParcel`.
+- Libellés « Envoyer un colis » et « Nouvelle annonce » ; police arabe IBM Plex Sans Arabic.
+- Choix des adresses : « Ma position actuelle » et « Choisir sur la carte » deviennent deux icônes en fin de chaque
+  champ (Départ, Arrivée), au lieu de deux lignes sous les champs.
+- Accueil : dernières annonces de toutes les wilayas ; « Tout voir » ouvre la liste sans filtre.
+- Notification « Nouveau colis près de vous » aux transporteurs proches du départ : position envoyée à l'ouverture
+  de l'application (repli sur la commune du profil après 24 h), rayon et limite de push réglables (`nearbyParcels`).
+- Correctif : plantage de la messagerie et des notifications (« undefined cannot be used as a constructor ») :
+  dates relatives sans `Intl.RelativeTimeFormat`, absent de Hermes.
+- Correctif : vérification validée par le staff sans effet avant reconnexion. Le profil est rechargé à chaque
+  notification de la catégorie Compte et au retour de l'application au premier plan.
+- Messagerie : la photo choisie reste en aperçu, retirable, et part avec le bouton d'envoi (avec le texte saisi) ;
+  un toucher sur une photo de la discussion l'ouvre en plein écran, avec les autres photos à feuilleter.
+- Correctif back-office : images des conversations « introuvables ». Elles sont publiques et s'affichent désormais
+  en vignette (clic : plein format). Photos de litige et preuves de livraison, publiques elles aussi, sont signées
+  avec leur vrai type de stockage (`type=upload`) au lieu de `authenticated`.
+- Back-office : consommation Cloudinary du mois sur le tableau de bord (alerte à 80 % et 95 %).
+- Ménage automatique des anciennes images (`purge-old-media`, réglage `mediaRetention`) : photos d'annonces
+  terminées depuis 90 jours, images de messages de plus de 180 jours. Voir `DECISIONS.md`.
+- Sélecteur de date en calendrier mensuel avec choix de l'année (expiration du permis et de l'assurance, date du
+  colis, trajets, offres, filtres).
+- Correctif : puces de filtres actifs étirées sur toute la hauteur de l'écran Annonces (`flexGrow: 0`).
+- Correctif : une modification quittée sans enregistrer s'ouvrait à la place d'une nouvelle annonce (état persisté).
+  Elle est désormais abandonnée à l'ouverture d'une nouvelle annonce, au redémarrage et à la déconnexion.
+
+### À tester sur téléphone
+- Publication rapide complète, avec et sans photo ; passage au mode complet puis retour.
+- Modification d'une annonce rapide ; reprise d'un brouillon après fermeture de l'application.
+- Colis proches : compte transporteur sur un téléphone (autorisation de localisation acceptée), colis publié depuis
+  un autre compte près de sa position ; vérifier le push et la distance affichée.
+- Messagerie : liste des conversations et envoi d'un message ; calendrier en français et en arabe.
+
+### Contrôles
+`turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 81 tests ; API 158 ; admin 9 ; mobile 27). Sous
+charge, MongoDB en mémoire peut dépasser son délai de démarrage de 10 s : relancer avec `--concurrency=1`.
 
 ## Journal du 20 octobre 2026
 

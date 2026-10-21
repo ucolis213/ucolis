@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { GuestGate } from '@/components/GuestGate';
 import { Screen } from '@/components/Screen';
 import { useSession } from '@/session/SessionContext';
+import { newParcelRoute } from '@/state/parcelDraft';
 import { colors, forwardIcon, radii, shadow, space } from '@/theme';
 
 export default function Publish() {
@@ -23,7 +24,7 @@ export default function Publish() {
       <AppText size="xl" weight="bold">
         {t('publish.title')}
       </AppText>
-      <Choice icon="cube" title={t('publish.parcel')} hint={t('publish.parcelHint')} onPress={() => router.push('/parcel/new/route')} />
+      <Choice icon="cube" title={t('publish.parcel')} hint={t('publish.parcelHint')} onPress={() => router.push(newParcelRoute())} />
       <Choice
         icon="car"
         title={t('publish.trip')}

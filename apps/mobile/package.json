@@ -12,8 +12,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
     "@expo-google-fonts/inter": "^0.4.1",
-    "@expo-google-fonts/noto-sans-arabic": "^0.4.1",
     "@expo/metro-runtime": "~57.0.17",
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.2.1",

@@ -13,6 +13,13 @@ const RTL_RELOAD_KEY = '@ucolis/rtl_reload';
 
 export const isLocale = (v: unknown): v is Locale => LOCALES.includes(v as Locale);
 
+// Rechargement à chaud (développement) : i18next garde les traductions du démarrage, on y verse les nouvelles.
+if (i18n.isInitialized) {
+  for (const lng of LOCALES) {
+    for (const ns of NAMESPACES) i18n.addResourceBundle(lng, ns, resources[lng][ns], true, true);
+  }
+}
+
 /** Langue enregistrée, sinon celle de l'appareil si elle est prise en charge, sinon le français. */
 export function pickLocale(stored: string | null, device: string | null | undefined): Locale {
   if (isLocale(stored)) return stored;

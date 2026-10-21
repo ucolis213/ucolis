@@ -1,7 +1,9 @@
-import { DEFAULT_SETTINGS } from '@ucolis/shared';
+import { DEFAULT_SETTINGS, NAMESPACES, resources } from '@ucolis/shared';
 import { parseFaq } from '../src/components/Markdown';
 import { normalizeSearch } from '../src/components/Select';
-import { formatDateTime, formatTime } from '../src/format';
+import i18n from 'i18next';
+import { atNoon, clampMonth, monthCells, weekDays } from '../src/calendar';
+import { formatDateTime, formatRelative, formatTime } from '../src/format';
 import {
   addRecent,
   clearRecents,
@@ -13,6 +15,9 @@ import {
 } from '../src/state/addressBook';
 import { startupRoute } from '../src/hooks/useAppConfig';
 import { pickLocale } from '../src/i18n';
+import { draftFromParcel } from '../src/state/draftFromParcel';
+import { quickPayload, stepErrors } from '../src/state/draftPayload';
+import { draftEntryRoute, EMPTY_DRAFT, newParcelRoute, useParcelDraft } from '../src/state/parcelDraft';
 
 describe('pickLocale', () => {
   it('privilégie la langue enregistrée, puis celle de l’appareil, puis le français', () => {
@@ -94,6 +99,50 @@ describe('format des heures', () => {
   });
 });
 
+describe('calendrier du sélecteur de date', () => {
+  it('aligne le 1er du mois sur son jour de semaine, à partir du dimanche', () => {
+    // Octobre 2026 commence un jeudi et compte 31 jours.
+    const cells = monthCells(2026, 9);
+    expect(cells.slice(0, 4)).toEqual([null, null, null, null]);
+    expect(cells[4]).toEqual(atNoon(2026, 9, 1));
+    expect(cells.filter(Boolean)).toHaveLength(31);
+    expect(cells.length % 7).toBe(0);
+    expect(weekDays(6)).toEqual([6, 0, 1, 2, 3, 4, 5]);
+  });
+
+  it('ramène le mois dans les bornes au changement d’année', () => {
+    const min = atNoon(2026, 9, 21);
+    const max = atNoon(2028, 3, 10);
+    expect(clampMonth(2026, 2, min, max)).toBe(9);
+    expect(clampMonth(2027, 2, min, max)).toBe(2);
+    expect(clampMonth(2028, 11, min, max)).toBe(3);
+  });
+});
+
+describe('temps relatif', () => {
+  beforeAll(() => i18n.init({ resources, lng: 'fr', ns: [...NAMESPACES], defaultNS: 'common', interpolation: { escapeValue: false } }));
+
+  it('se passe de Intl.RelativeTimeFormat, absent de Hermes', () => {
+    const now = new Date(2026, 9, 21, 12, 0);
+    const ago = (s: number) => formatRelative(new Date(now.getTime() - s * 1000), now);
+    // Simulation de Hermes.
+    const intl = Intl as { RelativeTimeFormat?: unknown };
+    const saved = intl.RelativeTimeFormat;
+    delete intl.RelativeTimeFormat;
+    try {
+      expect(ago(10)).toBe("À l'instant");
+      expect(ago(-30)).toBe("À l'instant");
+      expect(ago(5 * 60)).toBe('Il y a 5 min');
+      expect(ago(3 * 3600)).toBe('Il y a 3 h');
+      expect(ago(30 * 3600)).toBe('Hier');
+      expect(ago(3 * 86400)).toBe('Il y a 3 j');
+      expect(ago(10 * 86400)).toMatch(/11/);
+    } finally {
+      intl.RelativeTimeFormat = saved;
+    }
+  });
+});
+
 describe('sélecteur d’adresse', () => {
   it('propose les communes, celles qui commencent par la recherche d’abord, en français et en arabe', () => {
     expect(localSuggestions('a')).toEqual([]);
@@ -140,5 +189,58 @@ describe('sélecteur d’adresse', () => {
     expect(new Set(recents.map((r) => r.address)).size).toBe(MAX_RECENTS);
     await clearRecents();
     expect(await loadRecents()).toEqual([]);
+  });
+});
+
+describe('publication rapide', () => {
+  const place = (wilayaCode: string, commune: string, lat: number, lng: number) => ({
+    address: 'Rue Didouche Mourad',
+    details: '',
+    wilayaCode,
+    commune,
+    location: { lat, lng },
+  });
+  const draft = {
+    ...EMPTY_DRAFT,
+    pickup: place('16', '16001', 36.77, 3.06),
+    dropoff: place('31', '31001', 35.7, -0.63),
+    title: 'Carton de livres',
+    requestedPrice: 2000,
+    prohibitedItemsDeclared: true,
+  };
+
+  it('se contente du trajet, du titre, du prix et de la déclaration, sans photo', () => {
+    expect(EMPTY_DRAFT.mode).toBe('quick');
+    expect(stepErrors('quick', draft)).toEqual({});
+    expect(quickPayload(draft)).toMatchObject({ mode: 'quick', photos: [] });
+    expect(quickPayload(draft)).not.toHaveProperty('weightKg');
+  });
+
+  it('signale les champs manquants', () => {
+    const errors = stepErrors('quick', { ...draft, pickup: null, title: '', prohibitedItemsDeclared: false });
+    expect(Object.keys(errors)).toEqual(expect.arrayContaining(['pickup', 'title', 'prohibitedItemsDeclared']));
+  });
+
+  it('reprend une annonce rapide dans le même mode, sans les valeurs posées par l’API', () => {
+    const d = draftFromParcel({ weightKg: null, category: 'other', vehicleTypes: ['car', 'van'], paymentArrangement: 'other' });
+    expect(d).toMatchObject({ mode: 'quick', category: null, vehicleTypes: [], paymentArrangement: null });
+    expect(draftFromParcel({ weightKg: 5 }).mode).toBe('full');
+    expect(draftEntryRoute('quick')).toBe('/parcel/new/quick');
+    expect(draftEntryRoute('full')).toBe('/parcel/new/route');
+  });
+});
+
+describe('nouvelle annonce après une modification abandonnée', () => {
+  it('abandonne la modification en cours au lieu de rouvrir l’annonce publiée', () => {
+    useParcelDraft.getState().start({ mode: 'quick', title: 'Annonce déjà publiée' }, 'parcel-1');
+    expect(newParcelRoute()).toBe('/parcel/new/quick');
+    expect(useParcelDraft.getState()).toMatchObject({ editingId: null, editingQuick: false, draft: EMPTY_DRAFT });
+  });
+
+  it('garde un brouillon de nouvelle annonce en cours', () => {
+    useParcelDraft.getState().start();
+    useParcelDraft.getState().update({ title: 'Carton de livres' });
+    newParcelRoute();
+    expect(useParcelDraft.getState().draft.title).toBe('Carton de livres');
   });
 });

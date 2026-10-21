@@ -96,7 +96,7 @@ export default function PublicProfile() {
             <SectionCard title={t('trustStats')}>
               <KeyValue label={t('parcelsSent')} value={String(u.stats.parcelsSent)} />
               <KeyValue label={t('parcelsCarried')} value={String(u.stats.parcelsCarried)} />
-              <KeyValue label={t('successRate')} value={u.stats.successRate === null ? '—' : `${u.stats.successRate} %`} />
+              <KeyValue label={t('successRate')} value={u.stats.successRate === null ? '-' : `${u.stats.successRate} %`} />
               <KeyValue label={t('withdrawals')} value={String(u.stats.withdrawals)} />
               {u.stats.medianReplyMinutes !== null && <KeyValue label="" value={t('medianReply', { minutes: u.stats.medianReplyMinutes })} />}
             </SectionCard>

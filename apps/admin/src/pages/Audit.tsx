@@ -73,8 +73,8 @@ export function Audit() {
                             {e.targetType}
                             {e.targetId && <span className="block font-mono text-muted">{e.targetId}</span>}
                           </td>
-                          <td className="px-5 py-2">{e.reason ?? '—'}</td>
-                          <td className="px-5 py-2 text-xs text-muted">{e.ip ?? '—'}</td>
+                          <td className="px-5 py-2">{e.reason ?? '-'}</td>
+                          <td className="px-5 py-2 text-xs text-muted">{e.ip ?? '-'}</td>
                         </tr>
                         {open === e.id && (
                           <tr className="border-b border-border bg-background">
@@ -105,7 +105,7 @@ function Json({ title, value }: { title: string; value: unknown }) {
   return (
     <div>
       <div className="mb-1 text-xs font-semibold text-muted">{title}</div>
-      <pre className="max-h-64 overflow-auto rounded bg-surface p-2 text-xs">{value === null || value === undefined ? '—' : JSON.stringify(value, null, 2)}</pre>
+      <pre className="max-h-64 overflow-auto rounded bg-surface p-2 text-xs">{value === null || value === undefined ? '-' : JSON.stringify(value, null, 2)}</pre>
     </div>
   );
 }

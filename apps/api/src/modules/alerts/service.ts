@@ -1,8 +1,13 @@
 // Alertes (F10) et favoris (F7). Une nouvelle annonce qui correspond à une alerte déclenche au plus
 // un push par alerte et par heure ; les correspondances suivantes sont regroupées (« 3 nouveaux colis »).
 
+import type { Types } from 'mongoose';
 import {
+  CARRIER_INTENTS,
   MAX_SAVED_SEARCHES,
+  POSITION_MAX_AGE_HOURS,
+  communesWithinKm,
+  getCommune,
   getWilaya,
   haversineKm,
   parcelListQuerySchema,
@@ -11,14 +16,18 @@ import {
 } from '@ucolis/shared';
 import type { Deps } from '../../deps';
 import { AppError } from '../../lib/errors';
+import { NotificationModel } from '../notifications/model';
 import { ParcelModel, type ParcelLean } from '../parcels/model';
 import { fromPoint } from '../parcels/serializers';
 import type { ParcelService } from '../parcels/service';
 import { normalizeSearch } from '../parcels/service';
 import type { TripLean } from '../trips/model';
+import { UserModel, type UserLean } from '../users/model';
 import { FavoriteModel, SavedSearchModel, type SavedSearchLean } from './model';
 
 const HOUR = 3600_000;
+const DAY = 24 * HOUR;
+const EARTH_RADIUS_KM = 6371;
 
 const toDto = (s: SavedSearchLean): SavedSearchDto => ({
   id: s._id.toString(),
@@ -36,13 +45,13 @@ export function parcelMatches(p: ParcelLean, raw: Record<string, unknown>): bool
   const f = parsed.data;
   if (f.fromWilaya && p.pickup.wilayaCode !== f.fromWilaya) return false;
   if (f.toWilaya && p.dropoff.wilayaCode !== f.toWilaya) return false;
-  if (f.maxWeight && p.weightKg > f.maxWeight) return false;
+  if (f.maxWeight && (p.weightKg == null || p.weightKg > f.maxWeight)) return false;
   if (f.vehicleType && !p.vehicleTypes.includes(f.vehicleType)) return false;
   if (f.urgent && !p.urgent) return false;
   if (f.priceMin !== undefined && p.requestedPrice < f.priceMin) return false;
   if (f.priceMax !== undefined && p.requestedPrice > f.priceMax) return false;
-  if (f.dateFrom && p.desiredDate < f.dateFrom) return false;
-  if (f.dateTo && p.desiredDate > f.dateTo) return false;
+  if (f.dateFrom && p.desiredDate && p.desiredDate < f.dateFrom) return false;
+  if (f.dateTo && p.desiredDate && p.desiredDate > f.dateTo) return false;
   if (f.q && !(p.searchText ?? '').includes(normalizeSearch(f.q))) return false;
   if (f.lat !== undefined && f.lng !== undefined && f.radiusKm) {
     if (haversineKm({ lat: f.lat, lng: f.lng }, fromPoint(p.pickup.location)) > f.radiusKm) return false;
@@ -108,6 +117,64 @@ export function createAlertService(deps: Deps, parcels: ParcelService) {
       for (const a of alerts) {
         if (parcelMatches(p, a.filters as Record<string, unknown>)) await hit(a, routeLabel(p.pickup.wilayaCode, p.dropoff.wilayaCode));
       }
+    },
+
+    /**
+     * Transporteurs proches du départ d'un nouveau colis : position de moins de 24 h dans le rayon, sinon commune
+     * du profil dans le rayon. Distance à vol d'oiseau pour le message ; au-delà de dailyPushLimit notifications
+     * sur 24 h, plus de push (notification dans l'application seulement).
+     */
+    async nearbyCarriers(p: ParcelLean, exclude: ReadonlySet<string> = new Set()) {
+      const { nearbyParcels } = await deps.settings.getAll();
+      const now = deps.now();
+      const fresh = new Date(now.getTime() - POSITION_MAX_AGE_HOURS * HOUR);
+      const origin = fromPoint(p.pickup.location);
+      const sender = await UserModel.findById(p.sender, { blockedUsers: 1 }).lean();
+      // Ni l'expéditeur, ni ceux qu'il bloque, ni ceux qui le bloquent.
+      const base = {
+        _id: { $nin: [p.sender, ...((sender?.blockedUsers as Types.ObjectId[] | undefined) ?? [])] },
+        blockedUsers: { $ne: p.sender },
+        intent: { $in: CARRIER_INTENTS },
+        status: 'active',
+      };
+      const projection = { _id: 1, commune: 1, lastPosition: 1 };
+      const [located, byCommune] = (await Promise.all([
+        UserModel.find(
+          {
+            ...base,
+            'lastPosition.at': { $gte: fresh },
+            'lastPosition.location': {
+              $geoWithin: { $centerSphere: [[origin.lng, origin.lat], nearbyParcels.radiusKm / EARTH_RADIUS_KM] },
+            },
+          },
+          projection,
+        ).lean(),
+        UserModel.find(
+          {
+            ...base,
+            commune: { $in: communesWithinKm(origin, nearbyParcels.radiusKm) },
+            $or: [{ lastPosition: null }, { 'lastPosition.at': { $lt: fresh } }],
+          },
+          projection,
+        ).lean(),
+      ])) as [UserLean[], UserLean[]];
+
+      const since = new Date(now.getTime() - DAY);
+      const out: { userId: string; km: number; skipPush: boolean }[] = [];
+      for (const u of [...located, ...byCommune]) {
+        const id = u._id.toString();
+        if (exclude.has(id)) continue;
+        const from =
+          u.lastPosition && u.lastPosition.at >= fresh ? fromPoint(u.lastPosition.location) : getCommune(u.commune)?.center;
+        if (!from) continue;
+        const sent = await NotificationModel.countDocuments({ recipient: u._id, type: 'nearby_parcel', createdAt: { $gte: since } });
+        out.push({
+          userId: id,
+          km: Math.max(1, Math.round(haversineKm(origin, from))),
+          skipPush: sent >= nearbyParcels.dailyPushLimit,
+        });
+      }
+      return out;
     },
 
     async onTrip(t: TripLean) {

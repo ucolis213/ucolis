@@ -12,6 +12,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Segmented } from '@/components/Segmented';
 import { useSession } from '@/session/SessionContext';
+import { newParcelRoute } from '@/state/parcelDraft';
 import { space } from '@/theme';
 
 const GROUPS = {
@@ -53,7 +54,7 @@ export default function MyParcels() {
         <QueryView
           query={{ ...query, data: items }}
           isEmpty={(d) => d.length === 0}
-          empty={{ icon: 'cube-outline', title: t('parcel:noListings'), actionLabel: t('parcel:newTitle'), onAction: () => router.push('/parcel/new/route') }}
+          empty={{ icon: 'cube-outline', title: t('parcel:noListings'), actionLabel: t('parcel:newTitle'), onAction: () => router.push(newParcelRoute()) }}
         >
           {(data) => (
             <FlashList

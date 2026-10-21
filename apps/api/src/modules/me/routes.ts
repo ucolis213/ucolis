@@ -5,6 +5,7 @@ import {
   changePasswordSchema,
   emailChangeConfirmSchema,
   emailChangeSchema,
+  positionSchema,
   preferencesSchema,
   pushTokenSchema,
   updateMeSchema,
@@ -62,6 +63,11 @@ export function meRoutes(deps: Deps, me: MeService): Router {
   });
   r.delete('/me/sessions', async (req, res) => {
     await me.revokeOtherSessions(currentUser(req).userId, deviceIdOf(req));
+    res.status(204).end();
+  });
+
+  r.put('/me/position', validate(positionSchema), async (req, res) => {
+    await me.updatePosition(currentUser(req).userId, req.body);
     res.status(204).end();
   });
 

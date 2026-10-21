@@ -1,6 +1,6 @@
-// Recherche d'adresses façon VTC : champs Départ et Arrivée reliés, « Ma position actuelle », « Choisir sur la
-// carte », adresses récentes, et suggestions pendant la frappe : communes du référentiel tout de suite, lieux et
-// rues de l'API (OpenStreetMap ou Google) dès qu'ils arrivent.
+// Recherche d'adresses façon VTC : champs Départ et Arrivée reliés, chacun avec ses icônes « Ma position actuelle »
+// et « Choisir sur la carte » en fin de champ, adresses récentes, et suggestions pendant la frappe : communes du
+// référentiel tout de suite, lieux et rues de l'API (OpenStreetMap ou Google) dès qu'ils arrivent.
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -35,7 +35,6 @@ import { MapPicker, type PickedPlace } from './MapPicker';
 export type AddressField = 'pickup' | 'dropoff';
 
 type Row =
-  | { kind: 'action'; id: 'position' | 'map' }
   | { kind: 'header'; id: string; label: string; loading?: boolean }
   | { kind: 'place'; id: string; place: AddressSuggestion; icon: keyof typeof Ionicons.glyphMap }
   | { kind: 'note'; id: string; label: string };
@@ -80,8 +79,9 @@ export function AddressSearch({
   const [remote, setRemote] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [recents, setRecents] = useState<PickedPlace[]>([]);
-  const [locating, setLocating] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
+  /** Champ dont la position est en cours de localisation, ou dont la carte est ouverte. */
+  const [locating, setLocating] = useState<AddressField | null>(null);
+  const [mapField, setMapField] = useState<AddressField | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -125,33 +125,31 @@ export function AddressSearch({
     return () => clearTimeout(timer);
   }, [query]);
 
-  async function choose(place: PickedPlace) {
+  /** Adresse choisie pour un champ (par défaut celui en cours de saisie), puis passage à l'autre s'il est vide. */
+  async function choose(place: PickedPlace, f: AddressField = field) {
     const picked = toPlace(place);
-    onSelect(field, picked);
+    onSelect(f, picked);
     setRecents(await addRecent(picked));
-    if (values[otherField(field)]) close();
-    else switchField(otherField(field));
+    if (values[otherField(f)]) close();
+    else switchField(otherField(f));
   }
 
-  async function myPosition() {
-    setLocating(true);
+  async function myPosition(f: AddressField) {
+    setLocating(f);
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
       if (!perm.granted) return Alert.alert(t('locationDenied'));
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      await choose(await reverse({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
+      await choose(await reverse({ lat: pos.coords.latitude, lng: pos.coords.longitude }), f);
     } finally {
-      setLocating(false);
+      setLocating(null);
     }
   }
 
   const typing = query.trim().length >= 2;
   const local = typing ? localSuggestions(query) : [];
   const places = withoutDuplicates(remote, local);
-  const rows: Row[] = [
-    { kind: 'action', id: 'position' },
-    { kind: 'action', id: 'map' },
-  ];
+  const rows: Row[] = [];
   if (!typing && recents.length) {
     rows.push({ kind: 'header', id: 'h-recents', label: t('recentAddresses') });
     recents.forEach((p, i) =>
@@ -181,6 +179,35 @@ export function AddressSearch({
       rows.push({ kind: 'note', id: 'empty', label: t('noAddressResult') });
   }
 
+  /** Icônes en fin de champ : position actuelle et choix sur la carte, pour ce champ. */
+  const fieldActions = (f: AddressField) => (
+    <View style={styles.fieldActions}>
+      <Pressable
+        onPress={() => myPosition(f)}
+        disabled={locating !== null}
+        hitSlop={4}
+        style={styles.fieldAction}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('myCurrentLocation')}, ${t(f)}`}
+      >
+        {locating === f ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Ionicons name="locate" size={20} color={colors.primary} />
+        )}
+      </Pressable>
+      <Pressable
+        onPress={() => setMapField(f)}
+        hitSlop={4}
+        style={styles.fieldAction}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('chooseOnMap')}, ${t(f)}`}
+      >
+        <Ionicons name="map-outline" size={20} color={colors.primary} />
+      </Pressable>
+    </View>
+  );
+
   const fieldRow = (f: AddressField) => {
     const value = values[f];
     const placeholder = t(f === 'pickup' ? 'whereFrom' : 'whereTo');
@@ -207,55 +234,29 @@ export function AddressSearch({
               <Ionicons name="close-circle" size={18} color={colors.textSubtle} />
             </Pressable>
           )}
+          {fieldActions(f)}
         </View>
       );
     }
     return (
-      <Pressable
-        style={styles.fieldRow}
-        onPress={() => switchField(f)}
-        accessibilityRole="button"
-        accessibilityLabel={t(f)}
-      >
-        <AppText
-          numberOfLines={1}
-          color={value ? colors.navy : colors.textSubtle}
-          style={styles.flex}
+      <View style={styles.fieldRow}>
+        <Pressable
+          style={styles.fieldText}
+          onPress={() => switchField(f)}
+          accessibilityRole="button"
+          accessibilityLabel={t(f)}
         >
-          {value?.address ?? placeholder}
-        </AppText>
-      </Pressable>
+          <AppText numberOfLines={1} color={value ? colors.navy : colors.textSubtle}>
+            {value?.address ?? placeholder}
+          </AppText>
+        </Pressable>
+        {fieldActions(f)}
+      </View>
     );
   };
 
   const renderRow = ({ item }: { item: Row }) => {
     switch (item.kind) {
-      case 'action': {
-        const isMap = item.id === 'map';
-        return (
-          <Pressable
-            style={styles.row}
-            onPress={isMap ? () => setMapOpen(true) : myPosition}
-            accessibilityRole="button"
-            accessibilityLabel={t(isMap ? 'chooseOnMap' : 'myCurrentLocation')}
-          >
-            <View style={styles.actionIcon}>
-              {!isMap && locating ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : (
-                <Ionicons
-                  name={isMap ? 'map-outline' : 'locate'}
-                  size={20}
-                  color={colors.primary}
-                />
-              )}
-            </View>
-            <AppText weight="medium" style={styles.flex}>
-              {t(isMap ? 'chooseOnMap' : 'myCurrentLocation')}
-            </AppText>
-          </Pressable>
-        );
-      }
       case 'header':
         return (
           <View style={styles.header}>
@@ -333,13 +334,18 @@ export function AddressSearch({
           contentContainerStyle={styles.list}
         />
         <MapPicker
-          visible={mapOpen}
-          title={t(field)}
-          initial={values[field]?.location ?? values[otherField(field)]?.location ?? null}
-          onClose={() => setMapOpen(false)}
+          visible={mapField !== null}
+          title={t(mapField ?? field)}
+          initial={
+            mapField
+              ? (values[mapField]?.location ?? values[otherField(mapField)]?.location ?? null)
+              : null
+          }
+          onClose={() => setMapField(null)}
           onPick={(p) => {
-            setMapOpen(false);
-            void choose(p);
+            const f = mapField ?? field;
+            setMapField(null);
+            void choose(p, f);
           }}
         />
       </SafeAreaView>
@@ -373,6 +379,9 @@ const styles = StyleSheet.create({
   line: { flex: 1, width: 2, marginVertical: space(1), backgroundColor: colors.border },
   square: { width: 10, height: 10, backgroundColor: colors.navy },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH + 4 },
+  fieldText: { flex: 1, minHeight: MIN_TOUCH, justifyContent: 'center' },
+  fieldActions: { flexDirection: 'row', alignItems: 'center' },
+  fieldAction: { width: 40, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   input: { flex: 1, minHeight: MIN_TOUCH, color: colors.navy, fontSize: 16, textAlign: 'auto' },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
   list: { paddingHorizontal: space(4), paddingBottom: space(6) },
@@ -384,7 +393,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  actionIcon: { width: 20, alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

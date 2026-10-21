@@ -175,7 +175,23 @@ describe('masquage et vérifications', () => {
     expect((await ctx.http().get('/api/v1/admin/files').query({ publicId }).set(content.auth)).status).toBe(403);
     const ok = await ctx.http().get('/api/v1/admin/files').query({ publicId }).set(verifier.auth);
     expect(ok.body.url).toContain('expires_at=');
+    expect(ok.body.url).toContain('type=authenticated');
+    // Preuve de livraison stockée en public : signée avec ce type, sinon Cloudinary la dit introuvable.
+    const proof = await ctx.http().get('/api/v1/admin/files').query({ publicId: 'ucolis/delivery_proof/abc/p1' }).set(content.auth);
+    expect(proof.body.url).toContain('type=upload');
   });
+});
+
+describe('consommation Cloudinary', () => {
+  it('est réservée au tableau de bord', async () => {
+    const ctx = makeTestApp();
+    const viewer = await createStaff(ctx, 'moderator', ['dashboard.view']);
+    const other = await createStaff(ctx, 'moderator', ['parcels.view']);
+    expect((await ctx.http().get('/api/v1/admin/storage-usage').set(other.auth)).status).toBe(403);
+    const res = await ctx.http().get('/api/v1/admin/storage-usage').set(viewer.auth);
+    expect(res.body.usage.credits).toEqual({ used: 5, limit: 25, percent: 20 });
+  });
+
 });
 
 describe('modération', () => {

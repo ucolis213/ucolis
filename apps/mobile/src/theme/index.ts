@@ -1,4 +1,4 @@
-// Thème mobile : jetons de shared + typographie. Inter en latin, Noto Sans Arabic en arabe.
+// Thème mobile : jetons de shared + typographie. Inter en latin, IBM Plex Sans Arabic en arabe.
 // La direction ne change qu'au redémarrage (Updates.reloadAsync), I18nManager.isRTL est donc stable.
 
 import { I18nManager } from 'react-native';
@@ -6,10 +6,10 @@ import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
-import { NotoSansArabic_400Regular } from '@expo-google-fonts/noto-sans-arabic/400Regular';
-import { NotoSansArabic_500Medium } from '@expo-google-fonts/noto-sans-arabic/500Medium';
-import { NotoSansArabic_600SemiBold } from '@expo-google-fonts/noto-sans-arabic/600SemiBold';
-import { NotoSansArabic_700Bold } from '@expo-google-fonts/noto-sans-arabic/700Bold';
+import { IBMPlexSansArabic_400Regular } from '@expo-google-fonts/ibm-plex-sans-arabic/400Regular';
+import { IBMPlexSansArabic_500Medium } from '@expo-google-fonts/ibm-plex-sans-arabic/500Medium';
+import { IBMPlexSansArabic_600SemiBold } from '@expo-google-fonts/ibm-plex-sans-arabic/600SemiBold';
+import { IBMPlexSansArabic_700Bold } from '@expo-google-fonts/ibm-plex-sans-arabic/700Bold';
 
 export { colors, fontSizes, radii, space, MIN_TOUCH, parcelStatusColors } from '@ucolis/shared';
 
@@ -18,10 +18,10 @@ export const fontAssets = {
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
-  NotoSansArabic_400Regular,
-  NotoSansArabic_500Medium,
-  NotoSansArabic_600SemiBold,
-  NotoSansArabic_700Bold,
+  IBMPlexSansArabic_400Regular,
+  IBMPlexSansArabic_500Medium,
+  IBMPlexSansArabic_600SemiBold,
+  IBMPlexSansArabic_700Bold,
 };
 
 export type FontWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -34,10 +34,10 @@ const LATIN: Record<FontWeight, string> = {
 };
 
 const ARABIC: Record<FontWeight, string> = {
-  regular: 'NotoSansArabic_400Regular',
-  medium: 'NotoSansArabic_500Medium',
-  semibold: 'NotoSansArabic_600SemiBold',
-  bold: 'NotoSansArabic_700Bold',
+  regular: 'IBMPlexSansArabic_400Regular',
+  medium: 'IBMPlexSansArabic_500Medium',
+  semibold: 'IBMPlexSansArabic_600SemiBold',
+  bold: 'IBMPlexSansArabic_700Bold',
 };
 
 export const fontFamily = (weight: FontWeight = 'regular') =>

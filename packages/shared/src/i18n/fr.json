@@ -30,7 +30,7 @@
     },
     "onboarding": {
       "slide1Title": "Expédiez facilement",
-      "slide1Body": "Publiez votre colis et recevez des offres de transporteurs vérifiés partout en Algérie.",
+      "slide1Body": "Décrivez votre colis et recevez des offres de transporteurs vérifiés partout en Algérie.",
       "slide2Title": "Transportez et gagnez",
       "slide2Body": "Publiez vos trajets, remplissez votre véhicule et proposez votre prix.",
       "slide3Title": "Une communauté de confiance",
@@ -46,7 +46,7 @@
       "greeting": "Bonjour, {{name}}",
       "guestGreeting": "Bienvenue sur UCOLIS",
       "searchPlaceholder": "Rechercher un colis, une destination…",
-      "publishParcel": "Publier un colis",
+      "publishParcel": "Envoyer un colis",
       "proposeTrip": "Proposer un trajet",
       "activeParcels": "Colis actifs",
       "activeOffers": "Offres actives",
@@ -57,7 +57,7 @@
     },
     "publish": {
       "title": "Que voulez-vous publier ?",
-      "parcel": "Un colis",
+      "parcel": "Un colis à envoyer",
       "parcelHint": "Recevez des offres de transporteurs",
       "trip": "Un trajet",
       "tripHint": "Remplissez votre véhicule"
@@ -109,6 +109,18 @@
     "sortBy": "Trier par",
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
+    "relative": {
+      "justNow": "À l'instant",
+      "minutesAgo": "Il y a {{count}} min",
+      "hoursAgo": "Il y a {{count}} h",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {{count}} j"
+    },
+    "calendar": {
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant",
+      "chooseYear": "Choisir l'année"
+    },
     "unavailable": "Indisponible",
     "offlineBanner": "Hors connexion : les données affichées peuvent être anciennes.",
     "chooseFromGallery": "Choisir dans la galerie",
@@ -274,7 +286,7 @@
     },
     "suggestedPrice": "Prix estimé",
     "noListings": "Aucune annonce pour le moment",
-    "newTitle": "Publier un colis",
+    "newTitle": "Nouvelle annonce",
     "editTitle": "Modifier l'annonce",
     "steps": {
       "route": "Trajet",
@@ -328,7 +340,14 @@
     "estimated": "estimé",
     "suggested": "Prix suggéré : {{price}}",
     "priceWarning": "Ce prix dépasse 3 fois le prix suggéré : les transporteurs risquent de ne pas répondre.",
-    "photosHint": "1 à 5 photos. La première sert de couverture.",
+    "photosOptional": "Photos (facultatif)",
+    "photosOptionalHint": "Jusqu'à 5 photos, la première sert de couverture. Une annonce avec photo reçoit plus d'offres.",
+    "quickHint": "Le trajet, un titre et votre prix suffisent. Les transporteurs vous demanderont le reste.",
+    "moreDetails": "Ajouter plus de détails",
+    "moreDetailsHint": "Poids, dimensions, date, véhicules, destinataire",
+    "quickPublish": "Revenir à la publication rapide",
+    "notSpecified": "Non précisé",
+    "flexibleDate": "Date flexible",
     "addPhoto": "Ajouter",
     "cover": "Couverture",
     "publish": "Publier l'annonce",
@@ -592,7 +611,9 @@
       "dispute_opened": "Un litige a été ouvert",
       "carrier_withdrew": "Le transporteur s'est désisté"
     },
-    "about": "À propos de « {{title}} »"
+    "about": "À propos de « {{title}} »",
+    "removePhoto": "Retirer la photo",
+    "imageExpired": "Photo expirée"
   },
   "profile": {
     "title": "Mon profil",
@@ -848,6 +869,10 @@
       "title": "Colis compatible",
       "body": "Un colis correspond à votre trajet {{route}}."
     },
+    "nearby_parcel": {
+      "title": "Nouveau colis près de vous",
+      "body": "« {{parcelTitle}} » part à {{km}} km de vous. Faites votre offre."
+    },
     "trip_request_received": {
       "title": "Proposition de colis",
       "body": "Un expéditeur propose « {{parcelTitle}} » sur votre trajet."
@@ -970,7 +995,7 @@
       "vehicleTypes": "Choisissez au moins un type de véhicule.",
       "desiredDate": "Date entre aujourd'hui et dans 60 jours.",
       "minPrice": "100 DA minimum.",
-      "photosCount": "Entre 1 et 5 photos.",
+      "photosCount": "5 photos au maximum.",
       "radius": "Rayon non pris en charge.",
       "plate": "Immatriculation invalide.",
       "positive": "Doit être positif.",

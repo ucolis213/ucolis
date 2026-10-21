@@ -5,7 +5,6 @@ import type { MessageDto, UserSummary } from '@ucolis/shared';
 import { api } from '../api/client';
 import { useAction } from '../api/hooks';
 import { dateTime, t } from '../format';
-import { PrivateFileButton } from './PrivateFile';
 import { Button, Empty, ReasonDialog } from './ui';
 
 export function Messages({ messages, people, canDelete, invalidate }: { messages: MessageDto[]; people: Record<string, UserSummary | undefined>; canDelete?: boolean; invalidate: unknown[][] }) {
@@ -31,8 +30,14 @@ export function Messages({ messages, people, canDelete, invalidate }: { messages
               <em className="text-muted">Message supprimé{m.text ? ` : « ${m.text} »` : ''}</em>
             ) : (
               <div className="flex items-start justify-between gap-2">
-                <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                {m.image && <PrivateFileButton file={m.image} label="Image" />}
+                {m.text && <p className="whitespace-pre-wrap break-words">{m.text}</p>}
+                {/* Images de messages publiques (comme les photos de colis), pas une pièce privée signée. */}
+                {m.type === 'image' && !m.image && <em className="text-muted">Image supprimée après la durée de conservation.</em>}
+                {m.image && (
+                  <a href={m.image.url} target="_blank" rel="noreferrer noopener" title="Ouvrir l’image en grand">
+                    <img src={m.image.url} alt="Image envoyée" className="h-32 w-32 rounded object-cover" />
+                  </a>
+                )}
                 {canDelete && (
                   <Button variant="ghost" className="text-danger" onClick={() => setTarget(m)}>
                     Supprimer

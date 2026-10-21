@@ -118,6 +118,23 @@ const userSchema = new Schema(
       acceptedAt: { type: Date, default: null },
     },
     lastSeenAt: { type: Date, default: null },
+    /**
+     * Dernière position d'un transporteur (GeoJSON Point [lng, lat]), envoyée à l'ouverture de l'application.
+     * Sert seulement aux notifications de colis proches ; jamais exposée par l'API.
+     */
+    lastPosition: {
+      type: new Schema(
+        {
+          location: {
+            type: { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number], required: true },
+          },
+          at: { type: Date, required: true },
+        },
+        { _id: false },
+      ),
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -128,6 +145,8 @@ userSchema.index({ status: 1 });
 userSchema.index({ 'pro.status': 1 });
 userSchema.index({ 'carrierVerification.status': 1 });
 userSchema.index({ wilayaCode: 1 });
+userSchema.index({ commune: 1 });
+userSchema.index({ 'lastPosition.location': '2dsphere' }, { sparse: true });
 
 /** Calculé, jamais stocké ni écrit par une route : professionnel seulement si le dossier est validé. */
 userSchema.virtual('accountType').get(function () {

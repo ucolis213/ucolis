@@ -1,4 +1,7 @@
-// Assistant de publication en 4 étapes (F6). Chaque étape a son schéma, l'API valide l'ensemble.
+// Publication d'un colis (F6), en deux modes :
+// - rapide (par défaut) : trajet, titre, description, prix, photos facultatives ;
+// - complète : assistant en 4 étapes (photos facultatives aussi), chaque étape a son schéma, l'API valide
+//   l'ensemble.
 // suggestedPrice, distanceKm et volumeM3 ne sont jamais acceptés du client : l'API les recalcule.
 
 import { z } from 'zod';
@@ -69,14 +72,34 @@ export const parcelOptionsSchema = z.object({
   requestedPrice: z.number().int().min(MIN_PRICE_DA, 'validation.minPrice'),
 });
 
+/** Photos facultatives dans les deux modes : 0 à 5, la première sert de couverture. */
 export const parcelPhotosSchema = z.object({
-  photos: z.array(fileRefSchema).min(1, 'validation.photosCount').max(5, 'validation.photosCount'),
+  photos: z.array(fileRefSchema).max(5, 'validation.photosCount'),
 });
 
-export const createParcelSchema = parcelRouteSchema
+export const PARCEL_PUBLISH_MODES = ['quick', 'full'] as const;
+export type ParcelPublishMode = (typeof PARCEL_PUBLISH_MODES)[number];
+
+/** Publication rapide : poids, dimensions, date, véhicules et règlement restent « non précisés ». */
+export const quickParcelSchema = parcelRouteSchema.extend({
+  mode: z.literal('quick'),
+  title: parcelDetailsSchema.shape.title,
+  description: parcelDetailsSchema.shape.description,
+  requestedPrice: parcelOptionsSchema.shape.requestedPrice,
+  prohibitedItemsDeclared: parcelDetailsSchema.shape.prohibitedItemsDeclared,
+  photos: parcelPhotosSchema.shape.photos.default([]),
+});
+
+export const fullParcelSchema = parcelRouteSchema
   .extend(parcelDetailsSchema.shape)
   .extend(parcelOptionsSchema.shape)
   .extend(parcelPhotosSchema.shape);
+
+/** Sans « mode », le corps est une publication complète (clients antérieurs). */
+export const createParcelSchema = z.preprocess(
+  (v) => (v && typeof v === 'object' && !('mode' in v) ? { ...v, mode: 'full' } : v),
+  z.discriminatedUnion('mode', [quickParcelSchema, fullParcelSchema.extend({ mode: z.literal('full') })]),
+);
 
 /** POST /pricing/suggest : la distance est toujours calculée à partir des deux points. */
 export const pricingSuggestSchema = z.object({
@@ -96,6 +119,8 @@ export function suggestedVehicleTypes(weightKg: number, volumeM3: number) {
 }
 
 export type CreateParcelInput = z.infer<typeof createParcelSchema>;
+export type QuickParcelInput = z.infer<typeof quickParcelSchema>;
+export type FullParcelInput = z.infer<typeof fullParcelSchema>;
 
 export const PARCEL_SORTS = ['recent', 'date', 'price_desc', 'nearest'] as const;
 export type ParcelSort = (typeof PARCEL_SORTS)[number];
@@ -128,7 +153,7 @@ export const parcelListQuerySchema = paginationSchema.extend({
 export type ParcelListQuery = z.infer<typeof parcelListQuerySchema>;
 
 /** Modification possible en open et negotiating ; chaque champ est facultatif. */
-export const updateParcelSchema = createParcelSchema.partial();
+export const updateParcelSchema = fullParcelSchema.partial();
 export type UpdateParcelInput = z.infer<typeof updateParcelSchema>;
 
 export const cancelParcelSchema = z.object({ reason: z.string().trim().max(500).optional() });

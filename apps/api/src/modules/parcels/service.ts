@@ -3,6 +3,8 @@ import {
   ACTIVE_OFFER_STATUSES,
   ACTIVE_PARCEL_STATUSES,
   PUBLIC_PARCEL_STATUSES,
+  PUBLISH_WINDOW_DAYS,
+  VEHICLE_TYPES,
   getCommune,
   getWilaya,
   haversineKm,
@@ -56,17 +58,64 @@ export async function nextReference(now: Date): Promise<string> {
   return `UC-${yymm}-${String(counter.seq).padStart(4, '0')}`;
 }
 
-/** Champs calculés par l'API : les valeurs envoyées par le client sont ignorées. */
-async function derived(deps: Deps, input: Pick<CreateParcelInput, 'pickup' | 'dropoff' | 'weightKg' | 'dimensionsCm'>) {
+type Dimensions = { length: number; width: number; height: number };
+
+/**
+ * Champs calculés par l'API : les valeurs envoyées par le client sont ignorées. Sans poids ni dimensions
+ * (publication rapide), le prix suggéré ne tient compte que de la distance.
+ */
+async function derived(
+  deps: Deps,
+  input: Pick<CreateParcelInput, 'pickup' | 'dropoff'> & { weightKg?: number | null; dimensionsCm?: Dimensions | null },
+) {
   const { pricing } = await deps.settings.getAll();
   const distanceKm = haversineKm(input.pickup.location, input.dropoff.location);
-  const { length, width, height } = input.dimensionsCm;
-  const volumeM3 = volumeM3FromCm(length, width, height);
+  const d = input.dimensionsCm;
+  const volumeM3 = d ? volumeM3FromCm(d.length, d.width, d.height) : null;
   return {
     distanceKm,
     volumeM3,
-    suggestedPrice: suggestPrice({ distanceKm, weightKg: input.weightKg, volumeM3 }, pricing),
+    suggestedPrice: suggestPrice({ distanceKm, weightKg: input.weightKg ?? 0, volumeM3: volumeM3 ?? 0 }, pricing),
   };
+}
+
+/** Publication rapide : rien n'est précisé, tout véhicule convient, règlement à convenir avec le transporteur. */
+const QUICK_FIELDS = {
+  category: 'other',
+  fragile: false,
+  weightKg: null,
+  dimensionsCm: null,
+  vehicleTypes: [...VEHICLE_TYPES],
+  desiredDate: null,
+  timeSlot: 'any',
+  flexibleDates: false,
+  urgent: false,
+  recipient: null,
+  paymentArrangement: 'other',
+} as const;
+
+function detailFields(input: CreateParcelInput) {
+  if (input.mode === 'quick') return QUICK_FIELDS;
+  return {
+    category: input.category,
+    fragile: input.fragile,
+    weightKg: input.weightKg,
+    dimensionsCm: input.dimensionsCm,
+    vehicleTypes: [...new Set(input.vehicleTypes)],
+    desiredDate: input.desiredDate,
+    timeSlot: input.timeSlot,
+    flexibleDates: input.flexibleDates,
+    urgent: input.urgent,
+    recipient: input.recipient ?? null,
+    paymentArrangement: input.paymentArrangement,
+  };
+}
+
+/** Expiration : date souhaitée + parcelExpiryDays, ou fin de la fenêtre de publication sans date. */
+function expiryOf(desiredDate: Date | null | undefined, now: Date, parcelExpiryDays: number) {
+  return desiredDate
+    ? new Date(desiredDate.getTime() + parcelExpiryDays * DAY_MS)
+    : new Date(now.getTime() + PUBLISH_WINDOW_DAYS * DAY_MS);
 }
 
 const placeDoc = (p: CreateParcelInput['pickup']) => ({
@@ -203,29 +252,20 @@ export function createParcelService(deps: Deps) {
       assertPhotos(userId, input.photos);
       const now = deps.now();
       const settings = await deps.settings.getAll();
-      const calc = await derived(deps, input);
+      const detail = detailFields(input);
+      const calc = await derived(deps, { ...input, weightKg: detail.weightKg, dimensionsCm: detail.dimensionsCm });
       const parcel = await ParcelModel.create({
         reference: await nextReference(now),
         sender: user._id,
         title: input.title,
         description: input.description ?? '',
-        category: input.category,
-        fragile: input.fragile,
-        weightKg: input.weightKg,
-        dimensionsCm: input.dimensionsCm,
-        vehicleTypes: [...new Set(input.vehicleTypes)],
+        ...detail,
         pickup: placeDoc(input.pickup),
         dropoff: placeDoc(input.dropoff),
-        desiredDate: input.desiredDate,
-        timeSlot: input.timeSlot,
-        flexibleDates: input.flexibleDates,
-        urgent: input.urgent,
-        recipient: input.recipient ?? null,
-        paymentArrangement: input.paymentArrangement,
         requestedPrice: input.requestedPrice,
         photos: input.photos,
         ...calc,
-        expiresAt: new Date(input.desiredDate.getTime() + settings.parcelExpiryDays * DAY_MS),
+        expiresAt: expiryOf(detail.desiredDate, now, settings.parcelExpiryDays),
         statusHistory: [{ from: null, to: 'open', byType: 'user', by: user._id, at: now }],
         searchText: buildSearchText(input),
       });
@@ -245,9 +285,9 @@ export function createParcelService(deps: Deps) {
         description: input.description ?? p.description,
         pickup: input.pickup ?? { ...p.pickup, location: { lat: p.pickup.location.coordinates[1]!, lng: p.pickup.location.coordinates[0]! } },
         dropoff: input.dropoff ?? { ...p.dropoff, location: { lat: p.dropoff.location.coordinates[1]!, lng: p.dropoff.location.coordinates[0]! } },
-        weightKg: input.weightKg ?? p.weightKg,
-        dimensionsCm: input.dimensionsCm ?? p.dimensionsCm,
-      } as CreateParcelInput;
+        weightKg: input.weightKg ?? p.weightKg ?? null,
+        dimensionsCm: (input.dimensionsCm ?? p.dimensionsCm ?? null) as Dimensions | null,
+      } as Parameters<typeof derived>[1] & Parameters<typeof buildSearchText>[0];
       const set: Record<string, unknown> = {};
       for (const key of [
         'title', 'description', 'category', 'fragile', 'weightKg', 'dimensionsCm', 'timeSlot',
@@ -261,7 +301,7 @@ export function createParcelService(deps: Deps) {
       if (input.desiredDate) {
         const { parcelExpiryDays } = await deps.settings.getAll();
         set.desiredDate = input.desiredDate;
-        set.expiresAt = new Date(input.desiredDate.getTime() + parcelExpiryDays * DAY_MS);
+        set.expiresAt = expiryOf(input.desiredDate, deps.now(), parcelExpiryDays);
       }
       Object.assign(set, await derived(deps, merged));
       set.searchText = buildSearchText(merged);
@@ -396,11 +436,18 @@ export function createParcelService(deps: Deps) {
       if (query.maxWeight) filter.weightKg = { $lte: query.maxWeight };
       if (query.vehicleType) filter.vehicleTypes = query.vehicleType;
       if (query.urgent) filter.urgent = true;
+      // Sans date (publication rapide), l'annonce convient à toute période. Un poids maximal écarte en
+      // revanche les annonces sans poids.
       if (query.dateFrom || query.dateTo) {
-        filter.desiredDate = {
-          ...(query.dateFrom ? { $gte: query.dateFrom } : {}),
-          ...(query.dateTo ? { $lte: query.dateTo } : {}),
-        };
+        filter.$or = [
+          {
+            desiredDate: {
+              ...(query.dateFrom ? { $gte: query.dateFrom } : {}),
+              ...(query.dateTo ? { $lte: query.dateTo } : {}),
+            },
+          },
+          { desiredDate: null },
+        ];
       }
       if (query.priceMin !== undefined || query.priceMax !== undefined) {
         filter.requestedPrice = {

@@ -30,7 +30,7 @@
     },
     "onboarding": {
       "slide1Title": "أرسل بسهولة",
-      "slide1Body": "انشر طردك واستقبل عروضًا من ناقلين موثقين في كل أنحاء الجزائر.",
+      "slide1Body": "صِف طردك واستقبل عروضًا من ناقلين موثقين في كل أنحاء الجزائر.",
       "slide2Title": "انقل واربح",
       "slide2Body": "انشر رحلاتك واملأ مركبتك واقترح سعرك.",
       "slide3Title": "مجتمع موثوق",
@@ -46,7 +46,7 @@
       "greeting": "مرحبًا، {{name}}",
       "guestGreeting": "مرحبًا بك في UCOLIS",
       "searchPlaceholder": "ابحث عن طرد أو وجهة…",
-      "publishParcel": "انشر طردًا",
+      "publishParcel": "أرسل طردًا",
       "proposeTrip": "اقترح رحلة",
       "activeParcels": "طرود نشطة",
       "activeOffers": "عروض نشطة",
@@ -57,7 +57,7 @@
     },
     "publish": {
       "title": "ماذا تريد أن تنشر؟",
-      "parcel": "طرد",
+      "parcel": "طرد للإرسال",
       "parcelHint": "استقبل عروض الناقلين",
       "trip": "رحلة",
       "tripHint": "املأ مركبتك"
@@ -109,6 +109,18 @@
     "sortBy": "ترتيب حسب",
     "today": "اليوم",
     "tomorrow": "غدًا",
+    "relative": {
+      "justNow": "الآن",
+      "minutesAgo": "منذ {{count}} د",
+      "hoursAgo": "منذ {{count}} سا",
+      "yesterday": "أمس",
+      "daysAgo": "منذ {{count}} أيام"
+    },
+    "calendar": {
+      "previousMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي",
+      "chooseYear": "اختيار السنة"
+    },
     "unavailable": "غير متاح",
     "offlineBanner": "غير متصل: قد تكون البيانات المعروضة قديمة.",
     "chooseFromGallery": "اختيار من المعرض",
@@ -274,7 +286,7 @@
     },
     "suggestedPrice": "السعر التقديري",
     "noListings": "لا توجد إعلانات حاليًا",
-    "newTitle": "نشر طرد",
+    "newTitle": "إعلان جديد",
     "editTitle": "تعديل الإعلان",
     "steps": {
       "route": "المسار",
@@ -328,7 +340,14 @@
     "estimated": "تقديري",
     "suggested": "السعر المقترح: {{price}}",
     "priceWarning": "هذا السعر يتجاوز 3 أضعاف السعر المقترح: قد لا يرد الناقلون.",
-    "photosHint": "من 1 إلى 5 صور. الأولى هي صورة الغلاف.",
+    "photosOptional": "الصور (اختياري)",
+    "photosOptionalHint": "حتى 5 صور، الأولى هي صورة الغلاف. الإعلان المرفق بصورة يتلقى عروضًا أكثر.",
+    "quickHint": "يكفي المسار وعنوان وسعرك. سيسألك الناقلون عن الباقي.",
+    "moreDetails": "إضافة تفاصيل أكثر",
+    "moreDetailsHint": "الوزن، الأبعاد، التاريخ، المركبات، المستلم",
+    "quickPublish": "العودة إلى النشر السريع",
+    "notSpecified": "غير محدد",
+    "flexibleDate": "تاريخ مرن",
     "addPhoto": "إضافة",
     "cover": "الغلاف",
     "publish": "نشر الإعلان",
@@ -592,7 +611,9 @@
       "dispute_opened": "فُتح نزاع",
       "carrier_withdrew": "انسحب الناقل"
     },
-    "about": "بخصوص «{{title}}»"
+    "about": "بخصوص «{{title}}»",
+    "removePhoto": "إزالة الصورة",
+    "imageExpired": "صورة منتهية الصلاحية"
   },
   "profile": {
     "title": "حسابي",
@@ -848,6 +869,10 @@
       "title": "طرد مناسب",
       "body": "طرد يناسب رحلتك {{route}}."
     },
+    "nearby_parcel": {
+      "title": "طرد جديد بالقرب منك",
+      "body": "« {{parcelTitle}} » ينطلق على بعد {{km}} كم منك. قدّم عرضك."
+    },
     "trip_request_received": {
       "title": "اقتراح طرد",
       "body": "مرسل يقترح «{{parcelTitle}}» على رحلتك."
@@ -970,7 +995,7 @@
       "vehicleTypes": "اختر نوع مركبة واحدًا على الأقل.",
       "desiredDate": "تاريخ بين اليوم و60 يومًا.",
       "minPrice": "100 دج كحد أدنى.",
-      "photosCount": "بين 1 و5 صور.",
+      "photosCount": "5 صور كحد أقصى.",
       "radius": "نصف قطر غير مدعوم.",
       "plate": "رقم تسجيل غير صالح.",
       "positive": "يجب أن تكون القيمة موجبة.",

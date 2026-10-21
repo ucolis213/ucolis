@@ -18,9 +18,9 @@ export default function About() {
       </View>
       <SectionCard>
         <KeyValue label={t('about.version')} value={appVersion()} />
-        <KeyValue label={t('about.build')} value={Application.nativeBuildVersion ?? '—'} />
-        <KeyValue label={t('about.channel')} value={Updates.channel ?? '—'} />
-        <KeyValue label={t('about.runtime')} value={Updates.runtimeVersion ?? '—'} />
+        <KeyValue label={t('about.build')} value={Application.nativeBuildVersion ?? '-'} />
+        <KeyValue label={t('about.channel')} value={Updates.channel ?? '-'} />
+        <KeyValue label={t('about.runtime')} value={Updates.runtimeVersion ?? '-'} />
       </SectionCard>
     </Screen>
   );

@@ -7,6 +7,7 @@ import {
   parcelDetailsSchema,
   pricingSuggestSchema,
   suggestedVehicleTypes,
+  updateParcelSchema,
 } from '../src/schemas/parcel';
 import {
   loginSchema,
@@ -105,14 +106,41 @@ describe('schémas colis', () => {
   it('accepte un colis complet et ignore le prix suggéré du client', () => {
     const r = createParcelSchema.parse(parcel);
     expect(r).not.toHaveProperty('suggestedPrice');
+    expect(r.mode).toBe('full');
+    if (r.mode !== 'full') throw new Error('mode');
     expect(r.timeSlot).toBe('any');
     expect(r.fragile).toBe(false);
+  });
+
+  it('accepte une publication rapide : trajet, titre, prix, photos facultatives', () => {
+    const quick = {
+      mode: 'quick',
+      pickup: parcel.pickup,
+      dropoff: parcel.dropoff,
+      title: parcel.title,
+      requestedPrice: 1500,
+      prohibitedItemsDeclared: true,
+    };
+    const r = createParcelSchema.parse(quick);
+    expect(r).toMatchObject({ mode: 'quick', description: '', photos: [] });
+    expect(r).not.toHaveProperty('weightKg');
+    const fails = (patch: object) => messages(createParcelSchema.safeParse({ ...quick, ...patch }));
+    expect(fails({ title: 'abc' })).toContain('validation.titleLength');
+    expect(fails({ requestedPrice: 50 })).toContain('validation.minPrice');
+    expect(fails({ prohibitedItemsDeclared: false })).toContain('validation.prohibitedDeclaration');
+    expect(fails({ photos: Array(6).fill(parcel.photos[0]) })).toContain('validation.photosCount');
+  });
+
+  it('autorise une modification qui retire toutes les photos', () => {
+    expect(updateParcelSchema.safeParse({ photos: [] }).success).toBe(true);
+    expect(updateParcelSchema.parse({ title: 'Cadeaux pour la famille' })).not.toHaveProperty('photos');
   });
 
   it('applique les règles du PRD', () => {
     const fails = (patch: object) => messages(createParcelSchema.safeParse({ ...parcel, ...patch }));
     expect(fails({ requestedPrice: 99 })).toContain('validation.minPrice');
-    expect(fails({ photos: [] })).toContain('validation.photosCount');
+    expect(createParcelSchema.safeParse({ ...parcel, photos: [] }).success).toBe(true);
+    expect(fails({ photos: Array(6).fill(parcel.photos[0]) })).toContain('validation.photosCount');
     expect(fails({ vehicleTypes: [] })).toContain('validation.vehicleTypes');
     expect(fails({ dropoff: point('31', '16001', 35.7, -0.63) })).toContain('validation.commune');
     expect(

@@ -143,3 +143,84 @@ d'héberger nos propres instances.
 À faire avant le lancement : héberger Photon (extrait Algérie) ou passer à Google Places avec plafonds de quota, la
 lenteur du Photon public n'étant pas acceptable en production ; à plusieurs instances de l'API, la limite Nominatim
 devra être partagée (Redis) ou l'instance auto-hébergée.
+
+## 2026-10-21 — Publication rapide d'un colis
+
+### Deux modes de publication
+À la demande du produit, « Envoyer un colis » ouvre une publication rapide : adresses de départ et d'arrivée, titre,
+description facultative, prix demandé, photos facultatives. « Ajouter plus de détails » bascule vers l'assistant
+complet en 4 étapes avec le même brouillon, et l'étape Trajet propose le retour au mode rapide. Le corps de
+`POST /parcels` porte `mode: 'quick' | 'full'` ; sans `mode`, il est traité comme une publication complète.
+La déclaration des objets interdits reste obligatoire dans les deux modes (règle de sécurité du PRD).
+
+### Photos facultatives dans les deux modes
+0 à 5 photos, en mode rapide comme en mode complet (le PRD exigeait au moins une photo). Le message
+`validation.photosCount` devient « 5 photos au maximum ».
+
+### Champs non précisés d'une annonce rapide
+- `weightKg`, `dimensionsCm`, `volumeM3` et `desiredDate` valent `null` (« Non précisé », « Date flexible ») plutôt
+  qu'une valeur inventée ; une annonce sans poids est reconnue comme rapide.
+- `vehicleTypes` reçoit tous les types (tout véhicule convient), `category` et `paymentArrangement` valent `other`
+  (le mobile affiche « Non précisé » pour le règlement et masque catégorie et véhicules).
+- Prix suggéré : barème de F6 avec poids et volume nuls, donc fonction de la seule distance.
+- Expiration : sans date souhaitée, fin de la fenêtre de publication (création + 60 jours).
+- Filtres et alertes : une annonce sans date passe tout filtre de dates ; un poids maximal écarte en revanche les
+  annonces sans poids. Compatibilité avec un trajet : poids, volume et date non précisés ne limitent pas.
+- Modification : une annonce rapide se modifie en mode rapide, ou se complète par l'assistant (PATCH de tous les
+  champs). Une annonce complète ne repasse pas en mode rapide.
+- Brouillon mobile persistant en version 1 : un brouillon antérieur est repris dans l'assistant complet.
+
+### Libellé « Envoyer un colis »
+On publie une annonce, pas un colis. Le bouton d'accueil devient « Envoyer un colis » (« أرسل طردًا »), le titre de
+l'écran « Nouvelle annonce » (« إعلان جديد »), le choix de l'onglet Publier « Un colis à envoyer », et l'accueil
+« Décrivez votre colis… » ; le bouton final reste « Publier l'annonce ».
+
+### Police arabe : IBM Plex Sans Arabic
+IBM Plex Sans Arabic remplace Noto Sans Arabic, jugée trop neutre : plus soignée, très lisible en petite taille
+(prix, adresses, badges), dans le même esprit qu'Inter. Elle a les quatre graisses utilisées (400, 500, 600, 700),
+contrairement à Tajawal et Almarai, écartées pour cette raison.
+
+### Accueil : dernières annonces de toutes les wilayas
+Le PRD prévoyait les dernières annonces de la wilaya de l'utilisateur, et « Tout voir » ajoutait le filtre de départ
+correspondant aux filtres existants. Au lancement, le volume est faible : filtré sur une wilaya, l'accueil serait
+souvent vide, et les transporteurs sur de longs trajets s'intéressent aussi aux wilayas voisines. L'accueil montre donc
+les 5 dernières annonces, toutes wilayas confondues, et « Tout voir » remet les filtres à zéro (tri par date de
+publication). Quand le volume le justifiera, une section « Près de chez vous » pourra s'ajouter.
+
+### Notification des transporteurs proches d'un nouveau colis
+- Destinataires : comptes transporteur ou « les deux », actifs, hors expéditeur, comptes bloqués dans un sens ou dans
+  l'autre, et transporteurs déjà prévenus par la correspondance d'un trajet.
+- Position : l'application envoie la position du transporteur (`PUT /me/position`) à l'ouverture, au retour au
+  premier plan puis toutes les 15 min tant qu'elle est ouverte, avec l'autorisation « pendant l'utilisation »
+  seulement (demandée une fois). Pas de suivi app fermée hors livraison : moins de batterie, pas d'autorisation
+  « toujours » à justifier auprès d'Apple et Google pour cet usage. Un transporteur d'Alger arrivé à Oran est
+  repéré dès qu'il ouvre l'application.
+- Repli : position de plus de 24 h ou absente, commune du profil (centre de la commune).
+- Rayon et limite réglables par le staff (`nearbyParcels`) : 30 km, 5 push par transporteur sur 24 h ; au-delà,
+  notification dans l'application seulement. Le message donne la distance en km plutôt qu'un nom de lieu, qui
+  serait figé dans une seule langue.
+- Seule la dernière position est gardée (`users.lastPosition`), jamais exposée par l'API, effacée à la suppression
+  du compte. Textes d'autorisation iOS mis à jour en conséquence. À compléter : politique de confidentialité
+  (contenu éditable du back-office).
+- Envoi dans l'abonné `parcel.created`, comme les autres correspondances. Si le nombre de transporteurs proches
+  devient grand, passer cet envoi dans un job BullMQ pour ne pas allonger la publication.
+
+## Sélecteur de date en calendrier (21 octobre 2026)
+- La liste de jours (jusqu'à 3 650 lignes pour l'expiration du permis) devient un calendrier mensuel en JavaScript
+  (`DateSelect`, calcul dans `src/calendar.ts`) : flèches de mois, titre du mois qui ouvre la grille des années,
+  jours hors bornes grisés. Pas de sélecteur natif : même rendu sur iOS et Android, chiffres latins en arabe,
+  fonctionne dans Expo Go. Semaine affichée à partir du dimanche, premier jour ouvré en Algérie (`WEEK_START`).
+- Dates relatives (« Il y a 5 min ») par clés i18n : Hermes ne fournit pas `Intl.RelativeTimeFormat`, ce qui
+  faisait planter la messagerie. Au-delà de 7 jours, la date est affichée.
+
+## Quota Cloudinary : suivi et ménage des images (21 octobre 2026)
+- Tableau de bord du back-office : carte « Images (Cloudinary) » alimentée par l'Admin API `usage`
+  (`GET /admin/storage-usage`, permission dashboard.view), gardée 15 min en cache. Orange à 80 %, rouge à 95 % :
+  au-delà du quota du plan gratuit (25 crédits par mois), Cloudinary peut bloquer envois et affichage.
+- Ménage horaire `purge-old-media`, réglable (`mediaRetention`, 30 jours minimum) : photos d'une annonce livrée,
+  annulée ou expirée depuis 90 jours, images de messages envoyées depuis 180 jours. Jamais pendant un signalement
+  ouvert (annonce, conversation, message) ni un litige ouvert sur le colis de la conversation.
+- Gardés : photos de litige et preuves de livraison (pièces d'un éventuel recours), pièces d'identité et
+  justificatifs pro (déjà supprimés à l'anonymisation du compte).
+- Une annonce dupliquée partage les fichiers de l'originale : un fichier encore utilisé par une autre annonce
+  n'est pas détruit. Le message reste, sans fichier ; l'application affiche « Photo expirée ».

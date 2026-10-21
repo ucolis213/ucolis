@@ -42,13 +42,14 @@ export function uploadSignature(
 export function privateDownloadUrl(
   creds: CloudinaryCreds,
   publicId: string,
-  opts: { resourceType: 'image' | 'raw'; expiresAt: number; timestamp: number; format?: string },
+  opts: { resourceType: 'image' | 'raw'; expiresAt: number; timestamp: number; format?: string; type?: 'upload' | 'authenticated' },
 ): string {
   const params: Record<string, string | number> = {
     expires_at: opts.expiresAt,
     public_id: publicId,
     timestamp: opts.timestamp,
-    type: 'authenticated',
+    // Type de stockage du fichier : sans le bon type, Cloudinary répond « ressource introuvable ».
+    type: opts.type ?? 'authenticated',
     ...(opts.format ? { format: opts.format } : {}),
   };
   const query = new URLSearchParams({

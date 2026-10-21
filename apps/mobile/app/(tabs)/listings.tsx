@@ -137,7 +137,12 @@ function ParcelsPane() {
         </Pressable>
       </View>
       {chips.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsBar}
+          contentContainerStyle={styles.chips}
+        >
           {chips.map((k) => (
             <Pressable
               key={k}
@@ -311,7 +316,9 @@ const styles = StyleSheet.create({
   searchInput: { color: colors.navy, minHeight: MIN_TOUCH, textAlign: 'auto' },
   iconBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radii.card, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
   dot: { position: 'absolute', top: 8, end: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  chips: { paddingHorizontal: space(5), paddingBottom: space(2), gap: space(2) },
+  // Sans flexGrow: 0, un ScrollView horizontal prend toute la hauteur libre et étire les puces.
+  chipsBar: { flexGrow: 0 },
+  chips: { alignItems: 'center', paddingHorizontal: space(5), paddingBottom: space(2), gap: space(2) },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
