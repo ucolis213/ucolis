@@ -4,6 +4,7 @@
 import type { TFunction } from 'i18next';
 import type { ApiErrorBody, ErrorCode, PublicAppConfig, TokenResponse } from '@ucolis/shared';
 import { getDeviceId } from '../device';
+import { formatDate } from '../format';
 import i18n from '../i18n';
 import { tokens } from './tokens';
 
@@ -22,7 +23,7 @@ export class ApiError extends Error {
 
 export class NetworkError extends Error {}
 
-type SessionListener = (reason: 'expired' | 'revoked') => void;
+type SessionListener = (reason: 'expired' | 'revoked', error?: ApiError) => void;
 let onSessionLost: SessionListener | null = null;
 /** Le contexte de session s'abonne pour repasser en invité quand la session est perdue. */
 export const setSessionLostListener = (fn: SessionListener | null) => {
@@ -69,8 +70,9 @@ export function refreshSession(): Promise<boolean> {
       if (!res.ok) {
         // Erreur réseau ou serveur : on garde la session ; un refus explicite la ferme.
         if (res.status === 401 || res.status === 403) {
+          const error = await toApiError(res);
           await tokens.clear();
-          onSessionLost?.(res.status === 403 ? 'revoked' : 'expired');
+          onSessionLost?.(res.status === 403 ? 'revoked' : 'expired', error);
         }
         return false;
       }
@@ -87,6 +89,16 @@ export function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
+async function toApiError(res: Response): Promise<ApiError> {
+  const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
+  return new ApiError(
+    res.status,
+    body?.error.code ?? 'INTERNAL_ERROR',
+    body?.error.message ?? res.statusText,
+    body?.error.details,
+  );
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit & { timeoutMs?: number; retried?: boolean } = {},
@@ -98,16 +110,11 @@ export async function apiFetch<T>(
     if (await refreshSession()) return apiFetch<T>(path, { ...rest, retried: true });
   }
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-    const error = new ApiError(
-      res.status,
-      body?.error.code ?? 'INTERNAL_ERROR',
-      body?.error.message ?? res.statusText,
-      body?.error.details,
-    );
-    if (error.code === 'ACCOUNT_SUSPENDED') {
+    const error = await toApiError(res);
+    // Sur /auth/* (connexion, inscription) il n'y a pas de session à fermer : l'écran affiche l'erreur.
+    if (error.code === 'ACCOUNT_SUSPENDED' && !path.startsWith('/auth/')) {
       await tokens.clear();
-      onSessionLost?.('revoked');
+      onSessionLost?.('revoked', error);
     }
     throw error;
   }
@@ -135,6 +142,16 @@ export function qs(params: Record<string, unknown>): string {
 
 /** Message lisible et traduit pour n'importe quelle erreur. */
 export function errorMessage(t: TFunction, err: unknown): string {
+  if (err instanceof ApiError && err.code === 'ACCOUNT_SUSPENDED') {
+    const { reason, until } = (err.details ?? {}) as { reason?: string | null; until?: string | null };
+    return [
+      t('errors:ACCOUNT_SUSPENDED'),
+      reason ? t('errors:suspendedReason', { reason }) : null,
+      until ? t('errors:suspendedUntil', { date: formatDate(until) }) : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
   if (err instanceof ApiError) {
     return t(`errors:${err.code}`, { defaultValue: t('errors:INTERNAL_ERROR') });
   }

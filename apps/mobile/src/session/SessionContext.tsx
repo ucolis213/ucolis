@@ -4,11 +4,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import type { AuthResponse, Intent, Me } from '@ucolis/shared';
-import { api, refreshSession, setSessionLostListener } from '../api/client';
+import { api, errorMessage, refreshSession, setSessionLostListener } from '../api/client';
 import { tokens } from '../api/tokens';
 import { getDeviceId } from '../device';
+import i18n from '../i18n';
 import { clearRecents } from '../state/addressBook';
 import { useParcelDraft } from '../state/parcelDraft';
 import { resetReportedPosition } from '../tracking/nearbyPosition';
@@ -50,9 +51,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setSessionLostListener(() => {
+    setSessionLostListener((_reason, error) => {
       reset();
       router.replace('/home');
+      // Suspension en cours de session : on dit pourquoi l'utilisateur est déconnecté.
+      if (error?.code === 'ACCOUNT_SUSPENDED') Alert.alert(errorMessage(i18n.t, error));
     });
     (async () => {
       const refresh = await tokens.getRefresh();

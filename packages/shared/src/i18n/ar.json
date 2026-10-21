@@ -960,6 +960,8 @@
     "INVALID_CREDENTIALS": "البريد أو كلمة المرور غير صحيحة.",
     "EMAIL_NOT_VERIFIED": "أكّد بريدك الإلكتروني للمتابعة.",
     "ACCOUNT_SUSPENDED": "حسابك معلّق.",
+    "suspendedReason": "السبب: {{reason}}",
+    "suspendedUntil": "التعليق حتى {{date}}.",
     "INVALID_CODE": "رمز غير صحيح.",
     "CODE_EXPIRED": "انتهت صلاحية هذا الرمز.",
     "TOO_MANY_ATTEMPTS": "محاولات كثيرة. اطلب رمزًا جديدًا.",

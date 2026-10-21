@@ -960,6 +960,8 @@
     "INVALID_CREDENTIALS": "Email ou mot de passe incorrect.",
     "EMAIL_NOT_VERIFIED": "Vérifiez votre email pour continuer.",
     "ACCOUNT_SUSPENDED": "Votre compte est suspendu.",
+    "suspendedReason": "Motif : {{reason}}",
+    "suspendedUntil": "Suspension jusqu'au {{date}}.",
     "INVALID_CODE": "Code incorrect.",
     "CODE_EXPIRED": "Ce code a expiré.",
     "TOO_MANY_ATTEMPTS": "Trop d'essais. Demandez un nouveau code.",
