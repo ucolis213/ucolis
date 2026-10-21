@@ -17,33 +17,38 @@ export default function Blocked() {
   });
   const unblock = useMutation({
     mutationFn: (id: string) => api.delete(`/me/blocked/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['me', 'blocked'] }),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['me', 'blocked'] }),
+        qc.invalidateQueries({ queryKey: ['conversations'] }),
+        qc.invalidateQueries({ queryKey: ['conversation'] }),
+      ]),
   });
 
   return (
     <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('blockedUsers')} />}>
-        {query.isPending ? (
-          <Skeleton height={64} />
-        ) : query.isError ? (
-          <ErrorState message={errorMessage(t, query.error)} onRetry={() => query.refetch()} />
-        ) : query.data.items.length === 0 ? (
-          <EmptyState icon="ban-outline" title={t('noBlocked')} />
-        ) : (
-          query.data.items.map((u) => (
-            <UserRow
-              key={u.id}
-              user={u}
-              right={
-                <Button
-                  label={t('unblock')}
-                  variant="ghost"
-                  fullWidth={false}
-                  onPress={() => unblock.mutate(u.id)}
-                />
-              }
-            />
-          ))
-        )}
+      {query.isPending ? (
+        <Skeleton height={64} />
+      ) : query.isError ? (
+        <ErrorState message={errorMessage(t, query.error)} onRetry={() => query.refetch()} />
+      ) : query.data.items.length === 0 ? (
+        <EmptyState icon="ban-outline" title={t('noBlocked')} />
+      ) : (
+        query.data.items.map((u) => (
+          <UserRow
+            key={u.id}
+            user={u}
+            right={
+              <Button
+                label={t('unblock')}
+                variant="ghost"
+                fullWidth={false}
+                onPress={() => unblock.mutate(u.id)}
+              />
+            }
+          />
+        ))
+      )}
     </Screen>
   );
 }

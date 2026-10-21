@@ -39,7 +39,11 @@ describe('notifications des offres', () => {
       .http()
       .post('/api/v1/me/push-tokens')
       .set(amina.auth)
-      .send({ token: 'ExponentPushToken[amina-device]', platform: 'android', deviceId: amina.deviceId });
+      .send({
+        token: 'ExponentPushToken[amina-device]',
+        platform: 'android',
+        deviceId: amina.deviceId,
+      });
     const p = await createParcel(ctx, amina);
     await ctx
       .http()
@@ -61,7 +65,11 @@ describe('notifications des offres', () => {
       unreadNotifications: 1,
     });
 
-    await ctx.http().patch('/api/v1/me/preferences').set(amina.auth).send({ notifications: { offers: false } });
+    await ctx
+      .http()
+      .patch('/api/v1/me/preferences')
+      .set(amina.auth)
+      .send({ notifications: { offers: false } });
     const p2 = await createParcel(ctx, amina);
     await ctx
       .http()
@@ -77,9 +85,20 @@ describe('notifications des offres', () => {
     const { amina, karim, parcel } = await acceptedDeal(ctx);
     const convs = await ctx.http().get('/api/v1/conversations').set(karim.auth);
     expect(convs.body.items).toHaveLength(1);
-    expect(convs.body.items[0]).toMatchObject({ parcel: { id: parcel.id }, other: { id: amina.id }, unread: 1 });
-    const msgs = await ctx.http().get(`/api/v1/conversations/${convs.body.items[0].id}/messages`).set(karim.auth);
-    expect(msgs.body.items[0]).toMatchObject({ type: 'system', systemKey: 'offer_accepted', systemParams: { price: 3250 } });
+    expect(convs.body.items[0]).toMatchObject({
+      parcel: { id: parcel.id },
+      other: { id: amina.id },
+      unread: 1,
+    });
+    const msgs = await ctx
+      .http()
+      .get(`/api/v1/conversations/${convs.body.items[0].id}/messages`)
+      .set(karim.auth);
+    expect(msgs.body.items[0]).toMatchObject({
+      type: 'system',
+      systemKey: 'offer_accepted',
+      systemParams: { price: 3250 },
+    });
     const notifs = await ctx.http().get('/api/v1/notifications').set(karim.auth);
     expect(notifs.body.items.map((n: { type: string }) => n.type)).toContain('offer_accepted');
     const detail = await ctx.http().get(`/api/v1/parcels/${parcel.id}`).set(karim.auth);
@@ -108,13 +127,29 @@ describe('messagerie', () => {
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
     const p = await createParcel(ctx, amina);
-    const a = await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id, parcelId: p.id });
-    const b = await ctx.http().post('/api/v1/conversations').set(amina.auth).send({ userId: karim.id, parcelId: p.id });
+    const a = await ctx
+      .http()
+      .post('/api/v1/conversations')
+      .set(karim.auth)
+      .send({ userId: amina.id, parcelId: p.id });
+    const b = await ctx
+      .http()
+      .post('/api/v1/conversations')
+      .set(amina.auth)
+      .send({ userId: karim.id, parcelId: p.id });
     expect(a.body.id).toBe(b.body.id);
-    const general = await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id });
+    const general = await ctx
+      .http()
+      .post('/api/v1/conversations')
+      .set(karim.auth)
+      .send({ userId: amina.id });
     expect(general.body.id).not.toBe(a.body.id);
     expect(general.body.parcel).toBeNull();
-    const self = await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: karim.id });
+    const self = await ctx
+      .http()
+      .post('/api/v1/conversations')
+      .set(karim.auth)
+      .send({ userId: karim.id });
     expect(self.status).toBe(400);
   });
 
@@ -122,9 +157,15 @@ describe('messagerie', () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
-    const conv = (await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })).body;
+    const conv = (
+      await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
+    ).body;
     const send = (clientId: string, text: string) =>
-      ctx.http().post(`/api/v1/conversations/${conv.id}/messages`).set(karim.auth).send({ type: 'text', clientId, text });
+      ctx
+        .http()
+        .post(`/api/v1/conversations/${conv.id}/messages`)
+        .set(karim.auth)
+        .send({ type: 'text', clientId, text });
     const first = await send('client-0001', 'Bonjour, je passe à Oran demain');
     const dup = await send('client-0001', 'Bonjour, je passe à Oran demain');
     expect(dup.body.id).toBe(first.body.id);
@@ -132,9 +173,14 @@ describe('messagerie', () => {
     expect(await MessageModel.countDocuments({ conversation: conv.id })).toBe(2);
 
     const list = await ctx.http().get('/api/v1/conversations').set(amina.auth);
-    expect(list.body.items[0]).toMatchObject({ unread: 2, lastMessage: { text: 'Toujours dispo ?' } });
+    expect(list.body.items[0]).toMatchObject({
+      unread: 2,
+      lastMessage: { text: 'Toujours dispo ?' },
+    });
     // Une seule notification non lue par conversation.
-    expect(await NotificationModel.countDocuments({ recipient: amina.id, type: 'new_message' })).toBe(1);
+    expect(
+      await NotificationModel.countDocuments({ recipient: amina.id, type: 'new_message' }),
+    ).toBe(1);
     expect(ctx.realtime.eventsFor(`user:${amina.id}`, 'message:new')).toHaveLength(2);
 
     await ctx.http().post(`/api/v1/conversations/${conv.id}/read`).set(amina.auth);
@@ -143,7 +189,9 @@ describe('messagerie', () => {
     const msgs = await ctx.http().get(`/api/v1/conversations/${conv.id}/messages`).set(karim.auth);
     expect(msgs.body.items[0].readBy).toEqual([amina.id]);
     expect(ctx.realtime.eventsFor(`conversation:${conv.id}`, 'messages:read')).toHaveLength(1);
-    expect((await ctx.http().get('/api/v1/notifications/unread-count').set(amina.auth)).body).toEqual({
+    expect(
+      (await ctx.http().get('/api/v1/notifications/unread-count').set(amina.auth)).body,
+    ).toEqual({
       unreadMessages: 0,
       unreadNotifications: 0,
     });
@@ -158,9 +206,15 @@ describe('messagerie', () => {
       .post('/api/v1/me/push-tokens')
       .set(amina.auth)
       .send({ token: 'ExponentPushToken[a]', platform: 'ios', deviceId: amina.deviceId });
-    const conv = (await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })).body;
+    const conv = (
+      await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
+    ).body;
     const send = (n: number) =>
-      ctx.http().post(`/api/v1/conversations/${conv.id}/messages`).set(karim.auth).send({ type: 'text', clientId: `client-${n}xxxx`, text: `m${n}` });
+      ctx
+        .http()
+        .post(`/api/v1/conversations/${conv.id}/messages`)
+        .set(karim.auth)
+        .send({ type: 'text', clientId: `client-${n}xxxx`, text: `m${n}` });
     await send(1);
     expect(ctx.push.sent).toHaveLength(1);
     expect(ctx.push.sent[0]!.group).toBe(conv.id);
@@ -168,7 +222,11 @@ describe('messagerie', () => {
     await send(2);
     expect(ctx.push.sent).toHaveLength(1);
     ctx.realtime.leave(`conversation:${conv.id}`, amina.id);
-    await ctx.http().post(`/api/v1/conversations/${conv.id}/mute`).set(amina.auth).send({ muted: true });
+    await ctx
+      .http()
+      .post(`/api/v1/conversations/${conv.id}/mute`)
+      .set(amina.auth)
+      .send({ muted: true });
     await send(3);
     expect(ctx.push.sent).toHaveLength(1);
   });
@@ -178,10 +236,20 @@ describe('messagerie', () => {
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
     const intrus = await verifiedUser(ctx);
-    const conv = (await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })).body;
-    expect((await ctx.http().get(`/api/v1/conversations/${conv.id}/messages`).set(intrus.auth)).status).toBe(404);
+    const conv = (
+      await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
+    ).body;
+    expect(
+      (await ctx.http().get(`/api/v1/conversations/${conv.id}/messages`).set(intrus.auth)).status,
+    ).toBe(404);
     for (let i = 0; i < 35; i++) {
-      await MessageModel.create({ conversation: conv.id, author: karim.id, type: 'text', text: `m${i}`, createdAt: new Date(Date.now() + i * 1000) });
+      await MessageModel.create({
+        conversation: conv.id,
+        author: karim.id,
+        type: 'text',
+        text: `m${i}`,
+        createdAt: new Date(Date.now() + i * 1000),
+      });
     }
     const page1 = await ctx.http().get(`/api/v1/conversations/${conv.id}/messages`).set(amina.auth);
     expect(page1.body.items).toHaveLength(30);
@@ -194,6 +262,9 @@ describe('messagerie', () => {
     expect(page2.body.items).toHaveLength(5);
     expect(page2.body.hasMore).toBe(false);
 
+    const before = (await ctx.http().get(`/api/v1/conversations/${conv.id}`).set(amina.auth)).body;
+    expect(before).toMatchObject({ blockedByMe: false, canSend: true });
+
     await ctx.http().post(`/api/v1/me/blocked/${karim.id}`).set(amina.auth);
     const blocked = await ctx
       .http()
@@ -201,6 +272,16 @@ describe('messagerie', () => {
       .set(karim.auth)
       .send({ type: 'text', clientId: 'client-blocked', text: 'Hello' });
     expect(blocked.body.error.code).toBe('BLOCKED');
+
+    // Celle qui bloque peut débloquer ; le bloqué ne peut plus écrire, sans savoir qui a bloqué.
+    const mine = (await ctx.http().get(`/api/v1/conversations/${conv.id}`).set(amina.auth)).body;
+    expect(mine).toMatchObject({ blockedByMe: true, canSend: false });
+    const theirs = (await ctx.http().get(`/api/v1/conversations/${conv.id}`).set(karim.auth)).body;
+    expect(theirs).toMatchObject({ blockedByMe: false, canSend: false });
+
+    await ctx.http().delete(`/api/v1/me/blocked/${karim.id}`).set(amina.auth);
+    const after = (await ctx.http().get(`/api/v1/conversations/${conv.id}`).set(karim.auth)).body;
+    expect(after).toMatchObject({ blockedByMe: false, canSend: true });
   });
 
   it('limite à 10 nouvelles conversations générales par jour', async () => {
@@ -208,10 +289,17 @@ describe('messagerie', () => {
     const karim = await verifiedCarrier(ctx);
     for (let i = 0; i < 10; i++) {
       const other = await verifiedUser(ctx);
-      expect((await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: other.id })).status).toBe(200);
+      expect(
+        (await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: other.id }))
+          .status,
+      ).toBe(200);
     }
     const last = await verifiedUser(ctx);
-    const res = await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: last.id });
+    const res = await ctx
+      .http()
+      .post('/api/v1/conversations')
+      .set(karim.auth)
+      .send({ userId: last.id });
     expect(res.status).toBe(429);
     expect(await ConversationModel.countDocuments({ createdBy: karim.id })).toBe(10);
   });
@@ -236,9 +324,13 @@ describe('Socket.IO', () => {
     realtime.attach(socketRealtime(io));
     await new Promise<void>((resolve) => http!.listen(0, resolve));
     const port = (http.address() as AddressInfo).port;
-    const app = { ...ctx, services, http: () => (null as never) };
+    const app = { ...ctx, services, http: () => null as never };
     const client = (token?: string) => {
-      const s = connect(`http://localhost:${port}`, { auth: token ? { token } : {}, transports: ['websocket'], reconnection: false });
+      const s = connect(`http://localhost:${port}`, {
+        auth: token ? { token } : {},
+        transports: ['websocket'],
+        reconnection: false,
+      });
       sockets.push(s);
       return s;
     };
@@ -267,14 +359,19 @@ describe('Socket.IO', () => {
   it("délivre les messages en temps réel, l'indicateur d'écriture et les compteurs", async () => {
     const { client, request } = await start();
     const reg = async (n: string) => {
-      const r = await request.post('/api/v1/auth/register').send((await import('./helpers')).registration({ firstName: n }));
+      const r = await request
+        .post('/api/v1/auth/register')
+        .send((await import('./helpers')).registration({ firstName: n }));
       await UserModel.updateOne({ _id: r.body.user.id }, { emailVerifiedAt: new Date() });
       return { id: r.body.user.id as string, token: r.body.accessToken as string };
     };
     const amina = await reg('Amina');
     const karim = await reg('Karim');
     const conv = (
-      await request.post('/api/v1/conversations').set({ Authorization: `Bearer ${karim.token}` }).send({ userId: amina.id })
+      await request
+        .post('/api/v1/conversations')
+        .set({ Authorization: `Bearer ${karim.token}` })
+        .send({ userId: amina.id })
     ).body;
 
     const a = client(amina.token);
@@ -282,8 +379,12 @@ describe('Socket.IO', () => {
     const counters = await once<{ unreadMessages: number }>(a, 'counters');
     expect(counters.unreadMessages).toBe(0);
     await connected(k);
-    expect(await emitAck(a, 'conversation:join', { conversationId: conv.id })).toEqual({ ok: true });
-    expect(await emitAck(k, 'conversation:join', { conversationId: conv.id })).toEqual({ ok: true });
+    expect(await emitAck(a, 'conversation:join', { conversationId: conv.id })).toEqual({
+      ok: true,
+    });
+    expect(await emitAck(k, 'conversation:join', { conversationId: conv.id })).toEqual({
+      ok: true,
+    });
 
     const typing = once<{ isTyping: boolean; userId: string }>(a, 'typing');
     k.emit('typing', { conversationId: conv.id, isTyping: true });
@@ -303,7 +404,9 @@ describe('Socket.IO', () => {
     const intruder = await reg('Intrus');
     const i = client(intruder.token);
     await connected(i);
-    const denied = await emitAck<{ ok: boolean; error: { code: string } }>(i, 'conversation:join', { conversationId: conv.id });
+    const denied = await emitAck<{ ok: boolean; error: { code: string } }>(i, 'conversation:join', {
+      conversationId: conv.id,
+    });
     expect(denied).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } });
   });
 });

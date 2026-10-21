@@ -613,7 +613,12 @@
     },
     "about": "بخصوص «{{title}}»",
     "removePhoto": "إزالة الصورة",
-    "imageExpired": "صورة منتهية الصلاحية"
+    "imageExpired": "صورة منتهية الصلاحية",
+    "unblockUser": "إلغاء حظر المستخدم",
+    "viewProfile": "عرض الملف الشخصي",
+    "identityNotVerified": "هوية غير موثقة",
+    "blockedByMe": "لقد حظرت {{name}}. لم يعد بإمكانكما تبادل الرسائل.",
+    "cannotReply": "لم يعد بإمكانك الرد في هذه المحادثة."
   },
   "profile": {
     "title": "حسابي",

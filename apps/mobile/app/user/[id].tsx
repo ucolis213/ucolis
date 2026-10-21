@@ -1,10 +1,11 @@
 // Profil public (F3) : nom filtré (ou raison sociale), badges, ancienneté, statistiques de confiance,
 // répartition des notes, avis, trajets actifs ; Contacter, Signaler, Bloquer.
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { ConversationDto } from '@ucolis/shared';
+import type { ConversationDto, UserSummary } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
 import { usePublicUser, useUserReviews, useUserTrips } from '@/api/queries';
 import { AppText } from '@/components/AppText';
@@ -31,7 +32,37 @@ export default function PublicProfile() {
   const reviews = useUserReviews(id);
   const trips = useUserTrips(id);
   const requireAuth = useRequireAuth();
+  const qc = useQueryClient();
   const isMe = me?.id === id;
+  // Même liste que l'écran « Utilisateurs bloqués » : Bloquer devient Débloquer.
+  const blockedList = useQuery({
+    queryKey: ['me', 'blocked'],
+    queryFn: () => api.get<{ items: UserSummary[] }>('/me/blocked'),
+    enabled: !!me && !isMe,
+  });
+  const blocked = !!blockedList.data?.items.some((b) => b.id === id);
+
+  async function toggleBlock(name: string) {
+    try {
+      if (blocked) await api.delete(`/me/blocked/${id}`);
+      else if (
+        await confirm({
+          title: t('block'),
+          message: t('blockConfirm', { name }),
+          destructive: true,
+        })
+      )
+        await api.post(`/me/blocked/${id}`);
+      else return;
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['me', 'blocked'] }),
+        qc.invalidateQueries({ queryKey: ['conversations'] }),
+        qc.invalidateQueries({ queryKey: ['conversation'] }),
+      ]);
+    } catch (err) {
+      Alert.alert(errorMessage(t, err));
+    }
+  }
 
   return (
     <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title="" />}>
@@ -48,57 +79,86 @@ export default function PublicProfile() {
                 {u.badges.identity && <Badge kind="identity" />}
               </View>
               <AppText size="sm" color={colors.textMuted}>
-                {t('memberSince', { date: formatDate(u.memberSince, { day: undefined }) })} · {wilayaName(u.wilayaCode)}
+                {t('memberSince', { date: formatDate(u.memberSince, { day: undefined }) })} ·{' '}
+                {wilayaName(u.wilayaCode)}
               </AppText>
-              {u.rating.count > 0 ? <RatingStars value={u.rating.average} count={u.rating.count} size={18} /> : <AppText size="sm" color={colors.textMuted}>{t('noRating')}</AppText>}
+              {u.rating.count > 0 ? (
+                <RatingStars value={u.rating.average} count={u.rating.count} size={18} />
+              ) : (
+                <AppText size="sm" color={colors.textMuted}>
+                  {t('noRating')}
+                </AppText>
+              )}
             </View>
             {u.bio ? <AppText>{u.bio}</AppText> : null}
             {!isMe && (
               <View style={styles.row}>
-                <View style={styles.flex}>
-                  <Button
-                    label={t('contact')}
-                    icon="chatbubble-outline"
-                    onPress={() =>
-                      requireAuth(async () => {
-                        try {
-                          const conv = await api.post<ConversationDto>('/conversations', { userId: id });
-                          router.push({ pathname: '/conversation/[id]', params: { id: conv.id } });
-                        } catch (err) {
-                          Alert.alert(errorMessage(t, err));
-                        }
-                      }, { needsVerifiedEmail: true })
-                    }
-                  />
-                </View>
-                <Button label={t('parcel:actions.report')} variant="outline" fullWidth={false} onPress={() => requireAuth(() => router.push({ pathname: '/report', params: { type: 'user', id } }))} />
+                {!blocked && (
+                  <View style={styles.flex}>
+                    <Button
+                      label={t('contact')}
+                      icon="chatbubble-outline"
+                      onPress={() =>
+                        requireAuth(
+                          async () => {
+                            try {
+                              const conv = await api.post<ConversationDto>('/conversations', {
+                                userId: id,
+                              });
+                              router.push({
+                                pathname: '/conversation/[id]',
+                                params: { id: conv.id },
+                              });
+                            } catch (err) {
+                              Alert.alert(errorMessage(t, err));
+                            }
+                          },
+                          { needsVerifiedEmail: true },
+                        )
+                      }
+                    />
+                  </View>
+                )}
                 <Button
-                  label={t('block')}
-                  variant="ghost"
+                  label={t('parcel:actions.report')}
+                  variant="outline"
                   fullWidth={false}
                   onPress={() =>
-                    requireAuth(async () => {
-                      if (await confirm({ title: t('block'), message: t('blockConfirm', { name: u.displayName }), destructive: true })) {
-                        await api.post(`/me/blocked/${id}`);
-                        router.back();
-                      }
-                    })
+                    requireAuth(() =>
+                      router.push({ pathname: '/report', params: { type: 'user', id } }),
+                    )
                   }
+                />
+                <Button
+                  label={blocked ? t('unblock') : t('block')}
+                  variant="ghost"
+                  fullWidth={false}
+                  onPress={() => requireAuth(() => toggleBlock(u.displayName))}
                 />
               </View>
             )}
             {u.company && (
               <SectionCard title={t('company')}>
                 <KeyValue label={t('companyName')} value={u.company.name} />
-                {u.company.legalForm && <KeyValue label={t('legalForm')} value={t(`legalForms.${u.company.legalForm}`)} />}
+                {u.company.legalForm && (
+                  <KeyValue label={t('legalForm')} value={t(`legalForms.${u.company.legalForm}`)} />
+                )}
               </SectionCard>
             )}
             <SectionCard title={t('trustStats')}>
               <KeyValue label={t('parcelsSent')} value={String(u.stats.parcelsSent)} />
               <KeyValue label={t('parcelsCarried')} value={String(u.stats.parcelsCarried)} />
-              <KeyValue label={t('successRate')} value={u.stats.successRate === null ? '-' : `${u.stats.successRate} %`} />
+              <KeyValue
+                label={t('successRate')}
+                value={u.stats.successRate === null ? '-' : `${u.stats.successRate} %`}
+              />
               <KeyValue label={t('withdrawals')} value={String(u.stats.withdrawals)} />
-              {u.stats.medianReplyMinutes !== null && <KeyValue label="" value={t('medianReply', { minutes: u.stats.medianReplyMinutes })} />}
+              {u.stats.medianReplyMinutes !== null && (
+                <KeyValue
+                  label=""
+                  value={t('medianReply', { minutes: u.stats.medianReplyMinutes })}
+                />
+              )}
             </SectionCard>
             {u.rating.count > 0 && (
               <SectionCard title={t('myReviews')}>
@@ -110,7 +170,9 @@ export default function PublicProfile() {
                         {n}
                       </AppText>
                       <View style={styles.bar}>
-                        <View style={[styles.fill, { width: `${(count / u.rating.count) * 100}%` }]} />
+                        <View
+                          style={[styles.fill, { width: `${(count / u.rating.count) * 100}%` }]}
+                        />
                       </View>
                       <AppText size="xs" color={colors.textMuted} style={{ width: 24 }}>
                         {count}
@@ -158,5 +220,11 @@ const styles = StyleSheet.create({
   distRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   bar: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 8, backgroundColor: colors.warning },
-  review: { gap: space(1), paddingTop: space(2), borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, borderRadius: radii.input },
+  review: {
+    gap: space(1),
+    paddingTop: space(2),
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    borderRadius: radii.input,
+  },
 });

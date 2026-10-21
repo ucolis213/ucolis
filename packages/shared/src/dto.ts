@@ -56,7 +56,12 @@ export interface PublicUser extends UserSummary {
   memberSince: string;
   wilayaCode: string;
   bio: string;
-  company: { name: string; legalForm: string | null; wilayaCode: string | null; logo: FileRef | null } | null;
+  company: {
+    name: string;
+    legalForm: string | null;
+    wilayaCode: string | null;
+    logo: FileRef | null;
+  } | null;
   rating: { average: number; count: number; distribution: number[] };
   stats: {
     parcelsSent: number;
@@ -170,12 +175,7 @@ export interface ParcelCardDto {
 }
 
 export type ParcelViewerRole =
-  | 'guest'
-  | 'sender'
-  | 'assigned_carrier'
-  | 'carrier_with_offer'
-  | 'carrier_no_offer'
-  | 'other';
+  'guest' | 'sender' | 'assigned_carrier' | 'carrier_with_offer' | 'carrier_no_offer' | 'other';
 
 export interface OfferRoundDto {
   by: 'carrier' | 'sender';
@@ -217,7 +217,13 @@ export interface ParcelDto extends ParcelCardDto {
   finalPrice: number | null;
   recipient: { name: string; phone: string } | null;
   assignedCarrier: UserSummary | null;
-  statusHistory: { from: ParcelStatus | null; to: ParcelStatus; byType: 'user' | 'staff' | 'system'; at: string; reason: string | null }[];
+  statusHistory: {
+    from: ParcelStatus | null;
+    to: ParcelStatus;
+    byType: 'user' | 'staff' | 'system';
+    at: string;
+    reason: string | null;
+  }[];
   startedAt: string | null;
   declaredDeliveredAt: string | null;
   deliveredAt: string | null;
@@ -244,7 +250,12 @@ export interface NotificationDto {
   titleKey: string;
   bodyKey: string;
   params: Record<string, string | number>;
-  data: Partial<Record<'parcelId' | 'offerId' | 'tripId' | 'conversationId' | 'disputeId' | 'userId' | 'url', string | null>>;
+  data: Partial<
+    Record<
+      'parcelId' | 'offerId' | 'tripId' | 'conversationId' | 'disputeId' | 'userId' | 'url',
+      string | null
+    >
+  >;
   link: string | null;
   readAt: string | null;
   createdAt: string;
@@ -274,9 +285,18 @@ export interface ConversationDto {
   id: string;
   other: UserSummary;
   parcel: { id: string; title: string; status: ParcelStatus; reference: string } | null;
-  lastMessage: { text: string | null; type: string | null; authorId: string | null; at: string | null };
+  lastMessage: {
+    text: string | null;
+    type: string | null;
+    authorId: string | null;
+    at: string | null;
+  };
   unread: number;
   muted: boolean;
+  /** Vrai si je bloque l'autre participant (le déblocage est alors proposé). */
+  blockedByMe: boolean;
+  /** Faux si l'un des deux bloque l'autre ; ne révèle pas qui a bloqué. */
+  canSend: boolean;
   updatedAt: string;
 }
 

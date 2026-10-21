@@ -224,3 +224,15 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   justificatifs pro (déjà supprimés à l'anonymisation du compte).
 - Une annonce dupliquée partage les fichiers de l'originale : un fichier encore utilisé par une autre annonce
   n'est pas détruit. Le message reste, sans fichier ; l'application affiche « Photo expirée ».
+
+## Blocage visible dans la messagerie (21 octobre 2026)
+- La conversation expose `blockedByMe` (je bloque l'autre) et `canSend` (faux si l'un des deux bloque l'autre).
+  `canSend` ne dit pas qui a bloqué : la personne bloquée lit « Vous ne pouvez plus répondre dans cette
+  conversation » sans apprendre qu'elle a été bloquée.
+- On reste dans la discussion après un blocage. Elle passe en lecture seule, et la zone de saisie est remplacée
+  par un bandeau, avec « Débloquer » pour la personne qui bloque.
+- Le déblocage se fait aussi depuis le menu de la conversation et depuis le profil public, et plus seulement
+  depuis la liste des bloqués (PRD F3). Sinon, l'action « Bloquer » restait proposée pour un compte déjà bloqué.
+- En-tête de la discussion : photo, nom, badge « Identité vérifiée » (ou « Identité non vérifiée »), badge pro
+  et note. Un toucher sur l'en-tête ou sur la photo d'un message ouvre le profil public, également accessible
+  par « Voir le profil » dans le menu.

@@ -613,7 +613,12 @@
     },
     "about": "À propos de « {{title}} »",
     "removePhoto": "Retirer la photo",
-    "imageExpired": "Photo expirée"
+    "imageExpired": "Photo expirée",
+    "unblockUser": "Débloquer l'utilisateur",
+    "viewProfile": "Voir le profil",
+    "identityNotVerified": "Identité non vérifiée",
+    "blockedByMe": "Vous avez bloqué {{name}}. Vous ne pouvez plus échanger de messages.",
+    "cannotReply": "Vous ne pouvez plus répondre dans cette conversation."
   },
   "profile": {
     "title": "Mon profil",
