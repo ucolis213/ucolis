@@ -8,13 +8,15 @@ import { QueryView } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Favorites() {
   const { t } = useTranslation('profile');
   const query = useFavorites();
+  const pull = usePullToRefresh(query.refetch);
   const qc = useQueryClient();
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('favorites')} />} onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('favorites')} />} {...pull}>
       <QueryView query={query} isEmpty={(d) => d.items.length === 0} empty={{ icon: 'heart-outline', title: t('favoritesEmpty') }}>
         {(d) => (
           <View style={{ gap: space(3) }}>

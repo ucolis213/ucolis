@@ -7,12 +7,14 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { TripCard } from '@/components/TripCard';
 import { space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function MyTrips() {
   const { t } = useTranslation(['profile', 'trip']);
   const query = useMyTrips();
+  const pull = usePullToRefresh(query.refetch);
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('myTrips')} />} onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('myTrips')} />} {...pull}>
       <QueryView
         query={query}
         isEmpty={(d) => d.items.length === 0}

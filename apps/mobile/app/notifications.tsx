@@ -20,6 +20,7 @@ import { currentLocale } from '@/i18n';
 import { linkToHref } from '@/notifications/push';
 import { useSession } from '@/session/SessionContext';
 import { colors, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 const ICONS: Record<NotificationCategory, keyof typeof Ionicons.glyphMap> = {
   offers: 'pricetag',
@@ -35,6 +36,7 @@ export default function Notifications() {
   const { isGuest } = useSession();
   const qc = useQueryClient();
   const query = useNotifications(!isGuest);
+  const pull = usePullToRefresh(query.refetch);
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   const refresh = () => qc.invalidateQueries({ queryKey: ['notifications'] });
 
@@ -79,8 +81,7 @@ export default function Notifications() {
               data={data}
               keyExtractor={(n) => n.id}
               onEndReached={() => query.hasNextPage && query.fetchNextPage()}
-              refreshing={query.isRefetching}
-              onRefresh={() => query.refetch()}
+              {...pull}
               renderItem={({ item }) => <Row n={item} onPress={() => open(item)} />}
               ListFooterComponent={
                 <AppText

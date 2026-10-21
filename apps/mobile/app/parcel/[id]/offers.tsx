@@ -19,6 +19,7 @@ import { Segmented } from '@/components/Segmented';
 import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function ParcelOffers() {
   const { t } = useTranslation(['offer', 'parcel', 'common']);
@@ -26,6 +27,7 @@ export default function ParcelOffers() {
   const [sort, setSort] = useState<'recent' | 'price' | 'rating'>('recent');
   const parcel = useParcel(id);
   const query = useParcelOffers(id, sort);
+  const pull = usePullToRefresh(query.refetch);
   const config = useAppConfig();
   const qc = useQueryClient();
   const [countering, setCountering] = useState<OfferDto | null>(null);
@@ -49,7 +51,7 @@ export default function ParcelOffers() {
   }
 
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('offersFor', { title: parcel.data?.title ?? '' })} />} onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('offersFor', { title: parcel.data?.title ?? '' })} />} {...pull}>
       <Segmented
         value={sort}
         onChange={setSort}

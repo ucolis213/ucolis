@@ -21,6 +21,7 @@ import { TextField } from '@/components/TextField';
 import { formatDateTime } from '@/format';
 import { useSession } from '@/session/SessionContext';
 import { colors, radii, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 function Photos({ photos }: { photos: FileRef[] }) {
   if (!photos.length) return null;
@@ -38,6 +39,7 @@ export default function DisputeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useSession();
   const query = useDispute(id);
+  const pull = usePullToRefresh(query.refetch);
   const qc = useQueryClient();
   const [text, setText] = useState('');
   const [photos, setPhotos] = useState<FileRef[]>([]);
@@ -56,7 +58,7 @@ export default function DisputeDetail() {
   }
 
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('disputeTitle')} />} onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('disputeTitle')} />} {...pull}>
       <QueryView query={query}>
         {(d) => {
           const canRespond = d.against === user?.id && !d.response && d.status !== 'resolved' && new Date(d.responseDeadline) > new Date();

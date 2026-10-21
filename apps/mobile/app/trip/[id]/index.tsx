@@ -24,12 +24,14 @@ import { formatDate, formatDateTime, price, wilayaName } from '@/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useSession } from '@/session/SessionContext';
 import { colors, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function TripDetail() {
   const { t } = useTranslation(['trip', 'parcel', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useSession();
   const trip = useTrip(id);
+  const pull = usePullToRefresh(trip.refetch);
   const qc = useQueryClient();
   const requireAuth = useRequireAuth();
   const isOwner = !!user && trip.data?.carrier.id === user.id;
@@ -48,7 +50,7 @@ export default function TripDetail() {
   };
 
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('departure')} />} onRefresh={() => trip.refetch()} refreshing={trip.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('departure')} />} {...pull}>
       <QueryView query={trip}>
         {(tr) => {
           const received = (requests.data?.received ?? []).filter((r) => r.tripId === id && r.status === 'pending');

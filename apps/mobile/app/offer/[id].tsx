@@ -20,11 +20,13 @@ import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { useSocketEvent } from '@/realtime/socket';
 import { colors, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function OfferDetail() {
   const { t } = useTranslation(['offer', 'parcel', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useOffer(id);
+  const pull = usePullToRefresh(query.refetch);
   const qc = useQueryClient();
   const config = useAppConfig();
   const [prompt, setPrompt] = useState<'counter' | 'reoffer' | null>(null);
@@ -46,7 +48,7 @@ export default function OfferDetail() {
   };
 
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('title')} />} onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('title')} />} {...pull}>
       <QueryView query={query}>
         {(o) => {
           const sender = o.viewerIsSender;

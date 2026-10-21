@@ -16,6 +16,7 @@ import { isCarrierIntent, useSession } from '@/session/SessionContext';
 import { useFilters } from '@/state/filters';
 import { newParcelRoute } from '@/state/parcelDraft';
 import { colors, MIN_TOUCH, radii, shadow, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 /** Compteurs de l'accueil : colis actifs, offres actives, livraisons en cours. */
 function useHomeCounters(enabled: boolean) {
@@ -41,11 +42,12 @@ export default function Home() {
   const counters = useHomeCounters(!isGuest);
   // Dernières annonces, toutes wilayas confondues (voir DECISIONS.md, 21 octobre 2026).
   const latest = useParcels({ limit: 5 });
+  const pull = usePullToRefresh(() => Promise.all([latest.refetch(), counters.refetch()]));
   const showTrip = isGuest || isCarrierIntent(user?.intent);
   const carrierPending = user && isCarrierIntent(user.intent) && user.carrierVerification.status !== 'approved';
 
   return (
-    <Screen scroll onRefresh={() => Promise.all([latest.refetch(), counters.refetch()])} refreshing={latest.isRefetching}>
+    <Screen scroll {...pull}>
       <View style={styles.header}>
         <AppText size="xl" weight="bold" style={styles.flex}>
           {user ? t('home.greeting', { name: user.firstName }) : t('home.guestGreeting')}

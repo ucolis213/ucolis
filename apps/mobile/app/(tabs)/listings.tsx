@@ -23,6 +23,7 @@ import { formatDate, price, wilayaName } from '@/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { activeFilterKeys, useFilters, type ParcelFilters } from '@/state/filters';
 import { colors, fontFamily, MIN_TOUCH, radii, shadow, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Listings() {
   const { t } = useTranslation(['common', 'parcel', 'trip']);
@@ -90,6 +91,7 @@ function ParcelsPane() {
   const requireAuth = useRequireAuth();
   const queryClient = useQueryClient();
   const query = useParcels(filters as unknown as Record<string, unknown>);
+  const pull = usePullToRefresh(query.refetch);
   const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
   const chips = activeFilterKeys(filters);
 
@@ -192,8 +194,7 @@ function ParcelsPane() {
           renderItem={({ item }) => <ParcelCard parcel={item} onToggleFavorite={toggleFavorite} />}
           onEndReached={() => query.hasNextPage && !query.isFetchingNextPage && query.fetchNextPage()}
           onEndReachedThreshold={0.5}
-          refreshing={query.isRefetching}
-          onRefresh={() => query.refetch()}
+          {...pull}
           ListEmptyComponent={
             <EmptyState
               icon="cube-outline"
@@ -255,6 +256,7 @@ function TripsPane() {
   const { t } = useTranslation(['trip', 'common']);
   const { trips: filters, resetTrips } = useFilters();
   const query = useTrips(filters as Record<string, unknown>);
+  const pull = usePullToRefresh(query.refetch);
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   const active = Object.values(filters).some(Boolean);
   return (
@@ -288,8 +290,7 @@ function TripsPane() {
           ItemSeparatorComponent={() => <View style={{ height: space(3) }} />}
           renderItem={({ item }) => <TripCard trip={item} />}
           onEndReached={() => query.hasNextPage && !query.isFetchingNextPage && query.fetchNextPage()}
-          refreshing={query.isRefetching}
-          onRefresh={() => query.refetch()}
+          {...pull}
           ListEmptyComponent={<EmptyState icon="car-outline" title={t('noTrips')} />}
         />
       )}

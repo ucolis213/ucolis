@@ -15,11 +15,13 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { Segmented } from '@/components/Segmented';
 import { placeLabel } from '@/format';
 import { colors, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function MyOffers() {
   const { t } = useTranslation(['offer', 'profile']);
   const [tab, setTab] = useState<MyOfferTab>('active');
   const query = useMyOffers(tab);
+  const pull = usePullToRefresh(query.refetch);
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <Screen padded={false} edges={['top', 'bottom']} header={<ScreenHeader title={t('profile:myOffers')} />}>
@@ -35,8 +37,7 @@ export default function MyOffers() {
               contentContainerStyle={{ padding: space(5) }}
               ItemSeparatorComponent={() => <View style={{ height: space(3) }} />}
               onEndReached={() => query.hasNextPage && query.fetchNextPage()}
-              refreshing={query.isRefetching}
-              onRefresh={() => query.refetch()}
+              {...pull}
               renderItem={({ item }) => (
                 <Pressable onPress={() => router.push({ pathname: '/offer/[id]', params: { id: item.id } })} accessibilityRole="button">
                   {item.parcel && (

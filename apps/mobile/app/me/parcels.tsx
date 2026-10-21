@@ -14,6 +14,7 @@ import { Segmented } from '@/components/Segmented';
 import { useSession } from '@/session/SessionContext';
 import { newParcelRoute } from '@/state/parcelDraft';
 import { space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 const GROUPS = {
   active: 'open,negotiating,assigned,in_transit,delivered_pending,disputed',
@@ -25,6 +26,7 @@ export default function MyParcels() {
   const { user } = useSession();
   const [group, setGroup] = useState<keyof typeof GROUPS>('active');
   const query = useMyParcels(GROUPS[group]);
+  const pull = usePullToRefresh(query.refetch);
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   async function exportCsv() {
@@ -64,8 +66,7 @@ export default function MyParcels() {
               ItemSeparatorComponent={() => <View style={{ height: space(3) }} />}
               renderItem={({ item }) => <ParcelCard parcel={item} showStatus />}
               onEndReached={() => query.hasNextPage && query.fetchNextPage()}
-              refreshing={query.isRefetching}
-              onRefresh={() => query.refetch()}
+              {...pull}
             />
           )}
         </QueryView>

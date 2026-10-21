@@ -40,6 +40,7 @@ import { draftFromParcel } from '@/state/draftFromParcel';
 import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
 import { colors, radii, space } from '@/theme';
 import { stopTracking } from '@/tracking/location';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 /** Actions mises en avant en bouton principal ; les autres vont dans la liste secondaire. */
 const PRIMARY: ParcelAction[] = [
@@ -80,6 +81,7 @@ export default function ParcelDetail() {
   const { t } = useTranslation(['parcel', 'common', 'offer', 'errors']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useParcel(id);
+  const pull = usePullToRefresh(query.refetch);
   const qc = useQueryClient();
   const requireAuth = useRequireAuth();
   const { user } = useSession();
@@ -224,8 +226,7 @@ export default function ParcelDetail() {
       scroll
       padded={false}
       edges={['top', 'bottom']}
-      onRefresh={() => query.refetch()}
-      refreshing={query.isRefetching}
+      {...pull}
       header={
         <ScreenHeader
           title={t('reference', { reference: p.reference })}

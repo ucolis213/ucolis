@@ -15,11 +15,13 @@ import { Screen } from '@/components/Screen';
 import { formatRelative } from '@/format';
 import { useSession } from '@/session/SessionContext';
 import { colors, radii, space } from '@/theme';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Messages() {
   const { t } = useTranslation(['chat', 'common']);
   const { isGuest } = useSession();
   const query = useConversations(!isGuest);
+  const pull = usePullToRefresh(query.refetch);
   if (isGuest) {
     return (
       <Screen>
@@ -44,8 +46,7 @@ export default function Messages() {
               data={data.items}
               keyExtractor={(c) => c.id}
               renderItem={({ item }) => <ConversationRow conv={item} />}
-              refreshing={query.isRefetching}
-              onRefresh={() => query.refetch()}
+              {...pull}
             />
           )}
         </QueryView>
