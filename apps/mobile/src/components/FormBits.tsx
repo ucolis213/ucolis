@@ -331,10 +331,11 @@ function CalendarSheet({
   );
 }
 
-const MINUTES = ['00', '15', '30', '45'];
+// Minutes par pas de 5 : 00, 05, 10… 55.
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
 
-/** Heure facultative « HH:mm » : heure puis minutes (par quarts d'heure) dans une feuille, effaçable. */
+/** Heure facultative « HH:mm » : heure puis minutes (par 5 minutes) dans une feuille, effaçable. */
 export function TimeSelect({
   label,
   value,
@@ -409,6 +410,13 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
               <Ionicons name="close" size={26} color={colors.navy} />
             </Pressable>
           </View>
+          {/* Aperçu : l'heure choisie attend ses minutes. */}
+          <AppText size="xl" weight="bold" align="center" color={hour ? colors.navy : colors.textSubtle}>
+            {`${hour ?? '--'} : ${value && value.startsWith(`${hour}:`) ? value.slice(3) : '--'}`}
+          </AppText>
+          <AppText size="xs" color={colors.textMuted} align="center">
+            {t('timeHint')}
+          </AppText>
           <AppText size="sm" weight="medium" color={colors.textMuted}>
             {t('hour')}
           </AppText>
@@ -443,13 +451,13 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
                   key={m}
                   disabled={!hour}
                   onPress={() => hour && onPick(`${hour}:${m}`)}
-                  style={[styles.yearCell, selected && styles.cellSelected]}
+                  style={[styles.timeCell, selected && styles.cellSelected]}
                   accessibilityRole="button"
                   accessibilityLabel={hour ? `${hour}:${m}` : m}
                   accessibilityState={{ selected, disabled: !hour }}
                 >
                   <AppText weight={selected ? 'bold' : 'regular'} color={selected ? colors.surface : hour ? colors.navy : colors.border}>
-                    {hour ? `${hour}:${m}` : `:${m}`}
+                    {m}
                   </AppText>
                 </Pressable>
               );

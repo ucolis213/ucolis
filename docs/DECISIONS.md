@@ -272,7 +272,7 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
 - Date souhaitée jusqu'à un an (`DESIRED_DATE_MAX_DAYS`), au lieu de 60 jours. Le calendrier propose cette durée
   par défaut partout (annonce, prise en charge d'une offre, départ d'un trajet, filtres). Une annonce sans date
   expire toujours au bout de 60 jours (`PUBLISH_WINDOW_DAYS`).
-- Heure précise facultative (`desiredTime`, « HH:mm », quarts d'heure dans l'application) en plus du créneau.
+- Heure précise facultative (`desiredTime`, « HH:mm », pas de 5 minutes dans l'application) en plus du créneau.
   Quand elle est donnée, l'API impose le créneau correspondant (avant 12 h matin, avant 18 h après-midi, sinon
   soir) : filtres et compatibilité des trajets restent fondés sur le créneau. Choisir un autre créneau efface
   l'heure.
