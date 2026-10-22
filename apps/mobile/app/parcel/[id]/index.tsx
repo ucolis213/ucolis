@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   parcelActionsFor,
@@ -76,7 +76,6 @@ const ICONS: Partial<Record<ParcelAction, keyof typeof Ionicons.glyphMap>> = {
   withdraw_offer: 'remove-circle-outline',
 };
 
-const WIDTH = Dimensions.get('window').width;
 
 export default function ParcelDetail() {
   const { t } = useTranslation(['parcel', 'common', 'offer', 'errors']);
@@ -89,6 +88,9 @@ export default function ParcelDetail() {
   const startDraft = useParcelDraft((s) => s.start);
   const [cancelPrompt, setCancelPrompt] = useState(false);
   const [photoViewer, setPhotoViewer] = useState<{ photos: FileRef[]; index: number } | null>(null);
+  // Largeur courante (écran partagé, tablette) ; hauteur bornée pour qu'une tablette garde le contenu visible.
+  const window = useWindowDimensions();
+  const photoSize = { width: window.width, height: Math.min(window.width * 0.66, window.height * 0.4) };
   const p = query.data;
 
   // Le partage GPS s'arrête dès que le colis quitte in_transit.
@@ -271,7 +273,7 @@ export default function ParcelDetail() {
               accessibilityRole="imagebutton"
               accessibilityLabel={t('common:enlargePhoto')}
             >
-              <Image source={{ uri: cdn(ph.url, 900) }} style={{ width: WIDTH, height: WIDTH * 0.66 }} contentFit="cover" accessibilityIgnoresInvertColors />
+              <Image source={{ uri: cdn(ph.url, 900) }} style={photoSize} contentFit="cover" accessibilityIgnoresInvertColors />
             </Pressable>
           ))}
         </ScrollView>

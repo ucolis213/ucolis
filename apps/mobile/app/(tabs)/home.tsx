@@ -86,7 +86,7 @@ export default function Home() {
       )}
 
       <View style={styles.sectionHeader}>
-        <AppText size="lg" weight="bold">
+        <AppText size="lg" weight="bold" style={styles.shrink}>
           {t('home.latestListings')}
         </AppText>
         <AppText
@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
   cardIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   counters: { flexDirection: 'row', gap: space(3) },
   counter: { flex: 1, alignItems: 'center', padding: space(3), borderRadius: radii.card, backgroundColor: colors.surface, ...shadow },
+  shrink: { flexShrink: 1 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   list: { gap: space(3) },
   banner: { flexDirection: 'row', gap: space(2), padding: space(3), borderRadius: radii.card, backgroundColor: colors.warningSoft },

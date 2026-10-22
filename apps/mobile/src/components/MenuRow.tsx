@@ -46,7 +46,7 @@ export function MenuRow({
         {label}
       </AppText>
       {value && (
-        <AppText size="sm" color={colors.textMuted} numberOfLines={1}>
+        <AppText size="sm" color={colors.textMuted} numberOfLines={1} style={styles.value}>
           {value}
         </AppText>
       )}
@@ -57,6 +57,8 @@ export function MenuRow({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  // Valeur longue (email) : tronquée, sans écraser le libellé sur un écran étroit.
+  value: { flexShrink: 1, maxWidth: '50%' },
   section: { gap: space(2) },
   card: { borderRadius: radii.card, backgroundColor: colors.surface, overflow: 'hidden', ...shadow },
   row: {

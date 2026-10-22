@@ -78,7 +78,7 @@ export function ParcelCard({
       </View>
       <View style={styles.footer}>
         <View style={styles.sender}>
-          <AppText size="xs" weight="medium" numberOfLines={1}>
+          <AppText size="xs" weight="medium" numberOfLines={1} style={styles.shrink}>
             {parcel.sender.displayName}
           </AppText>
           {parcel.sender.rating.count > 0 && <RatingStars value={parcel.sender.rating.average} size={11} />}
@@ -98,6 +98,7 @@ export function ParcelCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  shrink: { flexShrink: 1 },
   card: { borderRadius: radii.card, backgroundColor: colors.surface, padding: space(3), gap: space(3), ...shadow },
   row: { flexDirection: 'row', gap: space(3) },
   photo: { width: 84, height: 84, borderRadius: radii.input },

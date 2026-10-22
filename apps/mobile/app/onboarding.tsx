@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LOCALES } from '@ucolis/shared';
 import { AppText } from '@/components/AppText';
@@ -25,6 +25,9 @@ const SLIDES: { icon: keyof typeof Ionicons.glyphMap; key: 1 | 2 | 3 }[] = [
 export default function Onboarding() {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
+  // Petits écrans (iPhone SE, mini) : illustration réduite pour que les boutons restent visibles.
+  const { height } = useWindowDimensions();
+  const art = height < 700 ? 140 : 200;
   const slide = SLIDES[index]!;
   const last = index === SLIDES.length - 1;
 
@@ -52,8 +55,8 @@ export default function Onboarding() {
       </View>
 
       <View style={styles.body}>
-        <View style={styles.illustration}>
-          <Ionicons name={slide.icon} size={96} color={colors.primary} />
+        <View style={[styles.illustration, { width: art, height: art, borderRadius: art / 2 }]}>
+          <Ionicons name={slide.icon} size={art * 0.48} color={colors.primary} />
         </View>
         <AppText size="xl" weight="bold" align="center">
           {t(`onboarding.slide${slide.key}Title`)}
@@ -104,9 +107,6 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center', gap: space(4) },
   illustration: {
     alignSelf: 'center',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',

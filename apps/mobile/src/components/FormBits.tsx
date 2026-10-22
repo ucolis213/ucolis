@@ -360,7 +360,8 @@ const styles = StyleSheet.create({
   weekDay: { flex: 1, textAlign: 'center', paddingVertical: space(1) },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: `${100 / 7}%`, height: MIN_TOUCH + 4, alignItems: 'center', justifyContent: 'center' },
-  dayInner: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: MIN_TOUCH / 2, alignItems: 'center', justifyContent: 'center' },
+  // Cercle borné par la colonne : sur un écran de 320 px, une colonne fait moins de MIN_TOUCH.
+  dayInner: { width: '100%', maxWidth: MIN_TOUCH, aspectRatio: 1, borderRadius: MIN_TOUCH / 2, alignItems: 'center', justifyContent: 'center' },
   dayToday: { borderWidth: 1, borderColor: colors.primary },
   cellSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   yearGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), paddingVertical: space(2) },

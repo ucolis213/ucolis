@@ -73,7 +73,8 @@ export function Screen({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  padded: { padding: space(5), gap: space(4) },
+  // Tablette : contenu centré, à largeur de lecture ; sans effet sur un téléphone.
+  padded: { padding: space(5), gap: space(4), width: '100%', maxWidth: 720, alignSelf: 'center' },
   footer: {
     paddingHorizontal: space(5),
     paddingVertical: space(3),

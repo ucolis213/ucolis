@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   photo: { alignItems: 'center', gap: space(2) },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2) },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), minHeight: MIN_TOUCH },
-  links: { flexDirection: 'row', gap: space(4), paddingStart: space(9) },
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: space(4), paddingStart: space(9) },
   box: {
     width: 24,
     height: 24,

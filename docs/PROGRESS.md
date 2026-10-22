@@ -47,6 +47,12 @@ admin 9 ; mobile 31).
   avec confirmation (`DELETE /conversations/:id`). Elle revient au message suivant.
 - Correctif : bas des écrans caché par le clavier. `Screen` évite désormais le clavier (iOS) pour tous les écrans ;
   les enveloppes propres à la connexion, l'inscription, la publication et la messagerie sont retirées.
+- Revue d'affichage par taille d'écran (lecture du code, sans appareil) : textes tronqués qui débordaient sur un écran
+  étroit (carte colis, lignes du profil, titre de l'accueil), cercles du calendrier à 320 px, illustration réduite
+  sur petit écran (accueil de premier lancement), photos de la fiche colis à la largeur courante et bornées en
+  hauteur, contenu centré à 720 px sur tablette.
+
+À tester : iPhone SE ou mini, grand Android, iPad, texte agrandi (Réglages → Accessibilité).
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.
 
