@@ -33,6 +33,8 @@ export const optionsPayload = (d: ParcelDraft) => ({
   vehicleTypes: d.vehicleTypes,
   desiredDate: d.desiredDate ?? undefined,
   timeSlot: d.timeSlot,
+  // Brouillon enregistré avant l'ajout de l'heure : champ absent.
+  desiredTime: d.desiredTime ?? null,
   flexibleDates: d.flexibleDates,
   urgent: d.urgent,
   recipient: d.recipientName || d.recipientPhone ? { name: d.recipientName, phone: d.recipientPhone } : undefined,

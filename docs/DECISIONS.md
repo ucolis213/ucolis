@@ -266,3 +266,13 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   `DEFAULT_COMMISSION.topUp`, à remplacer dans les réglages avant l'activation.
 - Pas de collection `CommissionConfig` : la configuration est une clé d'AppSetting (`commission`), comme le barème
   du prix, éditée et journalisée par le même écran.
+
+## 22 octobre 2026 : date et heure de l'annonce
+
+- Date souhaitée jusqu'à un an (`DESIRED_DATE_MAX_DAYS`), au lieu de 60 jours. Le calendrier propose cette durée
+  par défaut partout (annonce, prise en charge d'une offre, départ d'un trajet, filtres). Une annonce sans date
+  expire toujours au bout de 60 jours (`PUBLISH_WINDOW_DAYS`).
+- Heure précise facultative (`desiredTime`, « HH:mm », quarts d'heure dans l'application) en plus du créneau.
+  Quand elle est donnée, l'API impose le créneau correspondant (avant 12 h matin, avant 18 h après-midi, sinon
+  soir) : filtres et compatibilité des trajets restent fondés sur le créneau. Choisir un autre créneau efface
+  l'heure.

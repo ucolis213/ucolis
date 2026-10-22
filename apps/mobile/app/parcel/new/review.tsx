@@ -58,7 +58,7 @@ export default function ReviewStep() {
         <KeyValue label={t('vehicleTypesLabel')} value={draft.vehicleTypes.map((v) => t(`vehicleTypes.${v}`)).join(', ')} />
       </SectionCard>
       <SectionCard title={t('steps.options')}>
-        <KeyValue label={t('desiredDate')} value={draft.desiredDate ? `${formatDate(draft.desiredDate)} · ${t(`common:timeSlots.${draft.timeSlot}`)}` : '-'} />
+        <KeyValue label={t('desiredDate')} value={draft.desiredDate ? `${formatDate(draft.desiredDate)} · ${draft.desiredTime ?? t(`common:timeSlots.${draft.timeSlot}`)}` : '-'} />
         {draft.flexibleDates && <KeyValue label={t('flexibleDates')} value="✓" />}
         {draft.urgent && <KeyValue label={t('urgent')} value="✓" />}
         {draft.recipientName ? <KeyValue label={t('recipient')} value={`${draft.recipientName} · ${draft.recipientPhone}`} /> : null}

@@ -1,10 +1,11 @@
-// Petits éléments de formulaire : section, ligne clé/valeur, case à cocher, interrupteur, champ prix, date.
+// Petits éléments de formulaire : section, ligne clé/valeur, case à cocher, interrupteur, champ prix, date, heure.
 
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { DESIRED_DATE_MAX_DAYS } from '@ucolis/shared';
 import { atNoon, clampMonth, monthCells, sameDay, startOfDay, weekDays } from '../calendar';
 import { formatDate } from '../format';
 import { backIcon, colors, forwardIcon, MIN_TOUCH, radii, shadow, space } from '../theme';
@@ -140,7 +141,7 @@ export function DateSelect({
   label,
   value,
   onChange,
-  days = 61,
+  days = DESIRED_DATE_MAX_DAYS + 1,
   error,
 }: {
   label: string;
@@ -330,6 +331,136 @@ function CalendarSheet({
   );
 }
 
+const MINUTES = ['00', '15', '30', '45'];
+const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+
+/** Heure facultative « HH:mm » : heure puis minutes (par quarts d'heure) dans une feuille, effaçable. */
+export function TimeSelect({
+  label,
+  value,
+  onChange,
+  hint,
+  error,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (time: string | null) => void;
+  hint?: string;
+  error?: string;
+}) {
+  const { t } = useTranslation(['common', 'errors']);
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ gap: space(1.5) }}>
+      <AppText size="sm" weight="medium">
+        {label}
+      </AppText>
+      <View style={[styles.select, !!error && { borderColor: colors.danger }]}>
+        <Pressable style={[styles.flex, styles.timeField]} onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={label}>
+          <Ionicons name="time-outline" size={18} color={colors.textMuted} />
+          <AppText color={value ? colors.navy : colors.textSubtle} style={styles.flex}>
+            {value ?? t('selectTime')}
+          </AppText>
+        </Pressable>
+        {value && (
+          <Pressable onPress={() => onChange(null)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('clear')}>
+            <Ionicons name="close-circle" size={20} color={colors.textSubtle} />
+          </Pressable>
+        )}
+      </View>
+      {hint && !error && (
+        <AppText size="xs" color={colors.textMuted}>
+          {hint}
+        </AppText>
+      )}
+      {error && (
+        <AppText size="xs" color={colors.danger}>
+          {t(`errors:${error}`, { defaultValue: error })}
+        </AppText>
+      )}
+      {open && (
+        <TimeSheet
+          label={label}
+          value={value}
+          onClose={() => setOpen(false)}
+          onPick={(time) => {
+            onChange(time);
+            setOpen(false);
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
+function TimeSheet({ label, value, onClose, onPick }: { label: string; value: string | null; onClose: () => void; onPick: (time: string) => void }) {
+  const { t } = useTranslation('common');
+  const [hour, setHour] = useState<string | null>(value?.slice(0, 2) ?? null);
+  return (
+    <AppModal visible transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.backdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('cancel')} />
+        <SafeAreaView edges={['bottom']} style={styles.sheet}>
+          <View style={styles.modalHeader}>
+            <AppText size="lg" weight="bold" style={styles.flex}>
+              {label}
+            </AppText>
+            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('cancel')}>
+              <Ionicons name="close" size={26} color={colors.navy} />
+            </Pressable>
+          </View>
+          <AppText size="sm" weight="medium" color={colors.textMuted}>
+            {t('hour')}
+          </AppText>
+          <View style={styles.yearGrid}>
+            {HOURS.map((h) => {
+              const selected = h === hour;
+              return (
+                <Pressable
+                  key={h}
+                  onPress={() => setHour(h)}
+                  style={[styles.timeCell, selected && styles.cellSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${h} h`}
+                  accessibilityState={{ selected }}
+                >
+                  <AppText weight={selected ? 'bold' : 'regular'} color={selected ? colors.surface : colors.navy}>
+                    {h}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+          <AppText size="sm" weight="medium" color={colors.textMuted}>
+            {t('minutes')}
+          </AppText>
+          {/* Les minutes valident le choix : désactivées tant qu'aucune heure n'est choisie. */}
+          <View style={styles.yearGrid}>
+            {MINUTES.map((m) => {
+              const selected = !!hour && value === `${hour}:${m}`;
+              return (
+                <Pressable
+                  key={m}
+                  disabled={!hour}
+                  onPress={() => hour && onPick(`${hour}:${m}`)}
+                  style={[styles.yearCell, selected && styles.cellSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel={hour ? `${hour}:${m}` : m}
+                  accessibilityState={{ selected, disabled: !hour }}
+                >
+                  <AppText weight={selected ? 'bold' : 'regular'} color={selected ? colors.surface : hour ? colors.navy : colors.border}>
+                    {hour ? `${hour}:${m}` : `:${m}`}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </SafeAreaView>
+      </View>
+    </AppModal>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { borderRadius: radii.card, backgroundColor: colors.surface, padding: space(4), gap: space(3), ...shadow },
@@ -366,5 +497,7 @@ const styles = StyleSheet.create({
   dayToday: { borderWidth: 1, borderColor: colors.primary },
   cellSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   yearGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), paddingVertical: space(2) },
+  timeCell: { width: '14.5%', minHeight: MIN_TOUCH, borderRadius: radii.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  timeField: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH },
   yearCell: { width: '23%', minHeight: MIN_TOUCH, borderRadius: radii.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });

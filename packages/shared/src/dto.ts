@@ -171,6 +171,8 @@ export interface ParcelCardDto {
   weightKg: number | null;
   desiredDate: string | null;
   timeSlot: TimeSlot;
+  /** « HH:mm » ou null. */
+  desiredTime: string | null;
   requestedPrice: number;
   offersCount: number;
   urgent: boolean;

@@ -54,6 +54,8 @@ admin 9 ; mobile 31).
 
 - Correctif : fenêtres plein écran (wilaya, adresse, carte…) affichées sous l'heure et l'encoche, croix de fermeture
   inaccessible. Toutes les fenêtres passent par `AppModal` (zones de sécurité propres, clavier évité).
+- Annonce : date souhaitée jusqu'à un an ; heure précise facultative (feuille heure puis minutes), affichée sur la
+  carte, la fiche et le back-office.
 À tester : iPhone SE ou mini, grand Android, iPad, texte agrandi (Réglages → Accessibilité).
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.

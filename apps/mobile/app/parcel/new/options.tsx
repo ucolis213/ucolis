@@ -9,6 +9,7 @@ import {
   DEFAULT_PRICING,
   PAYMENT_ARRANGEMENTS,
   TIME_SLOTS,
+  timeSlotOf,
   VEHICLE_TYPES,
   haversineKm,
   isPriceUnusuallyHigh,
@@ -17,7 +18,7 @@ import {
 } from '@ucolis/shared';
 import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
-import { DateSelect, PriceInput, SectionCard, SwitchRow } from '@/components/FormBits';
+import { DateSelect, PriceInput, SectionCard, SwitchRow, TimeSelect } from '@/components/FormBits';
 import { TextField } from '@/components/TextField';
 import { WizardFrame } from '@/components/WizardFrame';
 import { price } from '@/format';
@@ -73,10 +74,17 @@ export default function OptionsStep() {
       )}
 
       <DateSelect label={t('desiredDate')} value={draft.desiredDate ? new Date(draft.desiredDate) : null} onChange={(d) => update({ desiredDate: d.toISOString() })} error={errors.desiredDate} />
+      <TimeSelect
+        label={t('desiredTime')}
+        value={draft.desiredTime ?? null}
+        onChange={(desiredTime) => update(desiredTime ? { desiredTime, timeSlot: timeSlotOf(desiredTime) } : { desiredTime })}
+        hint={t('desiredTimeHint')}
+        error={errors.desiredTime}
+      />
       <AppText weight="semibold">{t('timeSlot')}</AppText>
       <View style={styles.chips}>
         {TIME_SLOTS.map((s) => (
-          <Chip key={s} label={t(`common:timeSlots.${s}`)} selected={draft.timeSlot === s} onPress={() => update({ timeSlot: s })} />
+          <Chip key={s} label={t(`common:timeSlots.${s}`)} selected={draft.timeSlot === s} onPress={() => update(draft.desiredTime && timeSlotOf(draft.desiredTime) !== s ? { timeSlot: s, desiredTime: null } : { timeSlot: s })} />
         ))}
       </View>
       <SwitchRow label={t('flexibleDates')} value={draft.flexibleDates} onChange={(flexibleDates) => update({ flexibleDates })} />

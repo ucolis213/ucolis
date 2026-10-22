@@ -48,6 +48,7 @@ export function toParcelCard(p: ParcelLean, sender: UserLean, isFavorite?: boole
     weightKg: p.weightKg ?? null,
     desiredDate: iso(p.desiredDate),
     timeSlot: p.timeSlot,
+    desiredTime: p.desiredTime ?? null,
     requestedPrice: p.requestedPrice,
     offersCount: p.offersCount,
     urgent: p.urgent,

@@ -4,6 +4,7 @@ import { counterOfferSchema, createOfferSchema } from '../src/schemas/offer';
 import {
   createParcelSchema,
   isWithinPublishWindow,
+  timeSlotOf,
   parcelDetailsSchema,
   pricingSuggestSchema,
   suggestedVehicleTypes,
@@ -109,7 +110,23 @@ describe('schémas colis', () => {
     expect(r.mode).toBe('full');
     if (r.mode !== 'full') throw new Error('mode');
     expect(r.timeSlot).toBe('any');
+    expect(r.desiredTime).toBeNull();
     expect(r.fragile).toBe(false);
+  });
+
+  it('accepte une heure précise facultative et en déduit le créneau', () => {
+    const r = createParcelSchema.parse({ ...parcel, desiredTime: '14:30' });
+    if (r.mode !== 'full') throw new Error('mode');
+    expect(r.desiredTime).toBe('14:30');
+    expect(messages(createParcelSchema.safeParse({ ...parcel, desiredTime: '24:00' }))).toContain('validation.time');
+    expect(messages(createParcelSchema.safeParse({ ...parcel, desiredTime: '9:00' }))).toContain('validation.time');
+    expect([timeSlotOf('00:00'), timeSlotOf('11:59'), timeSlotOf('12:00'), timeSlotOf('17:45'), timeSlotOf('18:00')]).toEqual([
+      'morning',
+      'morning',
+      'afternoon',
+      'afternoon',
+      'evening',
+    ]);
   });
 
   it('accepte une publication rapide : trajet, titre, prix, photos facultatives', () => {
@@ -150,8 +167,8 @@ describe('schémas colis', () => {
 
   it("limite la date souhaitée à aujourd'hui + 60 jours", () => {
     const day = 86_400_000;
-    expect(isWithinPublishWindow(new Date(now.getTime() + 60 * day), now)).toBe(true);
-    expect(isWithinPublishWindow(new Date(now.getTime() + 61 * day), now)).toBe(false);
+    expect(isWithinPublishWindow(new Date(now.getTime() + 365 * day), now)).toBe(true);
+    expect(isWithinPublishWindow(new Date(now.getTime() + 366 * day), now)).toBe(false);
     expect(isWithinPublishWindow(new Date(now.getTime() - day), now)).toBe(false);
   });
 

@@ -5,7 +5,7 @@
 // suggestedPrice, distanceKm et volumeM3 ne sont jamais acceptés du client : l'API les recalcule.
 
 import { z } from 'zod';
-import { PARCEL_CATEGORIES, PAYMENT_ARRANGEMENTS, TIME_SLOTS, VEHICLE_TYPES } from '../enums';
+import { PARCEL_CATEGORIES, PAYMENT_ARRANGEMENTS, TIME_SLOTS, VEHICLE_TYPES, type TimeSlot } from '../enums';
 import { isCommuneInWilaya } from '../geo';
 import {
   fileRefSchema,
@@ -16,7 +16,10 @@ import {
   wilayaCodeSchema,
 } from './common';
 
+/** Durée de vie d'une annonce sans date souhaitée. */
 export const PUBLISH_WINDOW_DAYS = 60;
+/** Date souhaitée : n'importe quel jour jusqu'à un an. */
+export const DESIRED_DATE_MAX_DAYS = 365;
 export const MIN_PRICE_DA = 100;
 
 const DAY_MS = 86_400_000;
@@ -24,7 +27,16 @@ const DAY_MS = 86_400_000;
 export function isWithinPublishWindow(date: Date, now = new Date()): boolean {
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const d = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-  return d >= today && d <= today + PUBLISH_WINDOW_DAYS * DAY_MS;
+  return d >= today && d <= today + DESIRED_DATE_MAX_DAYS * DAY_MS;
+}
+
+/** Heure « HH:mm » sur 24 h. */
+export const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'validation.time');
+
+/** Créneau d'une heure précise : avant midi, avant 18 h, puis soir. */
+export function timeSlotOf(time: string): Exclude<TimeSlot, 'any'> {
+  const hour = Number(time.slice(0, 2));
+  return hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 }
 
 export const addressSchema = z
@@ -65,6 +77,8 @@ export const parcelOptionsSchema = z.object({
   vehicleTypes: z.array(z.enum(VEHICLE_TYPES)).min(1, 'validation.vehicleTypes'),
   desiredDate: z.coerce.date().refine((d) => isWithinPublishWindow(d), 'validation.desiredDate'),
   timeSlot: z.enum(TIME_SLOTS).default('any'),
+  /** Heure précise facultative ; quand elle est donnée, le créneau en découle. */
+  desiredTime: timeOfDaySchema.nullable().default(null),
   flexibleDates: z.boolean().default(false),
   urgent: z.boolean().default(false),
   recipient: recipientSchema.optional(),

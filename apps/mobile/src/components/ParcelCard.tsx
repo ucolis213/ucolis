@@ -64,7 +64,9 @@ export function ParcelCard({
             {[
               distance(parcel.distanceKm),
               parcel.weightKg !== null && weight(parcel.weightKg),
-              parcel.desiredDate ? formatDate(parcel.desiredDate, { year: undefined }) : t('flexibleDate'),
+              parcel.desiredDate
+                ? `${formatDate(parcel.desiredDate, { year: undefined })}${parcel.desiredTime ? ` ${parcel.desiredTime}` : ''}`
+                : t('flexibleDate'),
             ]
               .filter(Boolean)
               .join(' · ')}

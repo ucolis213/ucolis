@@ -301,7 +301,7 @@ Critères d'acceptation : un transporteur non vérifié reçoit 403 CARRIER_NOT_
    - Case obligatoire de déclaration des objets interdits : argent liquide, armes, produits illicites, matières dangereuses, animaux vivants, denrées périssables non emballées.
 3. **Détails** :
    - Types de véhicule acceptés : au moins 1, pré-cochés selon le poids et le volume.
-   - Date souhaitée, d'aujourd'hui à +60 jours, avec un créneau (morning, afternoon, evening, any) et une option « Dates flexibles (±2 jours) ».
+   - Date souhaitée, d'aujourd'hui à un an, avec un créneau (morning, afternoon, evening, any), une heure précise facultative (le créneau en découle : avant 12 h matin, avant 18 h après-midi, sinon soir) et une option « Dates flexibles (±2 jours) ».
    - Option « Urgent ».
    - Destinataire (nom et téléphone), facultatif mais recommandé.
    - Règlement convenu : cash_on_pickup, cash_on_delivery, paid_by_recipient ou other. Le paiement se fait hors de l'application.
@@ -633,6 +633,7 @@ email (unique), firstName, lastName, passwordHash, role (super_admin, moderator)
 | distanceKm | number | calculé (Haversine) |
 | desiredDate | Date ou null | null : date flexible (publication rapide) |
 | timeSlot | enum | morning, afternoon, evening, any |
+| desiredTime | string ou null | « HH:mm », facultatif ; impose le créneau correspondant |
 | flexibleDates, urgent | boolean | — |
 | recipient | objet | name, phone ; visibles par l'expéditeur, et par le transporteur retenu à partir de assigned |
 | paymentArrangement | enum | voir F6 |

@@ -99,6 +99,7 @@ export function createParcelsAdmin(deps: Deps) {
           weightKg: p.weightKg,
           distanceKm: p.distanceKm,
           desiredDate: p.desiredDate,
+          desiredTime: p.desiredTime ?? null,
           suggestedPrice: p.suggestedPrice,
           statusHistory: p.statusHistory,
           cancellation: p.cancellation,

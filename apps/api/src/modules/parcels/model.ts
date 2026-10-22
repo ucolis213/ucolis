@@ -82,6 +82,8 @@ const parcelSchema = new Schema(
     distanceKm: { type: Number, required: true },
     desiredDate: { type: Date, default: null },
     timeSlot: { type: String, enum: TIME_SLOTS, default: 'any' },
+    /** « HH:mm » facultatif ; le créneau en découle. */
+    desiredTime: { type: String, default: null },
     flexibleDates: { type: Boolean, default: false },
     urgent: { type: Boolean, default: false },
     recipient: {

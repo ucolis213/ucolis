@@ -321,7 +321,7 @@ export default function ParcelDetail() {
             label={t('desiredDate')}
             value={
               p.desiredDate
-                ? `${formatDate(p.desiredDate)} · ${t(`common:timeSlots.${p.timeSlot}`)}${p.flexibleDates ? ' (±2)' : ''}`
+                ? `${formatDate(p.desiredDate)} · ${p.desiredTime ?? t(`common:timeSlots.${p.timeSlot}`)}${p.flexibleDates ? ' (±2)' : ''}`
                 : t('flexibleDate')
             }
           />

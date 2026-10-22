@@ -99,6 +99,14 @@ describe('publication', () => {
     expect(completed.status).toBe(200);
     expect(completed.body).toMatchObject({ weightKg: 5, volumeM3: 0.036, category: 'clothing', photos: [] });
     expect(completed.body.desiredDate).not.toBeNull();
+
+    // Heure précise : le créneau en découle ; effacée, le créneau choisi reste.
+    const timed = await patch(quick.body.id, { desiredTime: '18:30', timeSlot: 'morning' });
+    expect(timed.body).toMatchObject({ desiredTime: '18:30', timeSlot: 'evening' });
+    const later = new Date(Date.now() + 300 * 86_400_000).toISOString();
+    const cleared = await patch(quick.body.id, { desiredTime: null, timeSlot: 'afternoon', desiredDate: later });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body).toMatchObject({ desiredTime: null, timeSlot: 'afternoon', desiredDate: later });
   });
 
   it('renvoie 422 ACTIVE_PARCEL_LIMIT à la sixième publication active d’un particulier', async () => {

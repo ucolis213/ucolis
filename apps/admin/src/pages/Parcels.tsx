@@ -90,6 +90,7 @@ interface ParcelDetailDto {
     weightKg: number | null;
     distanceKm: number;
     desiredDate: string | null;
+    desiredTime?: string | null;
     suggestedPrice: number;
     statusHistory: { from: string | null; to: string; byType: string; at: string; reason: string | null }[];
     cancellation: { by: string | null; reason: string | null } | null;
@@ -162,7 +163,7 @@ export function ParcelDetail() {
                     ['Arrivée', place(p.dropoff)],
                     ['Distance', `${Math.round(p.distanceKm)} km`],
                     ['Poids', p.weightKg === null ? 'Non précisé' : `${p.weightKg} kg`],
-                    ['Date souhaitée', p.desiredDate ? date(p.desiredDate) : 'Flexible'],
+                    ['Date souhaitée', p.desiredDate ? `${date(p.desiredDate)}${p.desiredTime ? ` à ${p.desiredTime}` : ''}` : 'Flexible'],
                     ['Prix demandé', price(p.requestedPrice)],
                     ['Prix conseillé', price(p.suggestedPrice)],
                     ['Prix final', price(p.finalPrice)],

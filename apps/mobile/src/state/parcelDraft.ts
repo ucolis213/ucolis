@@ -34,6 +34,8 @@ export interface ParcelDraft {
   vehicleTypes: VehicleType[];
   desiredDate: string | null;
   timeSlot: TimeSlot;
+  /** « HH:mm » facultatif. */
+  desiredTime: string | null;
   flexibleDates: boolean;
   urgent: boolean;
   recipientName: string;
@@ -59,6 +61,7 @@ export const EMPTY_DRAFT: ParcelDraft = {
   vehicleTypes: [],
   desiredDate: null,
   timeSlot: 'any',
+  desiredTime: null,
   flexibleDates: false,
   urgent: false,
   recipientName: '',

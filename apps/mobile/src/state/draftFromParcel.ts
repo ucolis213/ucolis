@@ -21,6 +21,7 @@ export function draftFromParcel(p: Partial<ParcelDto>, keepDate = true): Partial
     vehicleTypes: quick ? [] : (p.vehicleTypes ?? []),
     desiredDate: keepDate ? (p.desiredDate ?? null) : null,
     timeSlot: p.timeSlot ?? 'any',
+    desiredTime: keepDate ? (p.desiredTime ?? null) : null,
     flexibleDates: !!p.flexibleDates,
     urgent: !!p.urgent,
     recipientName: p.recipient?.name ?? '',

@@ -4,6 +4,7 @@ import {
   ACTIVE_PARCEL_STATUSES,
   PUBLIC_PARCEL_STATUSES,
   PUBLISH_WINDOW_DAYS,
+  timeSlotOf,
   VEHICLE_TYPES,
   getCommune,
   getWilaya,
@@ -88,6 +89,7 @@ const QUICK_FIELDS = {
   vehicleTypes: [...VEHICLE_TYPES],
   desiredDate: null,
   timeSlot: 'any',
+  desiredTime: null,
   flexibleDates: false,
   urgent: false,
   recipient: null,
@@ -103,7 +105,8 @@ function detailFields(input: CreateParcelInput) {
     dimensionsCm: input.dimensionsCm,
     vehicleTypes: [...new Set(input.vehicleTypes)],
     desiredDate: input.desiredDate,
-    timeSlot: input.timeSlot,
+    timeSlot: input.desiredTime ? timeSlotOf(input.desiredTime) : input.timeSlot,
+    desiredTime: input.desiredTime,
     flexibleDates: input.flexibleDates,
     urgent: input.urgent,
     recipient: input.recipient ?? null,
@@ -290,11 +293,12 @@ export function createParcelService(deps: Deps) {
       } as Parameters<typeof derived>[1] & Parameters<typeof buildSearchText>[0];
       const set: Record<string, unknown> = {};
       for (const key of [
-        'title', 'description', 'category', 'fragile', 'weightKg', 'dimensionsCm', 'timeSlot',
+        'title', 'description', 'category', 'fragile', 'weightKg', 'dimensionsCm', 'timeSlot', 'desiredTime',
         'flexibleDates', 'urgent', 'recipient', 'paymentArrangement', 'requestedPrice', 'photos',
       ] as const) {
         if (input[key] !== undefined) set[key] = input[key];
       }
+      if (input.desiredTime) set.timeSlot = timeSlotOf(input.desiredTime);
       if (input.vehicleTypes) set.vehicleTypes = [...new Set(input.vehicleTypes)];
       if (input.pickup) set.pickup = placeDoc(input.pickup);
       if (input.dropoff) set.dropoff = placeDoc(input.dropoff);
@@ -391,6 +395,7 @@ export function createParcelService(deps: Deps) {
         pickup: dto.pickup,
         dropoff: dto.dropoff,
         timeSlot: dto.timeSlot,
+        desiredTime: null,
         flexibleDates: dto.flexibleDates,
         urgent: dto.urgent,
         recipient: dto.recipient,
