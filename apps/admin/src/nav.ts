@@ -29,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Conversations',
     anyOf: ['conversations.view_reported', 'conversations.view_all'],
   },
+  { path: '/wallets', label: 'Portefeuilles', anyOf: ['wallet.manage'] },
   { path: '/broadcasts', label: 'Diffusion', anyOf: ['broadcast.send'] },
   { path: '/content', label: 'Contenus', anyOf: ['content.manage'] },
   { path: '/settings', label: 'Réglages', anyOf: ['settings.manage'] },

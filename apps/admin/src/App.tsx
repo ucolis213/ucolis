@@ -20,6 +20,7 @@ import { Staff } from './pages/Staff';
 import { Trips } from './pages/Trips';
 import { UserDetail } from './pages/UserDetail';
 import { Users } from './pages/Users';
+import { TopUpDetail, WalletDetail, Wallets } from './pages/Wallets';
 import { IdentityDetail, IdentityQueue, ProDetail, ProQueue } from './pages/Verifications';
 
 /** Chaque route déclare les permissions qui l'ouvrent, comme le menu ; l'API reste seule juge. */
@@ -40,6 +41,9 @@ const ROUTES: { path: string; anyOf: Permission[]; element: ReactNode }[] = [
   { path: 'reviews', anyOf: ['reviews.moderate'], element: <Reviews /> },
   { path: 'conversations', anyOf: ['conversations.view_reported', 'conversations.view_all'], element: <Conversations /> },
   { path: 'conversations/:id', anyOf: ['conversations.view_reported', 'conversations.view_all'], element: <ConversationView /> },
+  { path: 'wallets', anyOf: ['wallet.manage'], element: <Wallets /> },
+  { path: 'wallets/topups/:id', anyOf: ['wallet.manage'], element: <TopUpDetail /> },
+  { path: 'wallets/:userId', anyOf: ['wallet.manage'], element: <WalletDetail /> },
   { path: 'broadcasts', anyOf: ['broadcast.send'], element: <Broadcasts /> },
   { path: 'content', anyOf: ['content.manage'], element: <Content /> },
   { path: 'settings', anyOf: ['settings.manage'], element: <Settings /> },

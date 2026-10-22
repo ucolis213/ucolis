@@ -25,6 +25,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'conversations.view_reported': 'Lire les conversations signalées',
   'conversations.view_all': 'Lire toutes les conversations',
   'broadcast.send': 'Envoyer des diffusions',
+  'wallet.manage': 'Valider les recharges et ajuster les portefeuilles',
   'content.manage': 'Gérer les contenus',
   'settings.manage': 'Réglages',
   'staff.manage': 'Gérer le staff',

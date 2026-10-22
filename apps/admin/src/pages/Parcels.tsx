@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { PARCEL_STATUSES, type FileRef, type OfferDto, type ParcelStatus, type UserSummary } from '@ucolis/shared';
+import { PARCEL_STATUSES, type FileRef, type OfferDto, type ParcelCommissionDto, type ParcelStatus, type UserSummary } from '@ucolis/shared';
 import { api, downloadCsv, qs } from '../api/client';
 import { useAction, useAdminQuery, type Page } from '../api/hooks';
 import { useSession } from '../auth/session';
 import { ParcelStatusPill } from '../components/domain';
 import { PrivateFileButton } from '../components/PrivateFile';
 import { Button, Card, Filters, Input, KeyValue, PageHeader, Pagination, Pill, QueryState, ReasonDialog, SelectField, Table } from '../components/ui';
-import { commune, date, dateTime, label, price, wilaya } from '../format';
+import { commune, date, dateTime, label, price, t, wilaya } from '../format';
 import { useListParams } from '../hooks/useListParams';
 import { WILAYA_OPTIONS } from './Users';
 
@@ -95,6 +95,7 @@ interface ParcelDetailDto {
     cancellation: { by: string | null; reason: string | null } | null;
     hiddenInfo: { isHidden: boolean; reason: string | null; at: string | null } | null;
     deliveryProof: { photo: FileRef | null; note: string | null } | null;
+    commission: ParcelCommissionDto | null;
   };
   sender: UserSummary | null;
   carrier: UserSummary | null;
@@ -165,6 +166,7 @@ export function ParcelDetail() {
                     ['Prix demandé', price(p.requestedPrice)],
                     ['Prix conseillé', price(p.suggestedPrice)],
                     ['Prix final', price(p.finalPrice)],
+                    ['Commission', p.commission ? `${price(p.commission.totalCommission)} (${p.commission.ratePercent} % + ${price(p.commission.fixedFee)}) · ${t(`wallet.breakdown.${p.commission.status}`, { date: dateTime(p.commission.chargedAt) })}` : 'Aucune (course gratuite)'],
                     ['Créé le', dateTime(p.createdAt)],
                   ]}
                 />

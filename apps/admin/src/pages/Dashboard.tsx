@@ -13,7 +13,8 @@ interface Stats {
   deliveredAmount: number;
   deliveryRate: number | null;
   medianMinutesToFirstOffer: number | null;
-  queues: Record<'identity' | 'pro' | 'reports' | 'disputes', { count: number; oldestHours: number | null }>;
+  queues: Record<'identity' | 'pro' | 'reports' | 'disputes' | 'topUps', { count: number; oldestHours: number | null }>;
+  wallet: { commissions: number; pendingTopUps: number; blockedWallets: number };
 }
 
 const QUEUES = [
@@ -21,6 +22,7 @@ const QUEUES = [
   { key: 'pro', label: 'Dossiers pro', to: '/verifications/pro', permission: 'verifications.pro' },
   { key: 'reports', label: 'Signalements', to: '/reports', permission: 'reports.handle' },
   { key: 'disputes', label: 'Litiges', to: '/disputes', permission: 'disputes.handle' },
+  { key: 'topUps', label: 'Recharges à vérifier', to: '/wallets', permission: 'wallet.manage' },
 ] as const;
 
 export function Dashboard() {
@@ -48,8 +50,14 @@ export function Dashboard() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+              <Tile label="Commissions encaissées" value={price(s.wallet.commissions)} />
+              <Tile label="Portefeuilles sous le seuil" value={s.wallet.blockedWallets} />
+              <Tile label="Recharges en attente" value={s.wallet.pendingTopUps} />
+            </div>
+
             <Card title="Files d’attente">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 {QUEUES.filter((q) => can(q.permission)).map((q) => {
                   const v = s.queues[q.key];
                   return (

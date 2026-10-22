@@ -26,6 +26,10 @@ const LABELS: Record<AppSettingKey, { title: string; hint: string }> = {
   maintenance: { title: 'Mode maintenance', hint: 'Message bilingue affiché à l’ouverture de l’application.' },
   support: { title: 'Contact du support', hint: 'Email et WhatsApp affichés dans l’aide.' },
   termsVersion: { title: 'Version des CGU', hint: 'Mise à jour automatiquement à la publication des CGU.' },
+  commission: {
+    title: 'Commission et portefeuille',
+    hint: 'enabled : false = service gratuit. Avant d’activer, prévenez les transporteurs (Diffusion) et fixez effectiveFrom (date ISO, ex. 2027-01-01T00:00:00+01:00) : les courses acceptées avant ne sont pas prélevées. fixedFee : frais de dossier (DA). tiers : taux par tranche du prix convenu, upTo = borne haute incluse, null pour la dernière. welcomeBonus : crédité une fois à l’ouverture du portefeuille. minBalance : sous ce solde, plus d’offre ni de course. topUp : coordonnées de virement affichées dans l’application (valeurs d’exemple à remplacer) et bornes d’une recharge.',
+  },
 };
 
 export function Settings() {
