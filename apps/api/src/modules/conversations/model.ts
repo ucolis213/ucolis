@@ -13,6 +13,7 @@ const conversationSchema = new Schema(
       text: { type: String, default: null },
       type: { type: String, enum: MESSAGE_TYPES, default: null },
       author: { type: Schema.Types.ObjectId, default: null },
+      params: { type: Schema.Types.Mixed, default: null },
       at: { type: Date, default: null },
     },
     unread: { type: Map, of: Number, default: {} },

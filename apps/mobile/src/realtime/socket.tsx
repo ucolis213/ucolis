@@ -91,6 +91,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       current = null;
       setSocket(null);
       setConnected(false);
+      // Déconnexion : les badges du compte précédent ne doivent pas rester affichés.
+      setCounters({ unreadMessages: 0, unreadNotifications: 0 });
     };
   }, [status, queryClient, refreshMe]);
 

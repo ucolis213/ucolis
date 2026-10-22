@@ -5,7 +5,7 @@ import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { ConversationDto } from '@ucolis/shared';
+import { formatNotificationParams, formatPrice, type ConversationDto } from '@ucolis/shared';
 import { useConversations } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Avatar } from '@/components/Avatar';
@@ -13,6 +13,7 @@ import { GuestGate } from '@/components/GuestGate';
 import { QueryView } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { formatRelative } from '@/format';
+import { currentLocale } from '@/i18n';
 import { useSession } from '@/session/SessionContext';
 import { colors, radii, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -58,7 +59,7 @@ export default function Messages() {
 function ConversationRow({ conv }: { conv: ConversationDto }) {
   const { t } = useTranslation('chat');
   const last = conv.lastMessage;
-  const preview = last.type === 'system' ? t(`system.${last.text}`, { defaultValue: '' }) : last.type === 'image' ? `📷 ${t('photo')}` : (last.text ?? '');
+  const preview = last.type === 'system' ? t(`system.${last.text}`, { ...formatNotificationParams(last.params ?? {}, currentLocale(), formatPrice), defaultValue: '' }) : last.type === 'image' ? `📷 ${t('photo')}` : (last.text ?? '');
   return (
     <Pressable
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.background }]}

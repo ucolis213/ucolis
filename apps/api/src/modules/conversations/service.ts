@@ -68,6 +68,15 @@ export function createConversationService(deps: Deps) {
     const u = new Map(users.map((x) => [x._id.toString(), x as UserLean]));
     const p = new Map(parcels.map((x) => [x._id.toString(), x]));
     const iBlock = new Set((me?.blockedUsers ?? []).map(String));
+    // Conversations antérieures au stockage des paramètres : on les relit sur le dernier message système.
+    const legacy = convs.filter((c) => c.lastMessage?.type === 'system' && !c.lastMessage.params);
+    const legacyParams = new Map<string, Record<string, string | number>>();
+    for (const c of legacy) {
+      const m = await MessageModel.findOne({ conversation: c._id, type: 'system' }, { systemParams: 1 })
+        .sort({ createdAt: -1 })
+        .lean();
+      if (m?.systemParams) legacyParams.set(c._id.toString(), m.systemParams as Record<string, string | number>);
+    }
     return convs.map((c) => {
       const parcel = c.parcel ? p.get(c.parcel.toString()) : null;
       const unread = c.unread as unknown as Record<string, number> | undefined;
@@ -90,6 +99,10 @@ export function createConversationService(deps: Deps) {
           type: c.lastMessage?.type ?? null,
           authorId: c.lastMessage?.author ? c.lastMessage.author.toString() : null,
           at: c.lastMessage?.at ? c.lastMessage.at.toISOString() : null,
+          params:
+            (c.lastMessage?.params as Record<string, string | number> | null) ??
+            legacyParams.get(c._id.toString()) ??
+            null,
         },
         unread: unread?.[userId] ?? 0,
         muted: (c.mutedBy ?? []).some((m) => m.toString() === userId),
@@ -141,7 +154,13 @@ export function createConversationService(deps: Deps) {
       { _id: c._id },
       {
         $set: {
-          lastMessage: { text: preview.slice(0, 120), type: data.type, author: authorId, at: now },
+          lastMessage: {
+            text: preview.slice(0, 120),
+            type: data.type,
+            author: authorId,
+            params: data.systemParams ?? null,
+            at: now,
+          },
           deletedFor: [],
         },
         $inc: inc,

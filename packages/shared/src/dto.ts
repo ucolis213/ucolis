@@ -299,6 +299,8 @@ export interface ConversationDto {
     type: string | null;
     authorId: string | null;
     at: string | null;
+    /** Paramètres de traduction d'un message système (prix, etc.). */
+    params: Record<string, string | number> | null;
   };
   unread: number;
   muted: boolean;

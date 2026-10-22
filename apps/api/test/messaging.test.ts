@@ -89,7 +89,12 @@ describe('notifications des offres', () => {
       parcel: { id: parcel.id },
       other: { id: amina.id },
       unread: 1,
+      lastMessage: { type: 'system', text: 'offer_accepted', params: { price: 3250 } },
     });
+    // Conversation enregistrée avant le stockage des paramètres : relus sur le message système.
+    await ConversationModel.updateOne({ _id: convs.body.items[0].id }, { $set: { 'lastMessage.params': null } });
+    const legacy = await ctx.http().get('/api/v1/conversations').set(karim.auth);
+    expect(legacy.body.items[0].lastMessage.params).toEqual({ price: 3250 });
     const msgs = await ctx
       .http()
       .get(`/api/v1/conversations/${convs.body.items[0].id}/messages`)
