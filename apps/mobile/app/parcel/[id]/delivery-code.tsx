@@ -6,15 +6,16 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { DELIVERY_CODE_LENGTH } from '@ucolis/shared';
 import { ApiError, api, errorMessage } from '@/api/client';
 import { useParcel } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { CodeInput } from '@/components/CodeInput';
 import { LoadingSkeleton } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ErrorState } from '@/components/States';
-import { TextField } from '@/components/TextField';
 import { colors, radii, space } from '@/theme';
 import { stopTracking } from '@/tracking/location';
 
@@ -92,15 +93,8 @@ function EnterCode({ id, locked }: { id: string; locked: boolean }) {
   }
   return (
     <>
-      <TextField
-        label={t('enterCode')}
-        value={code}
-        onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 4))}
-        keyboardType="number-pad"
-        maxLength={4}
-        error={error}
-        style={{ fontSize: 32, letterSpacing: 16, textAlign: 'center' }}
-      />
+      {/* Code dicté par le destinataire : pas de proposition automatique du clavier. */}
+      <CodeInput label={t('enterCode')} length={DELIVERY_CODE_LENGTH} value={code} onChange={setCode} error={error} oneTimeCode={false} />
       <Button label={t('common:confirm')} onPress={submit} loading={pending} />
       <Button label={t('actions.declare_delivery')} variant="ghost" onPress={() => router.replace({ pathname: '/parcel/[id]/declare', params: { id } })} />
     </>

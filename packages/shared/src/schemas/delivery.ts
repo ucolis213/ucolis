@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { fileRefSchema } from './common';
+import { DELIVERY_CODE_LENGTH, digitsCode, fileRefSchema } from './common';
 
-export const deliveryCodeSchema = z.object({ code: z.string().regex(/^\d{4}$/, 'validation.deliveryCode') });
+export const deliveryCodeSchema = z.object({ code: digitsCode(DELIVERY_CODE_LENGTH, 'validation.deliveryCode') });
 
 export const declareDeliverySchema = z.object({
   photo: fileRefSchema.nullable().optional(),

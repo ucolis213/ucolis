@@ -145,6 +145,7 @@
     "unavailableListing": "Cette annonce n'est plus disponible.",
     "selectDate": "Choisir une date",
     "selectTime": "Choisir une heure",
+    "codeDigits": "Saisissez les {{n}} chiffres du code.",
     "hour": "Heure",
     "minutes": "Minutes",
     "timeSlots": {

@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
+import { TOTP_LENGTH } from '@ucolis/shared';
 import { api, errorText } from '../api/client';
-import { Button, ErrorBox, Input, Loading } from '../components/ui';
+import { Button, CodeInput, ErrorBox, Input, Loading } from '../components/ui';
 
 interface InviteInfo {
   email: string;
@@ -72,7 +73,7 @@ export function AcceptInvite() {
             <Input label="Email" value={info.data.email} readOnly />
             <Input label="Mot de passe" name="password" type="password" autoComplete="new-password" minLength={8} required hint="8 caractères minimum, avec lettres et chiffres." />
             <Input label="Confirmation" name="passwordConfirm" type="password" autoComplete="new-password" required />
-            <Input label="Code à 6 chiffres" name="totp" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="one-time-code" required />
+            <CodeInput label={`Code à ${TOTP_LENGTH} chiffres`} name="totp" length={TOTP_LENGTH} required />
             {error && (
               <p role="alert" className="text-sm text-danger">
                 {error}

@@ -36,7 +36,15 @@ export const passwordSchema = z
   .regex(/[A-Za-z]/, 'validation.passwordRules')
   .regex(/\d/, 'validation.passwordRules');
 
-export const otpCodeSchema = z.string().regex(/^\d{6}$/, 'validation.otp');
+/** Longueurs des codes à saisir : les interfaces affichent une case par chiffre. */
+export const OTP_LENGTH = 6;
+export const TOTP_LENGTH = 6;
+export const DELIVERY_CODE_LENGTH = 4;
+
+/** Code de `length` chiffres exactement. */
+export const digitsCode = (length: number, message: string) => z.string().regex(new RegExp(`^\\d{${length}}$`), message);
+
+export const otpCodeSchema = digitsCode(OTP_LENGTH, 'validation.otp');
 
 export const latLngSchema = z.object({
   lat: z.number().min(-90).max(90),

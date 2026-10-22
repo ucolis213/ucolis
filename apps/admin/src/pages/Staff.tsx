@@ -2,11 +2,11 @@
 // transfert du rôle de super-administrateur.
 
 import { useState, type FormEvent } from 'react';
-import { PERMISSIONS, PERMISSION_TEMPLATES, SUPER_ADMIN_ONLY, type Permission, type PermissionTemplate } from '@ucolis/shared';
+import { PERMISSIONS, PERMISSION_TEMPLATES, SUPER_ADMIN_ONLY, TOTP_LENGTH, type Permission, type PermissionTemplate } from '@ucolis/shared';
 import { api } from '../api/client';
 import { useAction, useAdminQuery } from '../api/hooks';
 import { useSession, type StaffDto } from '../auth/session';
-import { Button, Card, ErrorBox, Input, Modal, PageHeader, Pill, QueryState, ReasonDialog, SelectField, Table } from '../components/ui';
+import { Button, Card, CodeInput, ErrorBox, Input, Modal, PageHeader, Pill, QueryState, ReasonDialog, SelectField, Table } from '../components/ui';
 import { dateTime } from '../format';
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
@@ -200,7 +200,7 @@ function TransferDialog({ open, onClose, candidates }: { open: boolean; onClose:
         <div className="space-y-3">
           <SelectField label="Nouveau super-administrateur" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Choisir un modérateur actif" options={candidates.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName} (${c.email})` }))} required />
           <Input label="Votre mot de passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <Input label="Code 2FA" inputMode="numeric" pattern="\d{6}" maxLength={6} value={totp} onChange={(e) => setTotp(e.target.value)} required />
+          <CodeInput label="Code 2FA" length={TOTP_LENGTH} value={totp} onChange={setTotp} required />
         </div>
       }
       onClose={onClose}

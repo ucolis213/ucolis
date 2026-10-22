@@ -60,6 +60,10 @@ admin 9 ; mobile 31).
   en arrière-plan échouait avant l’appel à l’API. Elle ne bloque plus ; repli sur un suivi application ouverte.
   Les erreurs du téléphone affichent « Une erreur est survenue » au lieu d’« Erreur du serveur ».
 
+- Codes numériques en cases, une par chiffre attendu (longueurs dans `shared` : `OTP_LENGTH`, `TOTP_LENGTH`,
+  `DELIVERY_CODE_LENGTH`). Mobile `CodeInput` (pavé numérique, collage, code proposé par iOS) : vérification de
+  l’email, mot de passe oublié, changement d’email, code de remise. Back-office : connexion 2FA, invitation,
+  transfert du super-administrateur.
 À tester : iPhone SE ou mini, grand Android, iPad, texte agrandi (Réglages → Accessibilité).
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.

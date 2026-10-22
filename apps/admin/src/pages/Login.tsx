@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { ApiError, api, errorText } from '../api/client';
 import { DEV_PREVIEW_SESSION, useSession, type StaffSession } from '../auth/session';
-import { Button, Input } from '../components/ui';
+import { TOTP_LENGTH } from '@ucolis/shared';
+import { Button, CodeInput, Input } from '../components/ui';
 
 export function Login() {
   const { session, setSession } = useSession();
@@ -46,15 +47,12 @@ export function Login() {
         </div>
         <Input label="Email" name="email" type="email" autoComplete="username" required />
         <Input label="Mot de passe" name="password" type="password" autoComplete="current-password" required />
-        <Input
+        <CodeInput
           label="Code de double authentification"
           name="totp"
-          inputMode="numeric"
-          pattern="\d{6}"
-          maxLength={6}
-          autoComplete="one-time-code"
+          length={TOTP_LENGTH}
           required={needTotp}
-          hint="6 chiffres affichés par votre application d’authentification."
+          hint={`${TOTP_LENGTH} chiffres affichés par votre application d’authentification.`}
         />
         {error && (
           <p role="alert" className="text-sm text-danger">

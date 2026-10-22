@@ -189,6 +189,90 @@ export function Input({ label, hint, ...rest }: InputHTMLAttributes<HTMLInputEle
   );
 }
 
+/**
+ * Code numérique : une case par chiffre attendu. Saisie qui avance seule, retour arrière qui recule, collage ou
+ * remplissage automatique d'un code complet. Avec `name`, la valeur part dans le formulaire (FormData).
+ */
+export function CodeInput({
+  label,
+  length,
+  name,
+  value,
+  onChange,
+  required,
+  hint,
+  autoComplete = 'one-time-code',
+}: {
+  label: string;
+  length: number;
+  name?: string;
+  value?: string;
+  onChange?: (code: string) => void;
+  required?: boolean;
+  hint?: string;
+  autoComplete?: string;
+}) {
+  const [inner, setInner] = useState('');
+  const code = value ?? inner;
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const focus = (i: number) => refs.current[Math.max(0, Math.min(length - 1, i))]?.focus();
+  const set = (next: string) => {
+    const clean = next.replace(/\D/g, '').slice(0, length);
+    if (value === undefined) setInner(clean);
+    onChange?.(clean);
+  };
+  return (
+    <fieldset className="block text-sm font-medium">
+      <legend>{label}</legend>
+      {/* Un code se lit de gauche à droite. */}
+      <div className="mt-1 flex gap-2" dir="ltr">
+        {Array.from({ length }, (_, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            value={code[i] ?? ''}
+            inputMode="numeric"
+            pattern="\d"
+            maxLength={length}
+            autoComplete={i === 0 ? autoComplete : 'off'}
+            required={required}
+            aria-label={`${label}, chiffre ${i + 1} sur ${length}`}
+            className="h-12 w-11 rounded-lg border border-border bg-surface text-center font-mono text-lg outline-none focus:border-primary"
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              // Chiffre tapé : `data` ; code collé ou rempli automatiquement : toute la valeur de la case.
+              const inserted = ((e.nativeEvent as InputEvent).data ?? e.target.value).replace(/\D/g, '');
+              if (!inserted) return;
+              const at = Math.min(i, code.length);
+              set(code.slice(0, at) + inserted + code.slice(at + inserted.length));
+              focus(at + inserted.length);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace') {
+                e.preventDefault();
+                const at = code[i] ? i : i - 1;
+                if (at < 0) return;
+                set(code.slice(0, at) + code.slice(at + 1));
+                focus(at);
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                focus(i - 1);
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                focus(i + 1);
+              }
+            }}
+          />
+        ))}
+      </div>
+      {name && <input type="hidden" name={name} value={code} />}
+      {hint && <span className="mt-1 block text-xs font-normal text-muted">{hint}</span>}
+    </fieldset>
+  );
+}
+
 export function TextArea({ label, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
   return (
     <label className="block text-sm font-medium">

@@ -3,13 +3,13 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { otpCodeSchema, type Me } from '@ucolis/shared';
+import { OTP_LENGTH, otpCodeSchema, type Me } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
 import { AppText } from '@/components/AppText';
 import { AuthHeader } from '@/components/AuthHeader';
 import { Button } from '@/components/Button';
+import { CodeInput } from '@/components/CodeInput';
 import { Screen } from '@/components/Screen';
-import { TextField } from '@/components/TextField';
 import { useReturnTo } from '@/hooks/useReturnTo';
 import { useSession } from '@/session/SessionContext';
 import { colors } from '@/theme';
@@ -61,17 +61,7 @@ export default function VerifyEmail() {
   return (
     <Screen scroll background={colors.surface} edges={['top', 'bottom']}>
       <AuthHeader title={t('verifyTitle')} subtitle={t('verifyBody', { email })} />
-      <TextField
-        label={t('code')}
-        value={code}
-        onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-        keyboardType="number-pad"
-        autoComplete="one-time-code"
-        textContentType="oneTimeCode"
-        maxLength={6}
-        error={error}
-        style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }}
-      />
+      <CodeInput label={t('code')} length={OTP_LENGTH} value={code} onChange={setCode} error={error} autoFocus />
       <Button label={t('verify')} onPress={verify} loading={pending} />
       <AppText
         align="center"

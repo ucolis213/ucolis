@@ -145,6 +145,7 @@
     "unavailableListing": "هذا الإعلان لم يعد متاحًا.",
     "selectDate": "اختر تاريخًا",
     "selectTime": "اختر ساعة",
+    "codeDigits": "أدخل أرقام الرمز الـ{{n}}.",
     "hour": "الساعة",
     "minutes": "الدقائق",
     "timeSlots": {

@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { emailSchema, otpCodeSchema, type Me } from '@ucolis/shared';
+import { OTP_LENGTH, emailSchema, otpCodeSchema, type Me } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { CodeInput } from '@/components/CodeInput';
 import { notify } from '@/components/ConfirmDialog';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -67,14 +68,7 @@ export default function ChangeEmail() {
             <AppText size="sm" color={colors.textMuted}>
               {t('emailCodeSent', { email })}
             </AppText>
-            <TextField
-              label={t('auth:code')}
-              value={code}
-              onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-              error={error}
-            />
+            <CodeInput label={t('auth:code')} length={OTP_LENGTH} value={code} onChange={setCode} error={error} autoFocus />
             <Button label={t('confirmEmail')} onPress={confirmCode} loading={pending} />
           </>
         ) : (

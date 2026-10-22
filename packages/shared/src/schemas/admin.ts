@@ -3,20 +3,31 @@
 import { z } from 'zod';
 import { INTENTS, PARCEL_STATUSES, USER_STATUSES } from '../enums';
 import { PERMISSIONS, PERMISSION_TEMPLATES } from '../permissions';
-import { emailSchema, nameSchema, paginationSchema, passwordSchema, searchTextSchema, wilayaCodeSchema } from './common';
+import {
+  TOTP_LENGTH,
+  digitsCode,
+  emailSchema,
+  nameSchema,
+  paginationSchema,
+  passwordSchema,
+  searchTextSchema,
+  wilayaCodeSchema,
+} from './common';
+
+const totpSchema = digitsCode(TOTP_LENGTH, 'validation.totp');
 
 export const reasonSchema = z.string().trim().min(3, 'validation.reasonRequired').max(1000);
 
 export const staffLoginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, 'validation.required'),
-  totp: z.string().regex(/^\d{6}$/, 'validation.totp').optional(),
+  totp: totpSchema.optional(),
 });
 
 export const acceptInviteSchema = z.object({
   token: z.string().min(20),
   password: passwordSchema,
-  totp: z.string().regex(/^\d{6}$/, 'validation.totp'),
+  totp: totpSchema,
 });
 
 export const inviteStaffSchema = z.object({
@@ -33,7 +44,7 @@ export const reasonOnlySchema = z.object({ reason: reasonSchema });
 export const transferSuperAdminSchema = z.object({
   toStaffId: z.string().regex(/^[a-f\d]{24}$/i),
   password: z.string().min(1),
-  totp: z.string().regex(/^\d{6}$/, 'validation.totp'),
+  totp: totpSchema,
   reason: reasonSchema,
 });
 

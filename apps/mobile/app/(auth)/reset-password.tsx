@@ -3,11 +3,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { resetPasswordSchema } from '@ucolis/shared';
+import { OTP_LENGTH, resetPasswordSchema } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
 import { AppText } from '@/components/AppText';
 import { AuthHeader } from '@/components/AuthHeader';
 import { Button } from '@/components/Button';
+import { CodeInput } from '@/components/CodeInput';
 import { notify } from '@/components/ConfirmDialog';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
@@ -45,14 +46,7 @@ export default function ResetPassword() {
         control={control}
         name="code"
         render={({ field, fieldState }) => (
-          <TextField
-            label={t('code')}
-            value={field.value}
-            onChangeText={(v) => field.onChange(v.replace(/\D/g, '').slice(0, 6))}
-            keyboardType="number-pad"
-            autoComplete="one-time-code"
-            error={fieldState.error?.message}
-          />
+          <CodeInput label={t('code')} length={OTP_LENGTH} value={field.value} onChange={field.onChange} error={fieldState.error?.message} />
         )}
       />
       {(['password', 'passwordConfirm'] as const).map((name) => (
