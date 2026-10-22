@@ -22,6 +22,7 @@ import { AppText } from '@/components/AppText';
 import { cdn } from '@/components/Avatar';
 import { Badge, StatusBadge } from '@/components/Badge';
 import { Button } from '@/components/Button';
+import { CommissionBreakdown } from '@/components/CommissionBreakdown';
 import { confirm } from '@/components/ConfirmDialog';
 import { KeyValue, SectionCard } from '@/components/FormBits';
 import { PhotoViewer } from '@/components/PhotoViewer';
@@ -302,6 +303,10 @@ export default function ParcelDetail() {
             {t('autoConfirmAt', { date: formatDateTime(p.autoConfirmAt) })}
           </AppText>
         )}
+
+        {viewer === 'assigned_carrier' && p.commission && <CommissionBreakdown grossPrice={p.commission.grossPrice} frozen={p.commission} />}
+        {viewer === 'carrier_no_offer' && <CommissionBreakdown grossPrice={p.requestedPrice} />}
+        {viewer === 'carrier_with_offer' && p.viewer.myOffer && <CommissionBreakdown grossPrice={p.viewer.myOffer.counterPrice ?? p.viewer.myOffer.price} />}
 
         <RouteMap from={p.pickup.location} to={p.dropoff.location} />
         <SectionCard>

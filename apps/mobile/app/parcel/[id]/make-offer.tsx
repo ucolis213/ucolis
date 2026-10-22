@@ -11,6 +11,7 @@ import { useParcel } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { CommissionBreakdown, useWalletBlocked, WalletBlockedBanner } from '@/components/CommissionBreakdown';
 import { DateSelect, PriceInput, SectionCard } from '@/components/FormBits';
 import { LoadingSkeleton } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
@@ -38,6 +39,7 @@ export default function MakeOffer() {
   const [pickupDate, setPickupDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
+  const blocked = useWalletBlocked();
 
   if (parcel.isPending || !parcel.data) {
     return (
@@ -94,7 +96,7 @@ export default function MakeOffer() {
       scroll
       edges={['top', 'bottom']}
       header={<ScreenHeader title={atAsking ? t('parcel:actions.accept_asking_price') : t('parcel:actions.make_offer')} />}
-      footer={<Button label={t('send')} onPress={submit} loading={pending} />}
+      footer={<Button label={t('send')} onPress={submit} loading={pending} disabled={blocked} />}
     >
       <SectionCard>
         <AppText weight="bold">{p.title}</AppText>
@@ -102,6 +104,7 @@ export default function MakeOffer() {
           {t('parcel:requestedPrice')} : {price(p.requestedPrice)}
         </AppText>
       </SectionCard>
+      {blocked && <WalletBlockedBanner />}
       {atAsking ? (
         <AppText size="xl" weight="bold" color={colors.primary}>
           {price(p.requestedPrice)}
@@ -109,6 +112,7 @@ export default function MakeOffer() {
       ) : (
         <PriceInput label={t('price')} value={offerPrice} onChange={setOfferPrice} error={errors.price} hint={`≥ ${price(MIN_PRICE_DA)}`} />
       )}
+      <CommissionBreakdown grossPrice={atAsking ? p.requestedPrice : offerPrice} />
       <AppText weight="semibold">{t('vehicle')}</AppText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space(2) }}>
         {compatible.map((v) => (

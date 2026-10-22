@@ -10,6 +10,7 @@ import { api, errorMessage } from '@/api/client';
 import { useOffer } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { CommissionBreakdown, useWalletBlocked, WalletBlockedBanner } from '@/components/CommissionBreakdown';
 import { confirm } from '@/components/ConfirmDialog';
 import { OfferCard } from '@/components/OfferCard';
 import { PromptModal } from '@/components/PromptModal';
@@ -31,6 +32,7 @@ export default function OfferDetail() {
   const config = useAppConfig();
   const [prompt, setPrompt] = useState<'counter' | 'reoffer' | null>(null);
   const maxCounters = config.data?.limits.maxCounterOffers ?? 3;
+  const blocked = useWalletBlocked();
 
   useSocketEvent<{ offerId: string }>('offer:updated', (e) => {
     if (e.offerId === id) void query.refetch();
@@ -87,6 +89,8 @@ export default function OfferDetail() {
                 {o.parcelTitle} · {price(o.parcelRequestedPrice)}
               </AppText>
               <OfferCard offer={o} viewerIsSender={sender} showRounds />
+              {!sender && blocked && (o.status === 'pending' || o.status === 'countered') && <WalletBlockedBanner />}
+              {!sender && <CommissionBreakdown grossPrice={o.finalPrice ?? o.counterPrice ?? o.price} />}
               {sender && o.status === 'pending' && o.counterCount >= maxCounters && (
                 <AppText size="sm" color={colors.textMuted}>
                   {t('counterLimit')}

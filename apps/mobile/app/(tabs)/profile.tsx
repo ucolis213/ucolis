@@ -1,21 +1,29 @@
 import { router, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { CARRIER_INTENTS } from '@ucolis/shared';
+import { useWallet } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Avatar } from '@/components/Avatar';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
+import { useCommission } from '@/components/CommissionBreakdown';
 import { confirm } from '@/components/ConfirmDialog';
 import { GuestGate } from '@/components/GuestGate';
 import { MenuRow, MenuSection } from '@/components/MenuRow';
 import { RatingStars } from '@/components/RatingStars';
 import { Screen } from '@/components/Screen';
+import { price } from '@/format';
 import { useSession } from '@/session/SessionContext';
 import { colors, radii, shadow, space } from '@/theme';
 
 export default function Profile() {
   const { t } = useTranslation(['profile', 'common']);
   const { user, signOut } = useSession();
+  // Portefeuille visible dès que la commission est activée, pour les comptes qui transportent.
+  const commission = useCommission();
+  const showWallet = !!commission && !!user && (CARRIER_INTENTS.includes(user.intent) || user.carrierVerification.status === 'approved');
+  const wallet = useWallet(showWallet);
 
   if (!user) {
     return (
@@ -83,6 +91,9 @@ export default function Profile() {
         <MenuRow icon="pricetag-outline" label={t('myOffers')} onPress={go('/me/offers')} />
         <MenuRow icon="car-outline" label={t('myTrips')} onPress={go('/me/trips')} />
         <MenuRow icon="navigate-outline" label={t('myDeliveries')} onPress={go('/me/deliveries')} />
+        {showWallet && (
+          <MenuRow icon="wallet-outline" label={t('wallet')} value={wallet.data?.eligible ? price(wallet.data.balance) : undefined} onPress={go('/me/wallet')} />
+        )}
         <MenuRow icon="star-outline" label={t('myReviews')} onPress={go('/me/reviews')} />
         <MenuRow icon="heart-outline" label={t('favorites')} onPress={go('/me/favorites')} />
         <MenuRow icon="notifications-outline" label={t('alerts')} onPress={go('/me/alerts')} />

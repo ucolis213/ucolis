@@ -16,7 +16,10 @@ import type {
   ReviewStatusDto,
   SavedSearchDto,
   TripDto,
+  TopUpDto,
   VehicleDto,
+  WalletDto,
+  WalletTransactionDto,
 } from '@ucolis/shared';
 import { useSession } from '../session/SessionContext';
 import { api, qs } from './client';
@@ -178,3 +181,19 @@ export interface ContentDto {
 }
 export const useContent = (key: string, locale: string) =>
   useQuery({ queryKey: ['content', key, locale], queryFn: () => api.get<ContentDto>(`/content/${key}${qs({ locale })}`), retry: false });
+
+/** Portefeuille du transporteur : solde, état de la commission, recharge en attente. */
+export function useWallet(enabled = true) {
+  return useQuery({ queryKey: ['me', 'wallet'], queryFn: () => api.get<WalletDto>('/me/wallet'), enabled });
+}
+
+export function useWalletTransactions() {
+  return useInfiniteQuery({
+    queryKey: ['me', 'wallet', 'transactions'],
+    queryFn: ({ pageParam }) => api.get<Paginated<WalletTransactionDto>>(`/me/wallet/transactions${qs({ page: pageParam, limit: 20 })}`),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export const useMyTopUps = () => useQuery({ queryKey: ['me', 'wallet', 'topups'], queryFn: () => api.get<{ items: TopUpDto[] }>('/me/wallet/topups') });
