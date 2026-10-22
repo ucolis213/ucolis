@@ -156,7 +156,8 @@ export function errorMessage(t: TFunction, err: unknown): string {
     return t(`errors:${err.code}`, { defaultValue: t('errors:INTERNAL_ERROR') });
   }
   if (err instanceof NetworkError) return t('common:offline');
-  return t('errors:INTERNAL_ERROR');
+  // Erreur du téléphone (autorisation, module natif) : rien à voir avec le serveur.
+  return t('errors:UNEXPECTED');
 }
 
 /** Erreurs de validation de l'API ramenées au champ concerné. */

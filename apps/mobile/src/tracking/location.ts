@@ -38,54 +38,86 @@ export async function flushPendingPosition() {
   if (raw) await send(JSON.parse(raw) as Position);
 }
 
+const positionOf = (parcelId: string, loc: Location.LocationObject): Position => ({
+  parcelId,
+  lat: loc.coords.latitude,
+  lng: loc.coords.longitude,
+  accuracy: loc.coords.accuracy ?? null,
+  heading: loc.coords.heading ?? null,
+  speed: loc.coords.speed ?? null,
+  at: new Date(loc.timestamp).toISOString(),
+});
+
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(TRACKING_TASK, async ({ data, error }) => {
   if (error || !data?.locations?.length) return;
   const parcelId = await AsyncStorage.getItem(ACTIVE_KEY);
   if (!parcelId) return;
-  const loc = data.locations[data.locations.length - 1]!;
-  await send({
-    parcelId,
-    lat: loc.coords.latitude,
-    lng: loc.coords.longitude,
-    accuracy: loc.coords.accuracy ?? null,
-    heading: loc.coords.heading ?? null,
-    speed: loc.coords.speed ?? null,
-    at: new Date(loc.timestamp).toISOString(),
-  });
+  await send(positionOf(parcelId, data.locations[data.locations.length - 1]!));
 });
 
-/** Demande premier plan puis arrière-plan. Renvoie false si le suivi en arrière-plan est refusé. */
+/**
+ * Demande premier plan puis arrière-plan. Jamais d'exception : dans Expo Go sur iPhone, l'arrière-plan n'est pas
+ * configuré et sa demande échoue ; on retombe alors sur le suivi application ouverte.
+ */
 export async function requestTrackingPermissions(): Promise<{ foreground: boolean; background: boolean }> {
-  const fg = await Location.requestForegroundPermissionsAsync();
-  if (!fg.granted) return { foreground: false, background: false };
-  const bg = await Location.requestBackgroundPermissionsAsync();
-  return { foreground: true, background: bg.granted };
+  const fg = await Location.requestForegroundPermissionsAsync().catch(() => null);
+  if (!fg?.granted) return { foreground: false, background: false };
+  const bg = await Location.requestBackgroundPermissionsAsync().catch(() => null);
+  return { foreground: true, background: !!bg?.granted };
 }
 
-export async function startTracking(parcelId: string) {
+/** Suivi de repli, application ouverte seulement (position « pendant l'utilisation »). */
+let foregroundWatch: { parcelId: string; subscription: Location.LocationSubscription } | null = null;
+
+async function startForegroundWatch(parcelId: string) {
+  foregroundWatch?.subscription.remove();
+  const subscription = await Location.watchPositionAsync(
+    { accuracy: Location.Accuracy.Balanced, timeInterval: 10_000, distanceInterval: 25 },
+    (loc) => void send(positionOf(parcelId, loc)),
+  );
+  foregroundWatch = { parcelId, subscription };
+}
+
+/**
+ * Lance le partage de position du colis, de façon idempotente : en arrière-plan si c'est autorisé et possible,
+ * sinon application ouverte. Renvoie le mode obtenu, ou null sans aucune autorisation de localisation.
+ */
+export async function startTracking(parcelId: string): Promise<'background' | 'foreground' | null> {
   await AsyncStorage.setItem(ACTIVE_KEY, parcelId);
-  const { granted } = await Location.getBackgroundPermissionsAsync();
-  if (!granted) return false;
-  if (await Location.hasStartedLocationUpdatesAsync(TRACKING_TASK).catch(() => false)) return true;
-  await Location.startLocationUpdatesAsync(TRACKING_TASK, {
-    accuracy: Location.Accuracy.Balanced,
-    timeInterval: 10_000,
-    distanceInterval: 25,
-    pausesUpdatesAutomatically: false,
-    showsBackgroundLocationIndicator: true,
-    foregroundService: {
-      notificationTitle: 'UCOLIS',
-      notificationBody: i18n.t('parcel:tracking.title'),
-      notificationColor: '#FF6B35',
-    },
-  });
-  return true;
+  const background = await Location.getBackgroundPermissionsAsync().catch(() => null);
+  if (background?.granted) {
+    try {
+      if (!(await Location.hasStartedLocationUpdatesAsync(TRACKING_TASK).catch(() => false))) {
+        await Location.startLocationUpdatesAsync(TRACKING_TASK, {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 10_000,
+          distanceInterval: 25,
+          pausesUpdatesAutomatically: false,
+          showsBackgroundLocationIndicator: true,
+          foregroundService: {
+            notificationTitle: 'UCOLIS',
+            notificationBody: i18n.t('parcel:tracking.title'),
+            notificationColor: '#FF6B35',
+          },
+        });
+      }
+      return 'background';
+    } catch {
+      // Arrière-plan non configuré (Expo Go) : repli sur le suivi application ouverte.
+    }
+  }
+  const foreground = await Location.getForegroundPermissionsAsync().catch(() => null);
+  if (!foreground?.granted) return null;
+  if (foregroundWatch?.parcelId !== parcelId) await startForegroundWatch(parcelId).catch(() => null);
+  return foregroundWatch ? 'foreground' : null;
 }
 
 export async function stopTracking(parcelId?: string) {
   const active = await AsyncStorage.getItem(ACTIVE_KEY);
   if (parcelId && active && active !== parcelId) return;
   await AsyncStorage.multiRemove([ACTIVE_KEY, PENDING_KEY]);
+  foregroundWatch?.subscription.remove();
+  foregroundWatch = null;
   if (await Location.hasStartedLocationUpdatesAsync(TRACKING_TASK).catch(() => false)) {
     await Location.stopLocationUpdatesAsync(TRACKING_TASK);
   }

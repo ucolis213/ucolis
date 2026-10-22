@@ -56,6 +56,10 @@ admin 9 ; mobile 31).
   inaccessible. Toutes les fenêtres passent par `AppModal` (zones de sécurité propres, clavier évité).
 - Annonce : date souhaitée jusqu'à un an ; heure précise facultative (feuille heure puis minutes), affichée sur la
   carte, la fiche et le back-office.
+- Correctif : « Erreur du serveur » au démarrage d’une livraison dans Expo Go sur iPhone. La demande de localisation
+  en arrière-plan échouait avant l’appel à l’API. Elle ne bloque plus ; repli sur un suivi application ouverte.
+  Les erreurs du téléphone affichent « Une erreur est survenue » au lieu d’« Erreur du serveur ».
+
 À tester : iPhone SE ou mini, grand Android, iPad, texte agrandi (Réglages → Accessibilité).
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.

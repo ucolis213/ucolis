@@ -26,8 +26,9 @@ export default function StartDelivery() {
     try {
       const perms = await requestTrackingPermissions();
       await api.post(`/parcels/${id}/start`);
-      const tracking = perms.background ? await startTracking(id) : false;
-      if (!tracking) Alert.alert(t('permissions.locationDenied'));
+      // La livraison est démarrée : un partage de position incomplet ne l'empêche pas.
+      const mode = perms.foreground ? await startTracking(id).catch(() => null) : null;
+      if (mode !== 'background') Alert.alert(t(mode === 'foreground' ? 'permissions.locationForegroundOnly' : 'permissions.locationDenied'));
       void qc.invalidateQueries({ queryKey: ['parcel', id] });
       router.replace({ pathname: '/parcel/[id]', params: { id } });
     } catch (err) {

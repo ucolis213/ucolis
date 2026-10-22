@@ -40,7 +40,7 @@ import { useSession } from '@/session/SessionContext';
 import { draftFromParcel } from '@/state/draftFromParcel';
 import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
 import { colors, radii, space } from '@/theme';
-import { stopTracking } from '@/tracking/location';
+import { startTracking, stopTracking } from '@/tracking/location';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 /** Actions mises en avant en bouton principal ; les autres vont dans la liste secondaire. */
@@ -93,9 +93,12 @@ export default function ParcelDetail() {
   const photoSize = { width: window.width, height: Math.min(window.width * 0.66, window.height * 0.4) };
   const p = query.data;
 
-  // Le partage GPS s'arrête dès que le colis quitte in_transit.
+  // Le partage GPS s'arrête dès que le colis quitte in_transit, et reprend à l'ouverture de la fiche pendant la
+  // livraison (suivi application ouverte perdu à la fermeture).
   useEffect(() => {
-    if (p && p.viewer.role === 'assigned_carrier' && p.status !== 'in_transit') void stopTracking(p.id);
+    if (!p || p.viewer.role !== 'assigned_carrier') return;
+    if (p.status === 'in_transit') void startTracking(p.id).catch(() => null);
+    else void stopTracking(p.id);
   }, [p]);
 
   const refresh = () => {

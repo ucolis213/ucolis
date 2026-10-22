@@ -195,6 +195,7 @@
       "locationBody": "Pendant la livraison, UCOLIS partage votre position avec l'expéditeur de ce colis uniquement, pour qu'il suive son colis en temps réel. Le partage démarre quand vous démarrez la livraison et s'arrête dès la remise, l'annulation ou votre déconnexion. Votre position est aussi partagée quand l'application est en arrière-plan ou l'écran éteint.",
       "locationAllow": "J'ai compris, continuer",
       "locationDenied": "Sans la localisation en arrière-plan, l'expéditeur verra « Suivi indisponible ».",
+      "locationForegroundOnly": "Le suivi en arrière-plan n'est pas disponible : gardez l'application ouverte pendant la livraison pour que l'expéditeur vous suive.",
       "notificationTitle": "Restez informé",
       "notificationBody": "Recevez les nouvelles offres, les messages et l'avancement de vos livraisons."
     },
@@ -974,6 +975,7 @@
     "NOT_FOUND": "Élément introuvable.",
     "RATE_LIMITED": "Trop de tentatives. Réessayez plus tard.",
     "INTERNAL_ERROR": "Erreur du serveur. Réessayez.",
+    "UNEXPECTED": "Une erreur est survenue. Réessayez.",
     "MAINTENANCE": "Service en maintenance.",
     "EMAIL_TAKEN": "Cet email est déjà utilisé.",
     "PHONE_TAKEN": "Ce numéro est déjà utilisé.",

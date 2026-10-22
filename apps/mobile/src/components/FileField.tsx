@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { FileRef, UploadPurpose } from '@ucolis/shared';
+import { errorMessage } from '../api/client';
 import { compressImage, uploadFile } from '../api/upload';
 import { colors, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
@@ -31,8 +32,8 @@ export function FileField({
     setProgress(0);
     try {
       onChange(await uploadFile(purpose, file, setProgress));
-    } catch {
-      Alert.alert(t('errors:INTERNAL_ERROR'));
+    } catch (err) {
+      Alert.alert(errorMessage(t, err));
     } finally {
       setProgress(null);
     }

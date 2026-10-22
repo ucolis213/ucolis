@@ -451,6 +451,7 @@ Critères d'acceptation : toute transition absente de la table de la machine à 
 - Côté transporteur, dès in_transit :
   - Tâche de localisation en arrière-plan (expo-task-manager), précision équilibrée, toutes les 10 s ou tous les 25 m.
   - Sur Android, un service de premier plan affiche la notification permanente « Votre position est partagée avec l'expéditeur ». Sur iOS, l'indicateur système de localisation s'affiche.
+  - Sans arrière-plan (autorisation « Pendant l’utilisation », ou Expo Go sur iPhone), repli sur un suivi application ouverte, repris à l’ouverture de la fiche du colis ; le transporteur est prévenu. La livraison démarre dans tous les cas.
   - Envoi par le socket (tracking:position). Hors connexion, seule la dernière position est conservée, puis envoyée au retour du réseau.
 - Côté serveur :
   - La dernière position est gardée dans Redis (`tracking:<parcelId>`, durée de vie 24 h).
