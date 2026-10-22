@@ -2,16 +2,20 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatNotificationParams, formatPrice, type ConversationDto } from '@ucolis/shared';
+import { api, errorMessage } from '@/api/client';
 import { useConversations } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Avatar } from '@/components/Avatar';
+import { confirm } from '@/components/ConfirmDialog';
 import { GuestGate } from '@/components/GuestGate';
 import { QueryView } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
+import { SwipeableRow } from '@/components/SwipeableRow';
 import { formatRelative } from '@/format';
 import { currentLocale } from '@/i18n';
 import { useSession } from '@/session/SessionContext';
@@ -58,47 +62,62 @@ export default function Messages() {
 
 function ConversationRow({ conv }: { conv: ConversationDto }) {
   const { t } = useTranslation('chat');
+  const qc = useQueryClient();
   const last = conv.lastMessage;
+  // Supprimée pour moi seul ; retirée de la liste avant la réponse de l'API.
+  const remove = async () => {
+    if (!(await confirm({ title: t('deleteConfirm'), message: t('deleteConfirmBody'), confirmLabel: t('common:delete'), destructive: true }))) return;
+    qc.setQueryData<{ items: ConversationDto[] }>(['conversations'], (old) => old && { items: old.items.filter((c) => c.id !== conv.id) });
+    try {
+      await api.delete(`/conversations/${conv.id}`);
+    } catch (err) {
+      Alert.alert(errorMessage(t, err));
+    }
+    void qc.invalidateQueries({ queryKey: ['conversations'] });
+  };
   const preview = last.type === 'system' ? t(`system.${last.text}`, { ...formatNotificationParams(last.params ?? {}, currentLocale(), formatPrice), defaultValue: '' }) : last.type === 'image' ? `📷 ${t('photo')}` : (last.text ?? '');
   return (
-    <Pressable
-      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.background }]}
-      onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conv.id } })}
-      accessibilityRole="button"
-      accessibilityLabel={`${conv.other.displayName}, ${preview}`}
-    >
-      <Avatar file={conv.other.avatar} name={conv.other.displayName} size={52} />
-      <View style={styles.flex}>
-        <View style={styles.line}>
-          <AppText weight={conv.unread ? 'bold' : 'semibold'} numberOfLines={1} style={styles.flex}>
-            {conv.other.displayName}
-          </AppText>
-          {last.at && (
-            <AppText size="xs" color={colors.textMuted}>
-              {formatRelative(last.at)}
+    <SwipeableRow key={conv.id} actionLabel={t('deleteConversation')} actionIcon="trash-outline" onAction={remove}>
+      <Pressable
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.border }]}
+        onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conv.id } })}
+        onLongPress={remove}
+        accessibilityRole="button"
+        accessibilityLabel={`${conv.other.displayName}, ${preview}`}
+      >
+        <Avatar file={conv.other.avatar} name={conv.other.displayName} size={52} />
+        <View style={styles.flex}>
+          <View style={styles.line}>
+            <AppText weight={conv.unread ? 'bold' : 'semibold'} numberOfLines={1} style={styles.flex}>
+              {conv.other.displayName}
+            </AppText>
+            {last.at && (
+              <AppText size="xs" color={colors.textMuted}>
+                {formatRelative(last.at)}
+              </AppText>
+            )}
+          </View>
+          {conv.parcel && (
+            <AppText size="xs" color={colors.primaryDark} numberOfLines={1}>
+              {conv.parcel.reference} · {conv.parcel.title}
             </AppText>
           )}
+          <View style={styles.line}>
+            <AppText size="sm" color={conv.unread ? colors.navy : colors.textMuted} numberOfLines={1} style={styles.flex}>
+              {preview}
+            </AppText>
+            {conv.muted && <Ionicons name="notifications-off-outline" size={14} color={colors.textMuted} />}
+            {conv.unread > 0 && (
+              <View style={styles.badge}>
+                <AppText size="xs" weight="bold" color="#FFFFFF">
+                  {conv.unread}
+                </AppText>
+              </View>
+            )}
+          </View>
         </View>
-        {conv.parcel && (
-          <AppText size="xs" color={colors.primaryDark} numberOfLines={1}>
-            {conv.parcel.reference} · {conv.parcel.title}
-          </AppText>
-        )}
-        <View style={styles.line}>
-          <AppText size="sm" color={conv.unread ? colors.navy : colors.textMuted} numberOfLines={1} style={styles.flex}>
-            {preview}
-          </AppText>
-          {conv.muted && <Ionicons name="notifications-off-outline" size={14} color={colors.textMuted} />}
-          {conv.unread > 0 && (
-            <View style={styles.badge}>
-              <AppText size="xs" weight="bold" color="#FFFFFF">
-                {conv.unread}
-              </AppText>
-            </View>
-          )}
-        </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </SwipeableRow>
   );
 }
 

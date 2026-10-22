@@ -478,6 +478,7 @@ Critères d'acceptation : la position arrive chez l'expéditeur en moins de 15 s
   - Indicateur « en train d'écrire » (3 s), accusé « Vu », chargement des anciens messages par pages de 30.
   - En-tête cliquable vers le colis.
 - Actions : signaler un message ou la conversation, bloquer l'utilisateur.
+- Supprimer une conversation de sa liste (glisser la ligne vers le début de la lecture, ou appui long, avec confirmation). Elle disparaît pour soi seul : l'autre participant et le staff la gardent. Ses non-lus sont remis à zéro sans accusé « Vu ». Elle revient avec son historique au message suivant ou quand on la rouvre.
 - Badge du total des non-lus sur l'onglet Messages, synchronisé par le socket.
 - Les messages d'un compte supprimé restent, avec l'auteur « Utilisateur supprimé ».
 
@@ -734,7 +735,7 @@ Conventions :
 | Trajets | GET /trips ; GET /trips/:id ; POST /trips ; PATCH /trips/:id ; POST /trips/:id/status ; GET /me/trips ; GET /trips/:id/matching-parcels ; POST /trips/:id/requests ({ parcelId }) ; GET /me/trip-requests ; POST /trip-requests/:id/decline | Écriture réservée au transporteur vérifié propriétaire |
 | Favoris | GET /me/favorites ; PUT /me/favorites/:parcelId ; DELETE /me/favorites/:parcelId | Authentifié |
 | Alertes | GET /me/saved-searches ; POST ; PATCH /:id ; DELETE /:id | 10 au maximum |
-| Messagerie | GET /conversations ; POST /conversations ({ userId, parcelId? }, renvoie l'existante si elle existe) ; GET /conversations/:id ; GET /conversations/:id/messages?before= ; POST /conversations/:id/messages ; POST /conversations/:id/read ; POST /conversations/:id/mute | Participants uniquement |
+| Messagerie | GET /conversations ; POST /conversations ({ userId, parcelId? }, renvoie l'existante si elle existe) ; GET /conversations/:id ; GET /conversations/:id/messages?before= ; POST /conversations/:id/messages ; POST /conversations/:id/read ; POST /conversations/:id/mute ; DELETE /conversations/:id (pour soi seul) | Participants uniquement |
 | Notifications | GET /notifications ; GET /notifications/unread-count ; POST /notifications/:id/read ; POST /notifications/read-all ; DELETE /notifications/:id ; DELETE /notifications | Destinataire uniquement |
 | Avis | GET /parcels/:id/review-status ; POST /parcels/:id/reviews ; POST /reviews/:id/reply | Participants du colis livré, dans la fenêtre |
 | Signalements | POST /reports | Authentifié |

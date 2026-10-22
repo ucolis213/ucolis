@@ -618,7 +618,10 @@
     "viewProfile": "Voir le profil",
     "identityNotVerified": "Identité non vérifiée",
     "blockedByMe": "Vous avez bloqué {{name}}. Vous ne pouvez plus échanger de messages.",
-    "cannotReply": "Vous ne pouvez plus répondre dans cette conversation."
+    "cannotReply": "Vous ne pouvez plus répondre dans cette conversation.",
+    "deleteConversation": "Supprimer la discussion",
+    "deleteConfirm": "Supprimer cette discussion ?",
+    "deleteConfirmBody": "Elle disparaît de votre liste. Elle reviendra, avec son historique, si un nouveau message arrive."
   },
   "profile": {
     "title": "Mon profil",

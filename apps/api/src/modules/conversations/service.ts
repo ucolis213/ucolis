@@ -212,6 +212,13 @@ export function createConversationService(deps: Deps) {
       const exists = await ConversationModel.exists({ pairKey, parcel: parcelId ?? null });
       if (!exists && !parcelId) await consume(newConvLimiter, userId);
       const { conversation } = await ensure(userId, otherId, parcelId ?? null, userId);
+      // Rouverte volontairement (« Message », « Contacter ») : elle reprend sa place dans ma liste.
+      if (conversation.deletedFor?.some((d) => d.toString() === userId)) {
+        await ConversationModel.updateOne(
+          { _id: conversation._id },
+          { $pull: { deletedFor: new Types.ObjectId(userId) } },
+        );
+      }
       return (await toDtos([conversation], userId))[0]!;
     },
 
@@ -318,6 +325,20 @@ export function createConversationService(deps: Deps) {
           : { $pull: { mutedBy: new Types.ObjectId(userId) } },
       );
       return this.get(userId, id);
+    },
+
+    /**
+     * Supprime la conversation de ma liste, pour moi seul : l'autre participant et le staff la gardent
+     * (signalements, litiges). Elle revient, historique compris, au prochain message.
+     */
+    async hide(userId: string, id: string) {
+      await loadFor(userId, id);
+      await ConversationModel.updateOne(
+        { _id: id },
+        { $addToSet: { deletedFor: new Types.ObjectId(userId) }, $set: { [`unread.${userId}`]: 0 } },
+      );
+      // Sans accusé « Vu » : seuls les badges et les notifications de message sont remis à zéro.
+      await deps.bus.emit('conversation.read', { conversationId: id, userId });
     },
 
     async isMuted(userId: string, conversationId: string) {

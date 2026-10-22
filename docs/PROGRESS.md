@@ -38,6 +38,16 @@ Reste : tests de bout en bout Playwright.
 `pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 90 tests ; API 172, couverture ≈ 94 % ;
 admin 9 ; mobile 31).
 
+## Journal du 22 octobre 2026 : messagerie
+
+- Correctif : aperçu « Offre acceptée à {{price}} » dans la liste des conversations. Le dernier message garde ses
+  paramètres ; les conversations plus anciennes les relisent sur le message système.
+- Correctif : badge des messages non lus resté affiché après la déconnexion.
+- Suppression d'une conversation pour soi seul : glisser la ligne (droite → gauche, inversé en arabe) ou appui long,
+  avec confirmation (`DELETE /conversations/:id`). Elle revient au message suivant.
+
+À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.
+
 ## Journal du 22 octobre 2026 : commission et portefeuille (F19)
 
 ### Code

@@ -202,6 +202,44 @@ describe('messagerie', () => {
     });
   });
 
+  it('supprime une conversation pour moi seul, sans accusé « Vu », et la fait revenir au message suivant', async () => {
+    const ctx = makeTestApp();
+    const amina = await verifiedUser(ctx);
+    const karim = await verifiedCarrier(ctx);
+    const conv = (
+      await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
+    ).body;
+    const send = (clientId: string) =>
+      ctx
+        .http()
+        .post(`/api/v1/conversations/${conv.id}/messages`)
+        .set(karim.auth)
+        .send({ type: 'text', clientId, text: 'Bonjour' });
+    await send('client-0001');
+
+    const del = await ctx.http().delete(`/api/v1/conversations/${conv.id}`).set(amina.auth);
+    expect(del.status).toBe(204);
+    expect((await ctx.http().get('/api/v1/conversations').set(amina.auth)).body.items).toHaveLength(0);
+    expect((await ctx.http().get('/api/v1/conversations').set(karim.auth)).body.items).toHaveLength(1);
+    expect(
+      (await ctx.http().get('/api/v1/notifications/unread-count').set(amina.auth)).body.unreadMessages,
+    ).toBe(0);
+    const msgs = await ctx.http().get(`/api/v1/conversations/${conv.id}/messages`).set(karim.auth);
+    expect(msgs.body.items[0].readBy).toEqual([]);
+
+    // Rouverte volontairement, puis revenue avec un nouveau message.
+    await ctx.http().post('/api/v1/conversations').set(amina.auth).send({ userId: karim.id });
+    expect((await ctx.http().get('/api/v1/conversations').set(amina.auth)).body.items).toHaveLength(1);
+    await ctx.http().delete(`/api/v1/conversations/${conv.id}`).set(amina.auth);
+    await send('client-0002');
+    const back = await ctx.http().get('/api/v1/conversations').set(amina.auth);
+    expect(back.body.items[0]).toMatchObject({ id: conv.id, unread: 1 });
+
+    const stranger = await verifiedUser(ctx);
+    const forbidden = await ctx.http().delete(`/api/v1/conversations/${conv.id}`).set(stranger.auth);
+    expect(forbidden.status).toBe(404);
+  });
+
   it("n'envoie pas de push pour une conversation en sourdine ou ouverte à l'écran", async () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);

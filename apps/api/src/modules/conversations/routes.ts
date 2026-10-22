@@ -29,6 +29,10 @@ export function conversationRoutes(deps: Deps, conversations: ConversationServic
     await conversations.read(currentUser(req).userId, idParam(req));
     res.status(204).end();
   });
+  r.delete('/conversations/:id', async (req, res) => {
+    await conversations.hide(currentUser(req).userId, idParam(req));
+    res.status(204).end();
+  });
   r.post('/conversations/:id/mute', validate(muteSchema), async (req, res) => {
     res.json(await conversations.mute(currentUser(req).userId, idParam(req), req.body.muted));
   });

@@ -618,7 +618,10 @@
     "viewProfile": "عرض الملف الشخصي",
     "identityNotVerified": "هوية غير موثقة",
     "blockedByMe": "لقد حظرت {{name}}. لم يعد بإمكانكما تبادل الرسائل.",
-    "cannotReply": "لم يعد بإمكانك الرد في هذه المحادثة."
+    "cannotReply": "لم يعد بإمكانك الرد في هذه المحادثة.",
+    "deleteConversation": "حذف المحادثة",
+    "deleteConfirm": "حذف هذه المحادثة؟",
+    "deleteConfirmBody": "ستختفي من قائمتك. وستعود مع سجلها إذا وصلت رسالة جديدة."
   },
   "profile": {
     "title": "حسابي",
