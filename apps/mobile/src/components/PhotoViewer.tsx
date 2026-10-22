@@ -4,13 +4,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
-import { FlatList, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ViewToken } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ViewToken } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { FileRef } from '@ucolis/shared';
 import { MIN_TOUCH, space } from '../theme';
 import { AppText } from './AppText';
 import { cdn } from './Avatar';
+import { AppModal } from './AppModal';
 
 const VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
@@ -28,7 +29,7 @@ export function PhotoViewer({ photos, index, onClose }: { photos: FileRef[]; ind
   }, []);
 
   return (
-    <Modal visible={index !== null} animationType="fade" onRequestClose={onClose} statusBarTranslucent supportedOrientations={['portrait']}>
+    <AppModal avoidKeyboard={false} visible={index !== null} animationType="fade" onRequestClose={onClose} statusBarTranslucent supportedOrientations={['portrait']}>
       <View style={styles.root}>
         {index !== null && (
           <FlatList
@@ -65,7 +66,7 @@ export function PhotoViewer({ photos, index, onClose }: { photos: FileRef[]; ind
           </Pressable>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

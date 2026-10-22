@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
   Pressable,
   StyleSheet,
   TextInput,
@@ -31,6 +30,7 @@ import {
 import { backIcon, colors, fontFamily, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
 import { MapPicker, type PickedPlace } from './MapPicker';
+import { AppModal } from './AppModal';
 
 export type AddressField = 'pickup' | 'dropoff';
 
@@ -297,7 +297,7 @@ export function AddressSearch({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={close}>
+    <AppModal visible={visible} animationType="slide" onRequestClose={close}>
       <SafeAreaView style={styles.root}>
         <View style={styles.top}>
           <Pressable
@@ -349,7 +349,7 @@ export function AddressSearch({
           }}
         />
       </SafeAreaView>
-    </Modal>
+    </AppModal>
   );
 }
 

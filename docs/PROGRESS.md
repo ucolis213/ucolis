@@ -52,6 +52,8 @@ admin 9 ; mobile 31).
   sur petit écran (accueil de premier lancement), photos de la fiche colis à la largeur courante et bornées en
   hauteur, contenu centré à 720 px sur tablette.
 
+- Correctif : fenêtres plein écran (wilaya, adresse, carte…) affichées sous l'heure et l'encoche, croix de fermeture
+  inaccessible. Toutes les fenêtres passent par `AppModal` (zones de sécurité propres, clavier évité).
 À tester : iPhone SE ou mini, grand Android, iPad, texte agrandi (Réglages → Accessibilité).
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.

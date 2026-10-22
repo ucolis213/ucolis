@@ -2,7 +2,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { atNoon, clampMonth, monthCells, sameDay, startOfDay, weekDays } from '../calendar';
@@ -10,6 +10,7 @@ import { formatDate } from '../format';
 import { backIcon, colors, forwardIcon, MIN_TOUCH, radii, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { TextField, type TextFieldProps } from './TextField';
+import { AppModal } from './AppModal';
 
 export function SectionCard({ title, children, right }: { title?: string; children: ReactNode; right?: ReactNode }) {
   return (
@@ -218,7 +219,7 @@ function CalendarSheet({
   const weekDayName = (d: number) => formatDate(atNoon(2026, 0, 4 + d), { weekday: 'narrow', day: undefined, month: undefined, year: undefined });
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+    <AppModal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('cancel')} />
         <SafeAreaView edges={['bottom']} style={styles.sheet}>
@@ -325,7 +326,7 @@ function CalendarSheet({
           )}
         </SafeAreaView>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

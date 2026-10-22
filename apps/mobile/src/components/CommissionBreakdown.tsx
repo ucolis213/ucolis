@@ -4,7 +4,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -20,6 +20,7 @@ import { useAppConfig } from '../hooks/useAppConfig';
 import { colors, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
+import { AppModal } from '@/components/AppModal';
 
 const SUCCESS = '#1F8F88';
 
@@ -121,7 +122,7 @@ export function CommissionGridModal({ visible, settings, onClose }: { visible: b
     return t('grid.between', { from: price(r.from!), to: price(r.upTo) });
   };
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <AppModal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('close')} />
         <SafeAreaView edges={['bottom']} style={styles.sheet}>
@@ -151,7 +152,7 @@ export function CommissionGridModal({ visible, settings, onClose }: { visible: b
           </ScrollView>
         </SafeAreaView>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

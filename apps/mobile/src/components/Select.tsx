@@ -2,11 +2,12 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { colors, fontFamily, forwardIcon, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
+import { AppModal } from './AppModal';
 
 export interface SelectOption {
   value: string;
@@ -76,7 +77,7 @@ export function Select({
         </AppText>
       )}
 
-      <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+      <AppModal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <SafeAreaView style={styles.modal}>
           <View style={styles.modalHeader}>
             <AppText size="lg" weight="bold" style={styles.flex}>
@@ -130,7 +131,7 @@ export function Select({
             )}
           />
         </SafeAreaView>
-      </Modal>
+      </AppModal>
     </View>
   );
 }

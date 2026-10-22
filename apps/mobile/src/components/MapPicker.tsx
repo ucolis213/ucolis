@@ -5,7 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 import MapView, { type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ import { toPlace } from '../state/addressBook';
 import { backIcon, colors, MIN_TOUCH, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
+import { AppModal } from './AppModal';
 
 export interface PickedPlace {
   address: string;
@@ -59,10 +60,10 @@ interface MapPickerProps {
 
 export function MapPicker({ visible, ...props }: MapPickerProps) {
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={props.onClose}>
+    <AppModal visible={visible} animationType="slide" onRequestClose={props.onClose}>
       {/* Contenu créé à chaque ouverture : la carte repart du point initial, sans état résiduel. */}
       {visible && <MapPickerContent {...props} />}
-    </Modal>
+    </AppModal>
   );
 }
 

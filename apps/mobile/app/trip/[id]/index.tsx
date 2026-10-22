@@ -4,7 +4,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { isParcelCompatibleWithTrip, type Paginated, type ParcelCardDto, type ParcelDto } from '@ucolis/shared';
@@ -25,6 +25,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useSession } from '@/session/SessionContext';
 import { colors, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { AppModal } from '@/components/AppModal';
 
 export default function TripDetail() {
   const { t } = useTranslation(['trip', 'parcel', 'common']);
@@ -152,7 +153,7 @@ function ProposeModal({ visible, tripId, trip, onClose }: { visible: boolean; tr
     },
   });
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <AppModal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <ScreenHeader title={t('chooseParcel')} onBack={onClose} />
         <View style={{ padding: space(5), gap: space(3), flex: 1 }}>
@@ -182,7 +183,7 @@ function ProposeModal({ visible, tripId, trip, onClose }: { visible: boolean; tr
           </QueryView>
         </View>
       </SafeAreaView>
-    </Modal>
+    </AppModal>
   );
 }
 

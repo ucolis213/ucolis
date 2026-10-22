@@ -1,12 +1,13 @@
 // Saisie courte dans une fenêtre (motif d'annulation, prix…), identique sur iOS et Android.
 
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, radii, space } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { TextField, type TextFieldProps } from './TextField';
+import { AppModal } from './AppModal';
 
 export function PromptModal({
   visible,
@@ -39,7 +40,7 @@ export function PromptModal({
   }, [visible]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <AppModal avoidKeyboard={false} visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel={t('cancel')} />
         <View style={styles.sheet}>
@@ -75,7 +76,7 @@ export function PromptModal({
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </AppModal>
   );
 }
 
