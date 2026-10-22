@@ -236,3 +236,33 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
 - En-tête de la discussion : photo, nom, badge « Identité vérifiée » (ou « Identité non vérifiée »), badge pro
   et note. Un toucher sur l'en-tête ou sur la photo d'un message ouvre le profil public, également accessible
   par « Voir le profil » dans le menu.
+
+## Commission et portefeuille du transporteur (22 octobre 2026)
+- Retour sur le lot 0 et sur le hors-périmètre du PRD, à la demande du propriétaire du produit : la commission
+  entre dans la v1 (F19 du PRD). Le prix de la course reste réglé hors application ; seule la commission passe par
+  un portefeuille prépayé du transporteur. Gratuit au lancement : `commission.enabled` vaut false par défaut et
+  seul le super-administrateur l'active (Réglages), après une diffusion et avec une date `effectiveFrom`.
+- Grille demandée : 50 DA + 15 % sous 1 000 DA, 12 % de 1 000 à 3 000 DA, 10 % de 3 000 à 10 000 DA, 8 % au-delà.
+  Les deux tranches du milieu se chevauchaient à 3 000 DA : 3 000 DA est à 12 %. Taux unique selon la tranche du
+  prix entier (pas de tranches marginales, contrairement au barème du prix conseillé) ; arrondi au dinar.
+- La commission ne dépasse jamais le prix convenu (gains nets ≥ 0), même si le prix minimal d'une offre baisse.
+- Commission figée sur le colis à l'acceptation : le transporteur paie ce qu'on lui a affiché, même si la grille
+  change avant la livraison. Retour à la gratuité entre l'acceptation et la livraison : commission abandonnée
+  (waived). Un colis sorti de delivered par le staff est remboursé.
+- Prélèvement dans la transaction qui passe le colis en delivered, et non dans un abonné d'événement : un abonné
+  en échec est seulement journalisé, la commission serait perdue. Le statut de la commission sur le colis
+  (pending → charged → refunded) rend prélèvement et remboursement idempotents.
+- Une transaction MongoDB ne voit pas un document créé après son début : le portefeuille est ouvert avant la
+  transaction de livraison (`wallet.prepare`), jamais pendant.
+- Portefeuille ouvert, avec le bonus de 1 000 DA, à la validation de l'identité si la commission est activée,
+  sinon au premier accès d'un compte qui peut transporter (même règle que pour faire une offre). Pas de
+  portefeuille pendant la gratuité : les transporteurs déjà vérifiés reçoivent leur bonus à l'activation, sans
+  script de rattrapage. Un seul bonus par compte (index unique partiel).
+- Blocage sous `minBalance` (0 DA) : offre, nouvelle proposition, acceptation d'une contre-offre et acceptation
+  par l'expéditeur. L'expéditeur reçoit CARRIER_UNAVAILABLE, sans détail sur le solde du transporteur.
+- Recharge manuelle : virement CCP ou BaridiMob, preuve en fichier privé (`topup_proof`, accès authenticated),
+  validation par le staff (nouvelle permission `wallet.manage`, accordable à un modérateur), qui crédite le
+  montant réellement reçu. Une seule demande en attente par transporteur. Coordonnées de virement d'exemple dans
+  `DEFAULT_COMMISSION.topUp`, à remplacer dans les réglages avant l'activation.
+- Pas de collection `CommissionConfig` : la configuration est une clé d'AppSetting (`commission`), comme le barème
+  du prix, éditée et journalisée par le même écran.

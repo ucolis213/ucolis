@@ -35,8 +35,31 @@ Contrôles : `tsc`, lint, build Vite, 9 tests Vitest (menu, thème, client HTTP)
 Reste : tests de bout en bout Playwright.
 
 ## État global
-`pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 80 tests, couverture ≈ 99 % ; API 151 ;
-admin 9 ; mobile 22).
+`pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 90 tests ; API 172, couverture ≈ 94 % ;
+admin 9 ; mobile 31).
+
+## Journal du 22 octobre 2026 : commission et portefeuille (F19)
+
+### Code
+- `shared/commission.ts` : grille (50 DA + 15 / 12 / 10 / 8 %), ventilation, réglage `commission` (désactivé par
+  défaut : service gratuit), schémas et DTO du portefeuille, traductions FR/AR (espace `wallet`).
+- API, module `wallet` : Wallet, WalletTransaction, TopUpRequest. Commission figée sur le colis à l'acceptation,
+  prélevée dans la transaction de livraison, remboursée si le staff sort le colis de delivered. Bonus de 1 000 DA,
+  blocage sous le seuil, recharges avec preuve validées par le staff, ajustements motivés.
+- Back-office : page Portefeuilles (`wallet.manage`), réglage commission documenté, commission sur la fiche colis,
+  commissions encaissées et recharges en attente au tableau de bord.
+- Mobile : ventilation des gains (saisie d'offre, détail d'offre, fiche colis) avec la grille en fenêtre ;
+  Mon portefeuille et Recharger mon compte depuis le profil ; alerte et envoi désactivé sous le seuil.
+
+### Avant d'activer la commission
+1. Réglages → commission : remplacer les coordonnées de virement d'exemple (`topUp`).
+2. Diffusion aux transporteurs avec la date d'entrée en vigueur.
+3. Réglages → commission : `enabled: true` et `effectiveFrom` à cette date.
+4. Donner `wallet.manage` au modérateur chargé des recharges.
+
+### À tester sur téléphone
+- Ventilation sur la saisie d'une offre (prix tapé et prix demandé) et icône d'information, en FR et en AR (RTL).
+- Mon portefeuille : solde, historique, recharge avec photo et PDF ; alerte de solde insuffisant.
 
 ## Journal du 21 octobre 2026
 

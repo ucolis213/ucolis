@@ -112,6 +112,7 @@ Elle est distincte du statut pro : un particulier comme un professionnel doit la
 | conversations.view_reported | Lire une conversation seulement via un signalement ou un litige qui la cite |
 | conversations.view_all | Lire n'importe quelle conversation ; chaque accès est journalisé |
 | broadcast.send | Envoyer une notification à un segment d'utilisateurs |
+| wallet.manage | Valider ou refuser les recharges de portefeuille, ajuster un solde avec motif |
 | content.manage | Modifier la FAQ, les CGU et la politique de confidentialité |
 | settings.manage | Barème de prix, limites et durées. Réservée au super-administrateur |
 | staff.manage | Créer, modifier et désactiver des modérateurs. Réservée au super-administrateur |
@@ -192,12 +193,12 @@ Une flèche absente correspond à une transition refusée par l'API (409 INVALID
 | De | Vers | Déclenché par | Effets |
 |---|---|---|---|
 | open | negotiating | Système, à la première offre | — |
-| negotiating | assigned | Expéditeur qui accepte une offre, ou transporteur qui accepte une contre-offre | Transaction : offre accepted ; autres offres actives rejected avec rejectedBecauseAccepted = true ; finalPrice et assignedCarrier figés ; conversation créée ou réutilisée ; code de remise généré |
+| negotiating | assigned | Expéditeur qui accepte une offre, ou transporteur qui accepte une contre-offre | Transaction : offre accepted ; autres offres actives rejected avec rejectedBecauseAccepted = true ; finalPrice et assignedCarrier figés ; commission figée si elle est en vigueur (F19) ; conversation créée ou réutilisée ; code de remise généré |
 | assigned | negotiating ou open | Transporteur retenu (désistement) | Offre withdrawn. Les offres rejectedBecauseAccepted repassent en pending si leurs auteurs restent éligibles (colis en negotiating) ; sinon le colis revient en open. Code invalidé ; stats.withdrawals +1 |
 | open, negotiating, assigned | cancelled | Expéditeur | Motif obligatoire depuis assigned ; offres actives cancelled |
 | open, negotiating | expired | Job horaire | desiredDate + parcelExpiryDays (7 jours) dépassée ; offres actives cancelled ; republication par duplication |
 | assigned | in_transit | Transporteur retenu | startedAt ; partage GPS démarré |
-| in_transit | delivered | Transporteur retenu, avec le code de remise correct | deliveredAt ; compteurs ; GPS arrêté ; invitation à noter |
+| in_transit | delivered | Transporteur retenu, avec le code de remise correct | deliveredAt ; compteurs ; commission prélevée sur le portefeuille (F19) ; GPS arrêté ; invitation à noter |
 | in_transit | delivered_pending | Transporteur retenu | declaredDeliveredAt ; autoConfirmAt = +72 h ; GPS arrêté |
 | delivered_pending | delivered | Expéditeur, ou job à autoConfirmAt | Mêmes effets que la remise avec code |
 | in_transit, delivered_pending | disputed | Expéditeur ou transporteur retenu | Dispute créée ; previousStatus mémorisé ; validation automatique suspendue ; GPS arrêté |
@@ -549,7 +550,8 @@ Application web responsive, servie à part de l'application mobile. Chaque page 
 | Conversations | conversations.view_reported ou conversations.view_all | Lecture seule ; recherche par participant ; suppression d'un message abusif |
 | Diffusion | broadcast.send | Message bilingue ; segment (tous, transporteurs, expéditeurs, pros, wilaya) ; aperçu du nombre de destinataires ; envoi immédiat ou programmé |
 | Contenus | content.manage | FAQ, CGU, confidentialité, avec éditeur Markdown, versions et publication |
-| Réglages | settings.manage | Barème de prix, limites, durées, coordonnées de contact, version minimale de l'app, maintenance, requireCarrierVerification |
+| Portefeuilles | wallet.manage | File des recharges (la plus ancienne en premier) avec preuve de virement en URL signée ; créditer le montant reçu ou refuser avec motif ; soldes triés du plus bas au plus haut ; historique ; ajustement motivé |
+| Réglages | settings.manage | Barème de prix, limites, durées, coordonnées de contact, version minimale de l'app, maintenance, requireCarrierVerification, commission (activation, date d'effet, grille, bonus, seuil, coordonnées de virement) |
 | Staff | staff.manage | Liste ; inviter un modérateur avec modèle de permissions ; modifier les permissions ; désactiver ; transférer le rôle de super-administrateur |
 | Journal d'audit | audit.view | Qui, quoi, sur quoi, quand, motif, avant et après ; filtres ; export CSV |
 
@@ -561,6 +563,20 @@ Règles transverses :
 - Une session staff expire après 30 min d'inactivité.
 
 Critères d'acceptation : un modérateur sans users.view_pii ne reçoit jamais un email ou un téléphone en clair, y compris dans les exports et les réponses JSON ; un modérateur ne peut ni voir ni modifier ses propres permissions ; le super-administrateur ne peut pas être désactivé.
+
+### F19 — Commission et portefeuille du transporteur
+
+Le service est gratuit au lancement : la commission n'existe qu'une fois activée par le super-administrateur (réglage `commission.enabled`). Avant de l'activer, il prévient les transporteurs par une diffusion et fixe une date d'entrée en vigueur (`effectiveFrom`).
+
+- Grille (dans `shared/commission.ts`, modifiable dans les réglages) : frais de dossier fixes de 50 DA, plus un pourcentage du prix convenu. Le taux dépend de la tranche où tombe le prix entier, sans tranches marginales : 15 % sous 1 000 DA, 12 % de 1 000 à 3 000 DA inclus, 10 % de 3 001 à 10 000 DA inclus, 8 % au-delà. Montants arrondis au dinar ; la commission ne dépasse jamais le prix convenu.
+- Gains nets du transporteur = prix convenu − frais de dossier − commission variable.
+- La commission est figée sur le colis à l'acceptation de l'offre, si elle est en vigueur à cet instant. Elle est prélevée sur le portefeuille du transporteur dans la transaction qui passe le colis en delivered (code, confirmation, validation automatique, litige tranché pour la livraison, forçage par le staff). Un désistement l'efface. Si la gratuité revient avant la livraison, elle est abandonnée (waived). Si le staff sort un colis de delivered, elle est remboursée.
+- Portefeuille : un par transporteur, ouvert avec un bonus de bienvenue de 1 000 DA (une seule fois par compte), à la validation de l'identité ou au premier accès si la commission est activée. Le solde peut devenir négatif.
+- Blocage : sous le seuil `minBalance` (0 DA), le transporteur ne peut plus faire d'offre, reproposer un prix, accepter une contre-offre ni être retenu par un expéditeur (422 WALLET_INSUFFICIENT_BALANCE ; l'expéditeur reçoit CARRIER_UNAVAILABLE). Il est prévenu au passage sous le seuil.
+- Recharge : virement CCP ou BaridiMob vers les coordonnées des réglages, puis demande avec montant, référence facultative et preuve (image ou PDF privés). Une seule demande en attente à la fois. Le staff crédite le montant réellement reçu ou refuse avec un motif ; le transporteur est notifié.
+- Écrans : ventilation des gains (prix convenu, frais de dossier, commission au taux appliqué, gains nets mis en valeur) sur la saisie d'offre, le détail d'une offre et la fiche colis du transporteur, avec une icône d'information qui ouvre la grille ; « Mon portefeuille » depuis le profil (solde en rouge si négatif, en vert sinon ; historique avec références de livraison ; « Recharger mon compte »). L'expéditeur ne voit jamais la commission.
+
+Critères d'acceptation : aucune commission n'est figée ni prélevée tant que `commission.enabled` est faux ; une livraison n'est jamais prélevée deux fois ; chaque mouvement de solde a sa ligne d'historique avec le solde qui en résulte ; un transporteur sous le seuil ne peut obtenir aucune nouvelle course.
 
 ## Modèle de données
 
@@ -620,6 +636,7 @@ email (unique), firstName, lastName, passwordHash, role (super_admin, moderator)
 | recipient | objet | name, phone ; visibles par l'expéditeur, et par le transporteur retenu à partir de assigned |
 | paymentArrangement | enum | voir F6 |
 | requestedPrice, suggestedPrice, finalPrice | number (DA entiers) | finalPrice figé à l'acceptation |
+| commission | objet | null si la course est gratuite ; sinon grossPrice, fixedFee, ratePercent, variableCommission, totalCommission, netEarnings, status (pending, charged, refunded, waived), chargedAt. Figée à l'acceptation (F19) |
 | photos[] | File | 0–5 |
 | status | enum | open, negotiating, assigned, in_transit, delivered_pending, delivered, cancelled, expired, disputed |
 | statusHistory[] | objet | from, to, byType (user, staff, system), by, at, reason |
@@ -663,6 +680,12 @@ parcel, author, target, direction (sender_to_carrier ou carrier_to_sender), rati
 - **Report** : reporter, targetType (user, parcel, trip, review, conversation, message), targetId, reason, description (1 000), status (open, resolved, dismissed), staffNote, handledBy, handledAt, claim (by, until). Index unique partiel { reporter, targetType, targetId } quand status = open.
 - **Dispute** : parcel, openedBy, against, reason, description (2 000), photos[] (5 au maximum), response (text, photos[], at), status (open, in_review, resolved), outcome (delivered ou cancelled), decisionNote, handledBy, claim, resolvedAt, previousStatus. Un seul litige ouvert par colis.
 
+### Wallet, WalletTransaction et TopUpRequest
+
+- **Wallet** : user (unique), balance (DA, peut être négatif). Le solde ne change que par un $inc atomique accompagné d'une ligne WalletTransaction, dans la même transaction.
+- **WalletTransaction** : user, type (welcome_bonus, commission_debit, commission_refund, topup, adjustment), amount (positif pour un crédit, négatif pour un débit), balanceAfter, parcel, topUp, staff, note. Collection en ajout seul ; index unique partiel { user, type } pour welcome_bonus.
+- **TopUpRequest** : user, amount, method (ccp, baridimob), reference, proof (File privé), status (pending, approved, rejected), creditedAmount, decisionReason, decidedBy, decidedAt. Index unique partiel { user } quand status = pending.
+
 ### Données techniques
 
 - **TrackPoint** : parcel, carrier, location, accuracy, heading, speed, at. Expiration TTL de 30 jours.
@@ -671,7 +694,7 @@ parcel, author, target, direction (sender_to_carrier ou carrier_to_sender), rati
 - **SavedSearch** : user, name, scope (parcels ou trips), filters, notify, lastNotifiedAt.
 - **Favorite** : user, parcel. Index unique sur la paire.
 - **AuditLog** : actor (StaffAccount), action (par exemple user.suspend), targetType, targetId, reason, before, after, ip, userAgent. Collection en ajout seul, sans route de modification ni de suppression.
-- **AppSetting** : key (unique), value, updatedBy. Clés minimales : pricing, limits (activeParcelsIndividual, activeParcelsPro, activeTripsIndividual, activeTripsPro, maxCounterOffers), autoConfirmHours, parcelExpiryDays, reviewWindowDays, requireCarrierVerification, minAppVersion, maintenance, support (email, WhatsApp), termsVersion.
+- **AppSetting** : key (unique), value, updatedBy. Clés minimales : pricing, limits (activeParcelsIndividual, activeParcelsPro, activeTripsIndividual, activeTripsPro, maxCounterOffers), autoConfirmHours, parcelExpiryDays, reviewWindowDays, requireCarrierVerification, minAppVersion, maintenance, support (email, WhatsApp), termsVersion, commission (enabled, effectiveFrom, fixedFee, tiers, welcomeBonus, minBalance, topUp : titulaire, CCP, clé, RIP BaridiMob, montants minimal et maximal).
 - **Content** : key (faq, terms, privacy), locale (fr ou ar), body (Markdown), version, publishedAt, updatedBy.
 
 ### Référentiel géographique
@@ -700,7 +723,8 @@ Conventions :
 | Statut pro | GET /me/pro ; POST /me/pro (dépôt ou nouveau dépôt) | Authentifié, email vérifié |
 | Vérification transporteur | GET /me/carrier-verification ; POST /me/carrier-verification ; GET /me/vehicles ; POST /me/vehicles ; PATCH /me/vehicles/:id ; DELETE /me/vehicles/:id | Authentifié |
 | Blocage | GET /me/blocked ; POST /me/blocked/:userId ; DELETE /me/blocked/:userId | Authentifié |
-| Uploads | POST /uploads/signature avec { purpose } (parcel_photo, avatar, message_image, identity_doc, pro_doc, dispute_photo, delivery_proof, vehicle_photo) | Renvoie une signature Cloudinary limitée au dossier, au type et à la taille autorisés pour cet usage |
+| Portefeuille | GET /me/wallet ; GET /me/wallet/transactions ; GET /me/wallet/topups ; POST /me/wallet/topups ({ amount, method, reference?, proof }) | Authentifié ; recharge réservée aux transporteurs, commission activée |
+| Uploads | POST /uploads/signature avec { purpose } (parcel_photo, avatar, message_image, identity_doc, pro_doc, dispute_photo, delivery_proof, vehicle_photo, topup_proof) | Renvoie une signature Cloudinary limitée au dossier, au type et à la taille autorisés pour cet usage |
 | Utilisateurs publics | GET /users/:id ; GET /users/:id/reviews ; GET /users/:id/trips | Public, profil filtré |
 | Géo | GET /geo/reverse?lat=&lng= ; GET /geo/search?q= | Authentifié ; proxy OpenStreetMap (cache Redis de 7 jours, Nominatim limité à 1 requête par seconde) ou Google (cache de 30 jours) ; repli sur shared/geo |
 | Prix | POST /pricing/suggest | Public, même fonction que shared |
@@ -733,6 +757,7 @@ Conventions :
 | Conversations | GET /conversations ; GET /conversations/:id/messages ; DELETE /messages/:id | conversations.view_reported (avec ?reportId= ou ?disputeId=) ou conversations.view_all |
 | Diffusion | POST /broadcasts/preview ; POST /broadcasts ; GET /broadcasts | broadcast.send |
 | Contenus | GET /content ; PUT /content/:key/:locale ; POST /content/:key/:locale/publish | content.manage |
+| Portefeuilles | GET /wallets/topups?status= ; GET /wallets/topups/:id ; POST /wallets/topups/:id/decision ; GET /wallets?q=&blocked= ; GET /wallets/:userId ; POST /wallets/:userId/adjust | wallet.manage |
 | Réglages | GET /settings ; PUT /settings/:key | settings.manage |
 | Staff | GET /staff ; POST /staff/invite ; PATCH /staff/:id ; POST /staff/:id/disable ; POST /staff/transfer-super-admin | staff.manage |
 | Audit | GET /audit ; GET /audit/export | audit.view |
@@ -798,6 +823,8 @@ Chaque événement ci-dessous crée une notification dans l'application et, sauf
 | report_resolved | Votre signalement a été traité (sans détail de la sanction) | Auteur du signalement | Compte et vérification | Aucun écran |
 | account_suspended | Suspension (email aussi, pas de push) | Utilisateur | Compte et vérification | — |
 | terms_updated | Nouvelle version des CGU | Tous | Compte et vérification | CGU |
+| wallet_blocked | Le solde passe sous le seuil (commission prélevée ou ajustement) | Transporteur | Compte et vérification | Mon portefeuille |
+| wallet_topup_approved, wallet_topup_rejected | Décision du staff sur une recharge | Transporteur | Compte et vérification | Mon portefeuille |
 | broadcast | Message du staff | Segment choisi | Annonces UCOLIS | Lien facultatif |
 
 Les textes sont des clés de traduction avec paramètres, par exemple `notif.offer_received.body` avec `{ carrierName, price, parcelTitle }`. Le serveur construit le push dans la langue enregistrée du destinataire.
@@ -942,6 +969,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 | Administration | Un super-administrateur unique, créé par script. Il crée des modérateurs aux permissions choisies. Le back-office est une application web séparée, utilisable sur téléphone |
 | Vérification des transporteurs | Bloquante par défaut : pas d'offre ni de trajet sans identité vérifiée. Débrayable par le réglage requireCarrierVerification |
 | Formule de prix | Une seule : le barème dégressif à tranches marginales de F6, dans shared/pricing.ts, recalculé par l'API |
+| Commission | Gratuit au lancement. Une fois activée par le super-administrateur : 50 DA + taux par tranche du prix convenu, prélevés à la livraison sur un portefeuille prépayé du transporteur, rechargé par virement CCP ou BaridiMob validé par le staff (F19) |
 | Notifications push | Branchées dès le lot 4 : collection PushToken, envoi par expo-server-sdk, nettoyage des jetons invalides |
 | Réinitialisation du mot de passe | Par code à 6 chiffres saisi dans l'application, sans lien web |
 | Dernière position GPS | Gardée dans Redis et historisée par minute dans TrackPoint ; elle survit aux redémarrages |
@@ -953,7 +981,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 
 ### Hors périmètre de la v1
 
-- Paiement en ligne, séquestre et commission (le prix se règle hors application).
+- Paiement en ligne et séquestre : le prix se règle hors application entre l'expéditeur et le transporteur. Seule la commission UCOLIS passe par l'application (portefeuille prépayé, F19).
 - Assurance des colis.
 - Calcul d'itinéraire routier réel et estimation d'heure d'arrivée (la distance reste à vol d'oiseau).
 - Thème sombre.
@@ -964,7 +992,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 
 ### Pistes après la v1
 
-- Paiement électronique (CIB, Edahabia) avec séquestre et commission plateforme.
+- Paiement électronique (CIB, Edahabia) avec séquestre ; recharge du portefeuille par carte.
 - Page de suivi publique pour le destinataire, avec lien partagé.
 - Vérification du téléphone par SMS.
 - Comptes d'équipe pour les professionnels (plusieurs chauffeurs sous une même entreprise).
