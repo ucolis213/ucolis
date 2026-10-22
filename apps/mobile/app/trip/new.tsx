@@ -11,7 +11,7 @@ import { api, errorMessage, fieldErrors } from '@/api/client';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
-import { DateSelect, NumberInput, PriceInput, SectionCard, SwitchRow } from '@/components/FormBits';
+import { DateSelect, NumberInput, PriceInput, SectionCard, SwitchRow, TimeSelect } from '@/components/FormBits';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Select } from '@/components/Select';
@@ -20,8 +20,6 @@ import { TextField } from '@/components/TextField';
 import { WilayaCommuneSelect, useWilayaOptions, type PlaceValue } from '@/components/WilayaCommuneSelect';
 import { useSession } from '@/session/SessionContext';
 import { colors, space } from '@/theme';
-
-const HOURS = Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `${String(h).padStart(2, '0')}:00` }));
 
 /** Point de la commune (centre), pour la carte et les calculs de distance. */
 const locationOf = (p: PlaceValue) => {
@@ -39,7 +37,7 @@ export default function NewTrip() {
   const [to, setTo] = useState<PlaceValue>({ wilayaCode: '', commune: '' });
   const [stops, setStops] = useState<string[]>([]);
   const [date, setDate] = useState<Date | null>(null);
-  const [hour, setHour] = useState('8');
+  const [time, setTime] = useState('08:00');
   const [vehicleId, setVehicleId] = useState<string | null>(user?.vehicles.find((v) => v.isDefault)?.id ?? user?.vehicles[0]?.id ?? null);
   const vehicle = user?.vehicles.find((v) => v.id === vehicleId);
   const [capacityKg, setCapacityKg] = useState<number | null>(vehicle?.capacityKg ?? null);
@@ -57,9 +55,9 @@ export default function NewTrip() {
   const departureAt = useMemo(() => {
     if (!date) return null;
     const d = new Date(date);
-    d.setHours(Number(hour), 0, 0, 0);
+    d.setHours(Number(time.slice(0, 2)), Number(time.slice(3, 5)), 0, 0);
     return d;
-  }, [date, hour]);
+  }, [date, time]);
 
   if (user && user.carrierVerification.status !== 'approved') {
     return (
@@ -127,7 +125,7 @@ export default function NewTrip() {
         <WilayaCommuneSelect value={to} onChange={setTo} errors={{ wilaya: errors['to.wilayaCode'], commune: errors['to.commune'] }} />
       </SectionCard>
       <DateSelect label={t('departureDate')} value={date} onChange={setDate} error={errors.departureAt} />
-      <Select label={t('departureTime')} value={hour} options={HOURS} onChange={setHour} />
+      <TimeSelect label={t('departureTime')} value={time} onChange={(v) => v && setTime(v)} required />
 
       <AppText weight="semibold">{t('offer:vehicle')}</AppText>
       <View style={styles.chips}>

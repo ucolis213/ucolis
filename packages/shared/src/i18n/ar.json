@@ -147,7 +147,6 @@
     "selectTime": "اختر ساعة",
     "hour": "الساعة",
     "minutes": "الدقائق",
-    "timeHint": "اختر الساعة ثم الدقائق.",
     "timeSlots": {
       "morning": "صباحًا",
       "afternoon": "بعد الظهر",

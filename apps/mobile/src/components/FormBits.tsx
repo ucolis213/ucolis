@@ -1,8 +1,8 @@
 // Petits éléments de formulaire : section, ligne clé/valeur, case à cocher, interrupteur, champ prix, date, heure.
 
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { DESIRED_DATE_MAX_DAYS } from '@ucolis/shared';
@@ -10,6 +10,7 @@ import { atNoon, clampMonth, monthCells, sameDay, startOfDay, weekDays } from '.
 import { formatDate } from '../format';
 import { backIcon, colors, forwardIcon, MIN_TOUCH, radii, shadow, space } from '../theme';
 import { AppText } from './AppText';
+import { Button } from './Button';
 import { TextField, type TextFieldProps } from './TextField';
 import { AppModal } from './AppModal';
 
@@ -334,18 +335,25 @@ function CalendarSheet({
 // Minutes par pas de 5 : 00, 05, 10… 55.
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+const WHEEL_ITEM = 44;
+const WHEEL_ROWS = 5;
 
-/** Heure facultative « HH:mm » : heure puis minutes (par 5 minutes) dans une feuille, effaçable. */
+/**
+ * Heure « HH:mm » choisie sur deux roues (heures, minutes par 5), comme le réveil de l'iPhone.
+ * Facultative par défaut (effaçable) ; `required` pour une heure toujours renseignée (départ d'un trajet).
+ */
 export function TimeSelect({
   label,
   value,
   onChange,
+  required = false,
   hint,
   error,
 }: {
   label: string;
   value: string | null;
   onChange: (time: string | null) => void;
+  required?: boolean;
   hint?: string;
   error?: string;
 }) {
@@ -357,13 +365,13 @@ export function TimeSelect({
         {label}
       </AppText>
       <View style={[styles.select, !!error && { borderColor: colors.danger }]}>
-        <Pressable style={[styles.flex, styles.timeField]} onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={label}>
+        <Pressable style={[styles.flex, styles.timeField]} onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={value ? `${label}, ${value}` : label}>
           <Ionicons name="time-outline" size={18} color={colors.textMuted} />
           <AppText color={value ? colors.navy : colors.textSubtle} style={styles.flex}>
             {value ?? t('selectTime')}
           </AppText>
         </Pressable>
-        {value && (
+        {value && !required && (
           <Pressable onPress={() => onChange(null)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('clear')}>
             <Ionicons name="close-circle" size={20} color={colors.textSubtle} />
           </Pressable>
@@ -396,7 +404,9 @@ export function TimeSelect({
 
 function TimeSheet({ label, value, onClose, onPick }: { label: string; value: string | null; onClose: () => void; onPick: (time: string) => void }) {
   const { t } = useTranslation('common');
-  const [hour, setHour] = useState<string | null>(value?.slice(0, 2) ?? null);
+  // Sans valeur, les roues s'ouvrent sur 09:00 ; une ancienne heure hors pas de 5 est arrondie.
+  const [hour, setHour] = useState(() => (value ? Number(value.slice(0, 2)) : 9));
+  const [minute, setMinute] = useState(() => (value ? Math.min(11, Math.round(Number(value.slice(3, 5)) / 5)) : 0));
   return (
     <AppModal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -410,62 +420,73 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
               <Ionicons name="close" size={26} color={colors.navy} />
             </Pressable>
           </View>
-          {/* Aperçu : l'heure choisie attend ses minutes. */}
-          <AppText size="xl" weight="bold" align="center" color={hour ? colors.navy : colors.textSubtle}>
-            {`${hour ?? '--'} : ${value && value.startsWith(`${hour}:`) ? value.slice(3) : '--'}`}
-          </AppText>
-          <AppText size="xs" color={colors.textMuted} align="center">
-            {t('timeHint')}
-          </AppText>
-          <AppText size="sm" weight="medium" color={colors.textMuted}>
-            {t('hour')}
-          </AppText>
-          <View style={styles.yearGrid}>
-            {HOURS.map((h) => {
-              const selected = h === hour;
-              return (
-                <Pressable
-                  key={h}
-                  onPress={() => setHour(h)}
-                  style={[styles.timeCell, selected && styles.cellSelected]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${h} h`}
-                  accessibilityState={{ selected }}
-                >
-                  <AppText weight={selected ? 'bold' : 'regular'} color={selected ? colors.surface : colors.navy}>
-                    {h}
-                  </AppText>
-                </Pressable>
-              );
-            })}
+          {/* Heures à gauche, minutes à droite, même en arabe : une heure se lit de gauche à droite. */}
+          <View style={styles.wheels}>
+            <View style={styles.wheelBand} pointerEvents="none" />
+            <Wheel items={HOURS} index={hour} onChange={setHour} label={t('hour')} />
+            <AppText size="xl" weight="bold">
+              :
+            </AppText>
+            <Wheel items={MINUTES} index={minute} onChange={setMinute} label={t('minutes')} />
           </View>
-          <AppText size="sm" weight="medium" color={colors.textMuted}>
-            {t('minutes')}
-          </AppText>
-          {/* Les minutes valident le choix : désactivées tant qu'aucune heure n'est choisie. */}
-          <View style={styles.yearGrid}>
-            {MINUTES.map((m) => {
-              const selected = !!hour && value === `${hour}:${m}`;
-              return (
-                <Pressable
-                  key={m}
-                  disabled={!hour}
-                  onPress={() => hour && onPick(`${hour}:${m}`)}
-                  style={[styles.timeCell, selected && styles.cellSelected]}
-                  accessibilityRole="button"
-                  accessibilityLabel={hour ? `${hour}:${m}` : m}
-                  accessibilityState={{ selected, disabled: !hour }}
-                >
-                  <AppText weight={selected ? 'bold' : 'regular'} color={selected ? colors.surface : hour ? colors.navy : colors.border}>
-                    {m}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
+          <Button label={t('confirm')} onPress={() => onPick(`${HOURS[hour]}:${MINUTES[minute]}`)} />
         </SafeAreaView>
       </View>
     </AppModal>
+  );
+}
+
+/** Roue verticale : la valeur au centre est la valeur choisie ; le défilement se cale sur un élément. */
+function Wheel({ items, index, onChange, label }: { items: string[]; index: number; onChange: (i: number) => void; label: string }) {
+  const ref = useRef<ScrollView>(null);
+  const [current, setCurrent] = useState(index);
+  const at = (y: number) => Math.max(0, Math.min(items.length - 1, Math.round(y / WHEEL_ITEM)));
+  const select = (i: number, scroll: boolean) => {
+    if (scroll) ref.current?.scrollTo({ y: i * WHEEL_ITEM, animated: true });
+    setCurrent(i);
+    onChange(i);
+  };
+  return (
+    <ScrollView
+      ref={ref}
+      style={styles.wheel}
+      contentContainerStyle={{ paddingVertical: WHEEL_ITEM * Math.floor(WHEEL_ROWS / 2) }}
+      contentOffset={{ x: 0, y: index * WHEEL_ITEM }}
+      onLayout={() => ref.current?.scrollTo({ y: index * WHEEL_ITEM, animated: false })}
+      snapToInterval={WHEEL_ITEM}
+      decelerationRate="fast"
+      showsVerticalScrollIndicator={false}
+      scrollEventThrottle={16}
+      onScroll={(e) => setCurrent(at(e.nativeEvent.contentOffset.y))}
+      onMomentumScrollEnd={(e) => select(at(e.nativeEvent.contentOffset.y), false)}
+      onScrollEndDrag={(e) => {
+        // Relâchée sans élan : aucune fin d'inertie ne suivra.
+        if (!e.nativeEvent.velocity?.y) select(at(e.nativeEvent.contentOffset.y), false);
+      }}
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityValue={{ text: items[current] }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(e) =>
+        select(Math.max(0, Math.min(items.length - 1, current + (e.nativeEvent.actionName === 'increment' ? 1 : -1))), true)
+      }
+    >
+      {items.map((item, i) => {
+        const distance = Math.abs(i - current);
+        return (
+          <Pressable key={item} style={styles.wheelItem} onPress={() => select(i, true)} accessible={false}>
+            <AppText
+              size={distance === 0 ? 'xl' : 'lg'}
+              weight={distance === 0 ? 'bold' : 'regular'}
+              color={distance === 0 ? colors.navy : colors.textSubtle}
+              style={{ opacity: distance > 1 ? 0.5 : 1 }}
+            >
+              {item}
+            </AppText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -505,7 +526,11 @@ const styles = StyleSheet.create({
   dayToday: { borderWidth: 1, borderColor: colors.primary },
   cellSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   yearGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), paddingVertical: space(2) },
-  timeCell: { width: '14.5%', minHeight: MIN_TOUCH, borderRadius: radii.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  wheels: { flexDirection: 'row', direction: 'ltr', alignItems: 'center', justifyContent: 'center', gap: space(4), marginBottom: space(4) },
+  wheel: { height: WHEEL_ITEM * WHEEL_ROWS, width: 72, flexGrow: 0 },
+  wheelItem: { height: WHEEL_ITEM, alignItems: 'center', justifyContent: 'center' },
+  // Bandeau derrière la ligne choisie, au centre des roues.
+  wheelBand: { position: 'absolute', start: 0, end: 0, top: WHEEL_ITEM * Math.floor(WHEEL_ROWS / 2), height: WHEEL_ITEM, borderRadius: radii.input, backgroundColor: colors.background },
   timeField: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH },
   yearCell: { width: '23%', minHeight: MIN_TOUCH, borderRadius: radii.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });

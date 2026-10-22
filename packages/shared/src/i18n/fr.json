@@ -147,7 +147,6 @@
     "selectTime": "Choisir une heure",
     "hour": "Heure",
     "minutes": "Minutes",
-    "timeHint": "Choisissez l'heure, puis les minutes.",
     "timeSlots": {
       "morning": "Matin",
       "afternoon": "Après-midi",
