@@ -24,7 +24,7 @@ const SYSTEM_MESSAGES: Partial<Record<string, string>> = {
 
 export function registerSubscribers(
   deps: Deps,
-  s: Pick<Services, 'notifications' | 'conversations' | 'tracking' | 'reports' | 'trips' | 'alerts'>,
+  s: Pick<Services, 'notifications' | 'conversations' | 'tracking' | 'reports' | 'trips' | 'alerts' | 'wallet'>,
 ) {
   const { bus, realtime } = deps;
   const notify = s.notifications.notify;
@@ -223,6 +223,20 @@ export function registerSubscribers(
       to: e.userId,
       params: e.reason ? { reason: e.reason } : {},
       data: { userId: e.userId },
+    });
+    // Transporteur validé : portefeuille ouvert avec le bonus de bienvenue (si la commission est activée).
+    if (e.approved && (await deps.settings.getAll()).commission.enabled) await s.wallet.ensure(e.userId);
+  });
+
+  bus.on('wallet.blocked', async (e) => {
+    await notify({ type: 'wallet_blocked', to: e.userId, params: { balance: e.balance } });
+  });
+
+  bus.on('wallet.topup_decided', async (e) => {
+    await notify({
+      type: e.approved ? 'wallet_topup_approved' : 'wallet_topup_rejected',
+      to: e.userId,
+      params: e.approved ? { amount: e.amount } : { reason: e.reason ?? '' },
     });
   });
 

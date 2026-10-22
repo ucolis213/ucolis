@@ -12,12 +12,14 @@ import { ConversationModel } from '../conversations/model';
 import { pairKeyOf } from '../conversations/service';
 import { OfferModel, type OfferLean } from '../offers/model';
 import { toOfferDto } from '../offers/serializers';
+import { withTransaction } from '../offers/service';
 import { ParcelModel, type ParcelLean } from '../parcels/model';
 import { normalizeSearch } from '../parcels/service';
-import { fromPoint } from '../parcels/serializers';
+import { fromPoint, toParcelCommissionDto } from '../parcels/serializers';
 import { transitionParcel } from '../parcels/transitions';
 import { UserModel, type UserLean } from '../users/model';
 import { toUserSummary } from '../users/serializers';
+import { createWalletService } from '../wallet/service';
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -40,6 +42,7 @@ export function adminParcelRow(p: ParcelLean) {
 }
 
 export function createParcelsAdmin(deps: Deps) {
+  const wallet = createWalletService(deps);
   async function load(id: string) {
     const p = (await ParcelModel.findById(id).lean()) as ParcelLean | null;
     if (!p) throw new AppError(404, 'NOT_FOUND', 'Colis introuvable');
@@ -101,6 +104,7 @@ export function createParcelsAdmin(deps: Deps) {
           cancellation: p.cancellation,
           hiddenInfo: p.hidden,
           deliveryProof: p.deliveryProof,
+          commission: toParcelCommissionDto(p.commission),
         },
         sender: sender ? toUserSummary(sender as UserLean) : null,
         carrier: carrier ? toUserSummary(carrier as UserLean) : null,
@@ -115,9 +119,17 @@ export function createParcelsAdmin(deps: Deps) {
       if (!canForceParcelStatus(p.status, to, hasOpenDispute)) {
         throw new AppError(409, 'INVALID_TRANSITION', hasOpenDispute ? 'Un litige est ouvert' : 'Statut identique');
       }
-      await transitionParcel({ parcel: p, to, actor: 'staff', by: req.staff!.id, reason, now: deps.now(), force: true });
+      // Forcé en delivered : la commission est prélevée ; sorti de delivered : elle est rendue.
+      await wallet.prepare(p);
+      const change = await withTransaction(async (session) => {
+        await transitionParcel({ parcel: p, to, actor: 'staff', by: req.staff!.id, reason, now: deps.now(), force: true, session });
+        if (to === 'delivered') return wallet.charge(p, session);
+        if (p.status === 'delivered') return wallet.refund(p, session);
+        return null;
+      });
       await audit(req, { action: 'parcel.force_status', targetType: 'parcel', targetId: id, reason, before: { status: p.status }, after: { status: to } });
       await deps.bus.emit('parcel.status_changed', { parcelId: id, from: p.status, to, actorId: null });
+      await wallet.afterMove(change);
     },
 
     async hide(req: Request, id: string, hidden: boolean, reason: string) {

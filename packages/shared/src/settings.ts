@@ -1,6 +1,7 @@
 // Valeurs par défaut des réglages (AppSetting). Le super-administrateur les modifie depuis le back-office.
 
 import { z } from 'zod';
+import { DEFAULT_COMMISSION, type CommissionSettings } from './commission';
 import { DEFAULT_PRICING, type PricingSettings } from './pricing';
 
 export interface AppSettings {
@@ -30,6 +31,8 @@ export interface AppSettings {
   maintenance: { enabled: boolean; message: { fr: string; ar: string } };
   support: { email: string; whatsapp: string };
   termsVersion: string;
+  /** Commission et portefeuille des transporteurs ; désactivée au lancement. */
+  commission: CommissionSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -51,6 +54,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   maintenance: { enabled: false, message: { fr: '', ar: '' } },
   support: { email: 'support@ucolis.com', whatsapp: '+213550000000' },
   termsVersion: '2026-10-01',
+  commission: DEFAULT_COMMISSION,
 };
 
 export type AppSettingKey = keyof AppSettings;
@@ -65,6 +69,7 @@ export interface PublicAppConfig {
   limits: AppSettings['limits'];
   requireCarrierVerification: boolean;
   support: AppSettings['support'];
+  commission: CommissionSettings;
 }
 
 export function toPublicConfig(s: AppSettings): PublicAppConfig {
@@ -76,6 +81,7 @@ export function toPublicConfig(s: AppSettings): PublicAppConfig {
     limits: s.limits,
     requireCarrierVerification: s.requireCarrierVerification,
     support: s.support,
+    commission: s.commission,
   };
 }
 
@@ -122,4 +128,32 @@ export const APP_SETTING_SCHEMAS: Record<AppSettingKey, z.ZodType> = {
   maintenance: z.object({ enabled: z.boolean(), message: z.object({ fr: z.string().max(500), ar: z.string().max(500) }) }),
   support: z.object({ email: z.email(), whatsapp: z.string().regex(/^\+213[567]\d{8}$/) }),
   termsVersion: z.string().min(1).max(30),
+  commission: z.object({
+    enabled: z.boolean(),
+    effectiveFrom: z
+      .string()
+      .refine((v) => !Number.isNaN(Date.parse(v)), 'Date ISO attendue')
+      .nullable(),
+    fixedFee: z.number().int().min(0).max(10_000),
+    tiers: z
+      .array(z.object({ upTo: positiveInt.nullable(), ratePercent: z.number().min(0).max(100) }))
+      .min(1)
+      .refine((t) => t[t.length - 1]?.upTo === null, 'La dernière tranche doit être ouverte')
+      .refine(
+        (t) => t.slice(0, -1).every((x, i) => x.upTo !== null && (i === 0 || x.upTo > (t[i - 1]!.upTo ?? 0))),
+        'Bornes croissantes, seule la dernière est ouverte',
+      ),
+    welcomeBonus: z.number().int().min(0).max(100_000),
+    minBalance: z.number().int().min(-100_000).max(100_000),
+    topUp: z
+      .object({
+        holderName: z.string().trim().min(1).max(80),
+        ccpAccount: z.string().regex(/^\d{1,12}$/),
+        ccpKey: z.string().regex(/^\d{2}$/),
+        baridiMobRip: z.string().regex(/^\d{20}$/),
+        minAmount: positiveInt,
+        maxAmount: positiveInt,
+      })
+      .refine((v) => v.minAmount <= v.maxAmount, 'minAmount ≤ maxAmount'),
+  }),
 };

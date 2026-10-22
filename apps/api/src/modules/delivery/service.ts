@@ -17,12 +17,15 @@ import { withTransaction } from '../offers/service';
 import { ParcelModel, type ParcelLean } from '../parcels/model';
 import { transitionParcel } from '../parcels/transitions';
 import { UserModel } from '../users/model';
+import { createWalletService, type BalanceChange } from '../wallet/service';
 
 const HOUR = 3600_000;
 const WITHDRAWAL_WINDOW_MS = 30 * 24 * HOUR;
 export const WITHDRAWAL_ALERT_THRESHOLD = 3;
 
 export function createDeliveryService(deps: Deps) {
+  const wallet = createWalletService(deps);
+
   async function load(id: string): Promise<ParcelLean> {
     const p = (await ParcelModel.findById(id).lean()) as ParcelLean | null;
     if (!p) throw new AppError(404, 'NOT_FOUND', 'Colis introuvable');
@@ -51,9 +54,14 @@ export function createDeliveryService(deps: Deps) {
     });
   }
 
-  /** Effets communs d'une livraison terminée (code, confirmation, validation automatique, litige). */
+  /**
+   * Effets communs d'une livraison terminée (code, confirmation, validation automatique, litige),
+   * dont le prélèvement de la commission dans la même transaction.
+   */
   async function complete(p: ParcelLean, actor: ParcelActor, actorId: string | null, session?: ClientSession) {
     const now = deps.now();
+    let charged: BalanceChange | null = null;
+    await wallet.prepare(p);
     const run = async (s: ClientSession) => {
       const updated = await transitionParcel({
         parcel: p,
@@ -66,10 +74,12 @@ export function createDeliveryService(deps: Deps) {
       });
       await UserModel.updateOne({ _id: p.sender }, { $inc: { 'stats.parcelsSent': 1 } }, { session: s });
       await UserModel.updateOne({ _id: p.assignedCarrier }, { $inc: { 'stats.parcelsCarried': 1 } }, { session: s });
+      charged = await wallet.charge(p, s);
       return updated;
     };
     const updated = session ? await run(session) : await withTransaction(run);
     await changed(p, 'delivered', actorId);
+    await wallet.afterMove(charged);
     return updated;
   }
 
@@ -176,7 +186,13 @@ export function createDeliveryService(deps: Deps) {
           actor: 'carrier',
           by: carrierId,
           now,
-          set: { assignedCarrier: null, acceptedOffer: null, finalPrice: null, deliveryCode: { cipher: null, attempts: 0, lockedAt: null } },
+          set: {
+            assignedCarrier: null,
+            acceptedOffer: null,
+            finalPrice: null,
+            commission: null,
+            deliveryCode: { cipher: null, attempts: 0, lockedAt: null },
+          },
           session,
         });
         await OfferModel.updateOne(

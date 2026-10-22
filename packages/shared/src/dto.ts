@@ -15,6 +15,13 @@ import type {
   UserStatus,
   VehicleType,
 } from './enums';
+import type {
+  CommissionBreakdown,
+  ParcelCommissionStatus,
+  TopUpMethod,
+  TopUpStatus,
+  WalletTransactionType,
+} from './commission';
 import type { FileRef } from './schemas/common';
 
 export interface Paginated<T> {
@@ -232,6 +239,8 @@ export interface ParcelDto extends ParcelCardDto {
   cancellation: { reason: string | null; at: string } | null;
   deliveryProof: { photo: FileRef | null; note: string | null } | null;
   deliveryCodeLocked: boolean;
+  /** Ventilation de la commission, pour le transporteur retenu seulement. */
+  commission: ParcelCommissionDto | null;
   viewer: {
     role: ParcelViewerRole;
     myOffer: OfferDto | null;
@@ -377,4 +386,47 @@ export interface StorageUsageDto {
   bandwidth: { bytes: number; credits: number };
   transformations: { count: number; credits: number };
   objects: number;
+}
+
+/** Commission figée sur le colis à l'acceptation, visible du seul transporteur retenu. */
+export interface ParcelCommissionDto extends CommissionBreakdown {
+  status: ParcelCommissionStatus;
+  chargedAt: string | null;
+}
+
+export interface WalletDto {
+  /** Commission activée par le super-administrateur (peut-être pas encore en vigueur). */
+  enabled: boolean;
+  /** Commission prélevée sur les courses acceptées maintenant. */
+  active: boolean;
+  effectiveFrom: string | null;
+  /** Le compte peut-il transporter (et donc avoir un portefeuille) ? */
+  eligible: boolean;
+  balance: number;
+  minBalance: number;
+  blocked: boolean;
+  pendingTopUp: TopUpDto | null;
+}
+
+export interface WalletTransactionDto {
+  id: string;
+  type: WalletTransactionType;
+  /** Positif pour un crédit, négatif pour un débit. */
+  amount: number;
+  balanceAfter: number;
+  parcel: { id: string; reference: string; title: string } | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface TopUpDto {
+  id: string;
+  amount: number;
+  creditedAmount: number | null;
+  method: TopUpMethod;
+  reference: string | null;
+  status: TopUpStatus;
+  decisionReason: string | null;
+  createdAt: string;
+  decidedAt: string | null;
 }

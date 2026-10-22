@@ -26,6 +26,7 @@ export type DeepLinkTarget =
   | 'pro_status'
   | 'dispute'
   | 'terms'
+  | 'wallet'
   | 'none';
 
 interface NotificationDef {
@@ -84,6 +85,9 @@ export const NOTIFICATION_TYPES = {
   report_resolved: def('account', 'none'),
   account_suspended: def('account', 'none', false),
   terms_updated: def('account', 'terms'),
+  wallet_blocked: def('account', 'wallet'),
+  wallet_topup_approved: def('account', 'wallet'),
+  wallet_topup_rejected: def('account', 'wallet'),
   broadcast: def('announcements', 'none'),
 } as const satisfies Record<string, NotificationDef>;
 
@@ -127,6 +131,8 @@ export function deepLinkFor(type: NotificationType, data: DeepLinkData): string 
       return 'ucolis://me/carrier-verification';
     case 'pro_status':
       return 'ucolis://me/pro';
+    case 'wallet':
+      return 'ucolis://me/wallet';
     case 'terms':
       return 'ucolis://help/content/terms';
     case 'none':
@@ -153,7 +159,7 @@ export function formatNotificationParams(
   return Object.fromEntries(
     Object.entries(params).map(([k, v]) => [
       k,
-      (k === 'price' || k.endsWith('Price')) && typeof v === 'number' ? format(v, locale) : (v as string | number),
+      (k === 'price' || k.endsWith('Price') || k === 'amount' || k === 'balance') && typeof v === 'number' ? format(v, locale) : (v as string | number),
     ]),
   );
 }

@@ -1,4 +1,4 @@
-import type { ParcelCardDto, ParcelDto, PlaceDto } from '@ucolis/shared';
+import type { ParcelCardDto, ParcelCommissionDto, ParcelDto, PlaceDto } from '@ucolis/shared';
 import type { UserLean } from '../users/model';
 import { toUserSummary } from '../users/serializers';
 import type { ParcelLean } from './model';
@@ -7,6 +7,20 @@ type Point = { coordinates: number[] } | null | undefined;
 
 export const fromPoint = (p: Point) => ({ lat: p?.coordinates[1] ?? 0, lng: p?.coordinates[0] ?? 0 });
 export const toPoint = (l: { lat: number; lng: number }) => ({ type: 'Point' as const, coordinates: [l.lng, l.lat] });
+
+export function toParcelCommissionDto(c: ParcelLean['commission']): ParcelCommissionDto | null {
+  if (!c) return null;
+  return {
+    grossPrice: c.grossPrice,
+    fixedFee: c.fixedFee,
+    ratePercent: c.ratePercent,
+    variableCommission: c.variableCommission,
+    totalCommission: c.totalCommission,
+    netEarnings: c.netEarnings,
+    status: c.status,
+    chargedAt: c.chargedAt?.toISOString() ?? null,
+  };
+}
 
 type Place = ParcelLean['pickup'];
 
@@ -90,6 +104,7 @@ export function toParcelDto(
         ? { photo: p.deliveryProof.photo ?? null, note: p.deliveryProof.note ?? null }
         : null,
     deliveryCodeLocked: !!p.deliveryCode?.lockedAt,
+    commission: ctx.viewer.role === 'assigned_carrier' ? toParcelCommissionDto(p.commission) : null,
     viewer: ctx.viewer,
   };
 }

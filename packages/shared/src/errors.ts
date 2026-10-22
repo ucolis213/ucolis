@@ -34,6 +34,9 @@ export const ERROR_CODES = [
   'PERMISSION_DENIED',
   'TOTP_REQUIRED',
   'PARCEL_UNAVAILABLE',
+  'WALLET_INSUFFICIENT_BALANCE',
+  'CARRIER_UNAVAILABLE',
+  'TOPUP_ALREADY_PENDING',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -63,4 +63,7 @@ export interface DomainEvents {
   'dispute.opened': { disputeId: string; parcelId: string; against: string; openedBy: string };
   'dispute.resolved': { disputeId: string; parcelId: string; outcome: 'delivered' | 'cancelled'; parties: string[] };
   'delivery.reminder': { parcelId: string; kind: 'confirm' | 'late' };
+  /** Le solde vient de passer sous le seuil : plus d'offre ni de course jusqu'à la recharge. */
+  'wallet.blocked': { userId: string; balance: number };
+  'wallet.topup_decided': { userId: string; topUpId: string; approved: boolean; amount: number; reason: string | null };
 }

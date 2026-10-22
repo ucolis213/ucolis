@@ -5,6 +5,7 @@ import type { Deps } from '../../deps';
 import { OfferModel } from '../offers/model';
 import { ParcelModel } from '../parcels/model';
 import { UserModel } from '../users/model';
+import { createWalletService } from '../wallet/service';
 import { queueStats } from './queues';
 
 const DAY = 86_400_000;
@@ -59,5 +60,6 @@ export async function dashboardStats(deps: Deps) {
     deliveryRate: accepted ? Math.round(((parcels.delivered ?? 0) / accepted) * 100) : null,
     medianMinutesToFirstOffer: median(delays),
     queues: await queueStats(now),
+    wallet: await createWalletService(deps).stats(),
   };
 }

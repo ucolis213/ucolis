@@ -778,7 +778,8 @@
     "withdrawals": "Désistements",
     "medianReply": "Réponse en ~{{minutes}} min",
     "activeTrips": "Trajets actifs",
-    "company": "Entreprise"
+    "company": "Entreprise",
+    "wallet": "Mon portefeuille"
   },
   "notif": {
     "title": "Notifications",
@@ -945,7 +946,19 @@
     "empty": "Aucune notification",
     "markAllRead": "Tout marquer comme lu",
     "deleteAll": "Tout supprimer",
-    "deleteAllConfirm": "Supprimer toutes les notifications ?"
+    "deleteAllConfirm": "Supprimer toutes les notifications ?",
+    "wallet_blocked": {
+      "title": "Solde insuffisant",
+      "body": "Votre solde est de {{balance}}. Rechargez votre portefeuille pour accepter de nouvelles courses."
+    },
+    "wallet_topup_approved": {
+      "title": "Recharge acceptée",
+      "body": "{{amount}} ont été crédités sur votre portefeuille."
+    },
+    "wallet_topup_rejected": {
+      "title": "Recharge refusée",
+      "body": "Votre demande de recharge a été refusée. Motif : {{reason}}"
+    }
   },
   "errors": {
     "VALIDATION_ERROR": "Certaines informations sont invalides.",
@@ -1015,8 +1028,79 @@
       "companyName": "Entre 2 et 100 caractères.",
       "nif": "Le NIF compte 15 chiffres.",
       "departure": "La date de départ est passée.",
-      "recurrence": "Récurrence limitée à 8 semaines."
+      "recurrence": "Récurrence limitée à 8 semaines.",
+      "topUpAmount": "Montant invalide.",
+      "adjustmentAmount": "Montant non nul, 1 000 000 DA au plus."
     },
-    "PARCEL_UNAVAILABLE": "Cette annonce n'est plus disponible."
+    "PARCEL_UNAVAILABLE": "Cette annonce n'est plus disponible.",
+    "WALLET_INSUFFICIENT_BALANCE": "Solde insuffisant pour accepter des courses. Veuillez recharger votre portefeuille.",
+    "CARRIER_UNAVAILABLE": "Ce transporteur ne peut pas accepter de nouvelle course pour le moment.",
+    "TOPUP_ALREADY_PENDING": "Une demande de recharge est déjà en cours de vérification."
+  },
+  "wallet": {
+    "title": "Mon portefeuille",
+    "balance": "Solde actuel",
+    "free": "Le service est gratuit pour le moment : aucune commission n'est prélevée sur vos courses.",
+    "announced": "La commission s'appliquera aux courses acceptées à partir du {{date}}.",
+    "notEligible": "Le portefeuille est réservé aux transporteurs vérifiés.",
+    "blocked": "Solde insuffisant pour accepter des courses. Veuillez recharger votre portefeuille.",
+    "history": "Historique",
+    "noTransactions": "Aucune opération pour le moment.",
+    "types": {
+      "welcome_bonus": "Bonus de bienvenue",
+      "commission_debit": "Commission de la course",
+      "commission_refund": "Remboursement de commission",
+      "topup": "Recharge",
+      "adjustment": "Ajustement UCOLIS"
+    },
+    "parcelRef": "Livraison {{reference}}",
+    "balanceAfter": "Solde : {{balance}}",
+    "topUp": "Recharger mon compte",
+    "topUpIntro": "Faites un virement vers le compte ci-dessous, puis envoyez la preuve (capture BaridiMob ou reçu CCP). Votre solde est crédité après vérification par notre équipe.",
+    "holder": "Titulaire",
+    "ccp": "Compte CCP",
+    "ccpKey": "Clé",
+    "rip": "RIP (BaridiMob)",
+    "amount": "Montant versé (DA)",
+    "amountHint": "Entre {{min}} et {{max}}",
+    "method": "Moyen de paiement",
+    "methods": {
+      "ccp": "Virement CCP",
+      "baridimob": "BaridiMob"
+    },
+    "reference": "Référence du virement (facultatif)",
+    "proof": "Preuve de virement",
+    "send": "Envoyer la demande",
+    "sent": "Demande envoyée. Vous serez prévenu après vérification.",
+    "pending": "Recharge de {{amount}} en cours de vérification.",
+    "myTopUps": "Mes demandes de recharge",
+    "topUpStatuses": {
+      "pending": "En vérification",
+      "approved": "Acceptée",
+      "rejected": "Refusée"
+    },
+    "credited": "Crédité : {{amount}}",
+    "rejectedReason": "Motif : {{reason}}",
+    "breakdown": {
+      "title": "Vos gains",
+      "gross": "Prix convenu avec l'expéditeur",
+      "fixedFee": "Frais de dossier fixes",
+      "commission": "Commission de service ({{rate}} %)",
+      "net": "Vos gains nets",
+      "charged": "Prélevée le {{date}}",
+      "pending": "Prélevée sur votre portefeuille à la livraison",
+      "refunded": "Commission remboursée",
+      "waived": "Commission offerte"
+    },
+    "grid": {
+      "title": "Grille de commission",
+      "intro": "Pour chaque livraison réussie, UCOLIS prélève sur votre portefeuille des frais de dossier fixes de {{fee}} et un pourcentage du prix convenu :",
+      "below": "Moins de {{amount}}",
+      "between": "De {{from}} à {{to}}",
+      "above": "Plus de {{amount}}",
+      "footer": "Le prélèvement a lieu à la livraison. Si votre solde passe sous {{min}}, vous ne pouvez plus faire d'offre ni accepter de course jusqu'à la recharge."
+    },
+    "info": "Comprendre la commission",
+    "close": "Fermer"
   }
 }

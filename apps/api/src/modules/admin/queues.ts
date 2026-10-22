@@ -2,6 +2,7 @@
 
 import { DisputeModel, ReportModel } from '../trust/model';
 import { UserModel } from '../users/model';
+import { TopUpRequestModel } from '../wallet/model';
 
 const ageHours = (d: Date | null | undefined, now: Date) =>
   d ? Math.round((now.getTime() - d.getTime()) / 3_600_000) : null;
@@ -22,16 +23,19 @@ export async function queueStats(now: Date) {
   };
 }
 
-/** Signalements et litiges ouverts (lot 7). */
+/** Signalements et litiges ouverts (lot 7), recharges de portefeuille à vérifier. */
 async function extraQueues(now: Date): Promise<Record<string, { count: number; oldestHours: number | null }>> {
-  const [reports, oldestReport, disputes, oldestDispute] = await Promise.all([
+  const [reports, oldestReport, disputes, oldestDispute, topUps, oldestTopUp] = await Promise.all([
     ReportModel.countDocuments({ status: 'open' }),
     ReportModel.findOne({ status: 'open' }, { createdAt: 1 }).sort({ createdAt: 1 }).lean(),
     DisputeModel.countDocuments({ status: { $in: ['open', 'in_review'] } }),
     DisputeModel.findOne({ status: { $in: ['open', 'in_review'] } }, { createdAt: 1 }).sort({ createdAt: 1 }).lean(),
+    TopUpRequestModel.countDocuments({ status: 'pending' }),
+    TopUpRequestModel.findOne({ status: 'pending' }, { createdAt: 1 }).sort({ createdAt: 1 }).lean(),
   ]);
   return {
     reports: { count: reports, oldestHours: ageHours(oldestReport?.createdAt, now) },
     disputes: { count: disputes, oldestHours: ageHours(oldestDispute?.createdAt, now) },
+    topUps: { count: topUps, oldestHours: ageHours(oldestTopUp?.createdAt, now) },
   };
 }

@@ -18,6 +18,7 @@ export const PERMISSIONS = [
   'conversations.view_reported',
   'conversations.view_all',
   'broadcast.send',
+  'wallet.manage',
   'content.manage',
   'settings.manage',
   'staff.manage',

@@ -1,37 +1,15 @@
-import bcrypt from 'bcryptjs';
 import { describe, expect, it } from 'vitest';
-import { deriveKey, encrypt } from '../src/lib/crypto';
-import { newTotpSecret, totpAt } from '../src/lib/totp';
+import { totpAt } from '../src/lib/totp';
 import { AuditLogModel, StaffModel } from '../src/modules/admin/model';
 import { NotificationModel } from '../src/modules/notifications/model';
 import { ParcelModel } from '../src/modules/parcels/model';
 import { UserModel } from '../src/modules/users/model';
-import { createParcel, verifiedUser, type TestApp } from './fixtures';
-import { bearer, makeTestApp, useDatabase } from './helpers';
+import { STAFF_PASSWORD, createParcel, createStaff, verifiedUser } from './fixtures';
+import { makeTestApp, useDatabase } from './helpers';
 
 useDatabase();
 
-const PASSWORD = 'SuperSecret123';
-
-async function createStaff(ctx: TestApp, role: 'super_admin' | 'moderator', permissions: string[] = [], email = `${role}-${Math.random().toString(36).slice(2, 7)}@ucolis.dz`) {
-  const secret = newTotpSecret();
-  const key = deriveKey(ctx.deps.config.deliveryCodeKey, 'staff-totp');
-  const staff = await StaffModel.create({
-    email,
-    firstName: role === 'super_admin' ? 'Super' : 'Modo',
-    lastName: 'Staff',
-    role,
-    permissions,
-    status: 'active',
-    passwordHash: await bcrypt.hash(PASSWORD, 4),
-    totpSecret: encrypt(key, secret),
-  });
-  const login = await ctx
-    .http()
-    .post('/api/v1/admin/auth/login')
-    .send({ email, password: PASSWORD, totp: totpAt(secret, ctx.clock.now().getTime()) });
-  return { id: staff.id as string, email, secret, auth: bearer(login.body.accessToken), refreshToken: login.body.refreshToken as string };
-}
+const PASSWORD = STAFF_PASSWORD;
 
 describe('authentification du staff', () => {
   it('exige le mot de passe puis le code TOTP', async () => {

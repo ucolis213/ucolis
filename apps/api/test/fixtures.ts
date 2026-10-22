@@ -1,5 +1,9 @@
 // Fabriques de données de test : utilisateurs vérifiés, colis, transporteurs vérifiés.
 
+import bcrypt from 'bcryptjs';
+import { deriveKey, encrypt } from '../src/lib/crypto';
+import { newTotpSecret, totpAt } from '../src/lib/totp';
+import { StaffModel } from '../src/modules/admin/model';
 import { UserModel } from '../src/modules/users/model';
 import { bearer, makeTestApp, registration } from './helpers';
 
@@ -97,4 +101,32 @@ export async function relogin<T extends TestUser>(ctx: TestApp, user: T): Promis
   user.token = res.body.accessToken;
   user.auth = bearer(res.body.accessToken);
   return user;
+}
+
+export const STAFF_PASSWORD = 'SuperSecret123';
+
+/** Compte staff actif, connecté (mot de passe + TOTP). */
+export async function createStaff(
+  ctx: TestApp,
+  role: 'super_admin' | 'moderator',
+  permissions: string[] = [],
+  email = `${role}-${Math.random().toString(36).slice(2, 7)}@ucolis.dz`,
+) {
+  const secret = newTotpSecret();
+  const key = deriveKey(ctx.deps.config.deliveryCodeKey, 'staff-totp');
+  const staff = await StaffModel.create({
+    email,
+    firstName: role === 'super_admin' ? 'Super' : 'Modo',
+    lastName: 'Staff',
+    role,
+    permissions,
+    status: 'active',
+    passwordHash: await bcrypt.hash(STAFF_PASSWORD, 4),
+    totpSecret: encrypt(key, secret),
+  });
+  const login = await ctx
+    .http()
+    .post('/api/v1/admin/auth/login')
+    .send({ email, password: STAFF_PASSWORD, totp: totpAt(secret, ctx.clock.now().getTime()) });
+  return { id: staff.id as string, email, secret, auth: bearer(login.body.accessToken), refreshToken: login.body.refreshToken as string };
 }

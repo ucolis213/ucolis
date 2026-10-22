@@ -18,6 +18,7 @@ import { createTrackingService } from './modules/tracking/service';
 import { createDisputeService } from './modules/trust/disputes';
 import { createReportService } from './modules/trust/reports';
 import { createReviewService } from './modules/trust/reviews';
+import { createWalletService } from './modules/wallet/service';
 
 export function createServices(deps: Deps) {
   const auth = createAuthService(deps);
@@ -36,7 +37,8 @@ export function createServices(deps: Deps) {
   const trips = createTripService(deps, parcels);
   const alerts = createAlertService(deps, parcels);
   const content = createContentService(deps);
-  registerSubscribers(deps, { notifications, conversations, tracking, reports, trips, alerts });
+  const wallet = createWalletService(deps);
+  registerSubscribers(deps, { notifications, conversations, tracking, reports, trips, alerts, wallet });
   return {
     auth,
     me,
@@ -54,6 +56,7 @@ export function createServices(deps: Deps) {
     trips,
     alerts,
     content,
+    wallet,
   };
 }
 

@@ -184,6 +184,7 @@ export const UPLOAD_PURPOSES = [
   'dispute_photo',
   'delivery_proof',
   'vehicle_photo',
+  'topup_proof',
 ] as const;
 export type UploadPurpose = (typeof UPLOAD_PURPOSES)[number];
 

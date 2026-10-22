@@ -50,6 +50,7 @@ import { contentAdminRoutes } from '../content/routes';
 import { proAdminRoutes } from '../pro/routes';
 import { trustAdminRoutes } from './trustAdmin';
 import { createVerificationsAdmin } from './verificationsAdmin';
+import { walletAdminRoutes } from '../wallet/routes';
 import type { Services } from '../../services';
 
 const refreshBody = z.object({ refreshToken: z.string().min(1) });
@@ -60,6 +61,7 @@ const FILE_PERMISSIONS: Record<string, Permission[]> = {
   pro_doc: ['verifications.pro'],
   dispute_photo: ['disputes.handle'],
   delivery_proof: ['disputes.handle', 'parcels.view'],
+  topup_proof: ['wallet.manage'],
 };
 
 export function adminRoutes(deps: Deps, services: Services) {
@@ -331,6 +333,7 @@ export function adminRoutes(deps: Deps, services: Services) {
   r.use(trustAdminRoutes(deps, services, claims));
   r.use(proAdminRoutes(services.pro, claims));
   r.use(contentAdminRoutes(deps, services.content));
+  r.use(walletAdminRoutes(services.wallet));
 
   return { router: r, claims, staffService };
 }

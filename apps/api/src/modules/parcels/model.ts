@@ -1,12 +1,27 @@
 import { Schema, model, type FlattenMaps, type InferSchemaType, type Types } from 'mongoose';
 import {
   PARCEL_CATEGORIES,
+  PARCEL_COMMISSION_STATUSES,
   PARCEL_STATUSES,
   PAYMENT_ARRANGEMENTS,
   TIME_SLOTS,
   VEHICLE_TYPES,
 } from '@ucolis/shared';
 import { fileSchema } from '../users/model';
+
+const commissionSchema = new Schema(
+  {
+    grossPrice: { type: Number, required: true },
+    fixedFee: { type: Number, required: true },
+    ratePercent: { type: Number, required: true },
+    variableCommission: { type: Number, required: true },
+    totalCommission: { type: Number, required: true },
+    netEarnings: { type: Number, required: true },
+    status: { type: String, enum: PARCEL_COMMISSION_STATUSES, required: true },
+    chargedAt: { type: Date, default: null },
+  },
+  { _id: false },
+);
 
 /** GeoJSON Point [lng, lat] en base ; { lat, lng } dans l'API. */
 export const pointSchema = new Schema(
@@ -77,6 +92,8 @@ const parcelSchema = new Schema(
     requestedPrice: { type: Number, required: true, min: 100 },
     suggestedPrice: { type: Number, required: true },
     finalPrice: { type: Number, default: null },
+    /** Commission figée à l'acceptation (null : course gratuite), prélevée à la livraison. */
+    commission: { type: commissionSchema, default: null },
     photos: { type: [fileSchema], default: [] },
     status: { type: String, enum: PARCEL_STATUSES, default: 'open' },
     statusHistory: { type: [statusEntrySchema], default: [] },

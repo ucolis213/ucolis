@@ -28,6 +28,7 @@ describe('catalogue des notifications', () => {
     expect(deepLinkFor('counter_offer_received', { offerId: 'o1' })).toBe('ucolis://offer/o1');
     expect(deepLinkFor('offer_accepted', {})).toBeNull();
     expect(deepLinkFor('report_resolved', {})).toBeNull();
+    expect(deepLinkFor('wallet_topup_approved', {})).toBe('ucolis://me/wallet');
     const full = { parcelId: 'p', offerId: 'o', conversationId: 'c', disputeId: 'd' };
     for (const type of types) {
       const link = deepLinkFor(type, full);

@@ -19,6 +19,7 @@ import { isBlockedBetween } from '../me/service';
 import { ParcelModel, type ParcelLean } from '../parcels/model';
 import { transitionParcel } from '../parcels/transitions';
 import { UserModel, type UserLean } from '../users/model';
+import { createWalletService } from '../wallet/service';
 import { OfferModel, type OfferLean } from './model';
 import { toOfferDto } from './serializers';
 
@@ -42,6 +43,8 @@ export async function withTransaction<T>(fn: (session: ClientSession) => Promise
 }
 
 export function createOfferService(deps: Deps) {
+  const wallet = createWalletService(deps);
+
   async function loadOffer(id: string): Promise<OfferLean> {
     const o = (await OfferModel.findById(id).lean()) as OfferLean | null;
     if (!o) throw new AppError(404, 'NOT_FOUND', 'Offre introuvable');
@@ -91,6 +94,8 @@ export function createOfferService(deps: Deps) {
    */
   async function assign(o: OfferLean, finalPrice: number, actor: 'sender' | 'carrier', actorId: string) {
     const now = deps.now();
+    await wallet.assertCanTakeJobs(o.carrier, actor);
+    const commission = await wallet.snapshot(finalPrice, now);
     const code = newDeliveryCode(deps.config.deliveryCodeKey);
     let notSelected: string[] = [];
     const result = await withTransaction(async (session) => {
@@ -111,6 +116,7 @@ export function createOfferService(deps: Deps) {
             assignedCarrier: o.carrier,
             acceptedOffer: o._id,
             finalPrice,
+            commission,
             deliveryCode: { cipher: code.cipher, attempts: 0, lockedAt: null },
           },
           session,
@@ -160,6 +166,7 @@ export function createOfferService(deps: Deps) {
       if (requireCarrierVerification && carrier.carrierVerification?.status !== 'approved') {
         throw new AppError(403, 'CARRIER_NOT_VERIFIED', 'Vérification transporteur requise');
       }
+      await wallet.assertCanTakeJobs(carrierId);
       const parcel = await loadParcel(parcelId);
       if (parcel.sender.toString() === carrierId) {
         throw new AppError(422, 'OWN_PARCEL', 'Impossible de faire une offre sur son propre colis');
@@ -361,6 +368,7 @@ export function createOfferService(deps: Deps) {
       const o = await loadOffer(offerId);
       assertCarrier(o, carrierId);
       assertOfferTransition(o, 'pending', 'carrier');
+      await wallet.assertCanTakeJobs(carrierId);
       const updated = await setOffer(o, {
         $set: { status: 'pending', price: input.price, atAskingPrice: false },
         $push: { rounds: { by: 'carrier', price: input.price, message: input.message ?? null, at: deps.now() } },

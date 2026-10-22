@@ -22,6 +22,7 @@ export const UPLOAD_RULES: Record<UploadPurpose, UploadRule> = {
   delivery_proof: { access: 'upload', formats: IMAGES, maxBytes: 10 * MB },
   identity_doc: { access: 'authenticated', formats: DOCS, maxBytes: 10 * MB },
   pro_doc: { access: 'authenticated', formats: DOCS, maxBytes: 10 * MB },
+  topup_proof: { access: 'authenticated', formats: DOCS, maxBytes: 10 * MB },
 };
 
 /** Dossier Cloudinary propre à l'usage et à l'utilisateur : l'API vérifie qu'un fichier lui appartient. */

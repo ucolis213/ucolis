@@ -1,6 +1,7 @@
 export * from './enums';
 export * from './errors';
 export * from './pricing';
+export * from './commission';
 export * from './geo';
 export * from './stateMachines';
 export * from './permissions';
@@ -23,3 +24,4 @@ export * from './schemas/admin';
 export * from './schemas/trust';
 export * from './schemas/pro';
 export * from './schemas/trips';
+export * from './schemas/wallet';

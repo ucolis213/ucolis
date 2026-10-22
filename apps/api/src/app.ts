@@ -26,6 +26,7 @@ import { tripRoutes } from './modules/trips/routes';
 import { trustRoutes } from './modules/trust/routes';
 import { uploadRoutes } from './modules/uploads/routes';
 import { userRoutes } from './modules/users/routes';
+import { walletRoutes } from './modules/wallet/routes';
 import { createServices, type Services } from './services';
 
 /** Construit l'application Express sans ouvrir de port : testable avec supertest. */
@@ -61,6 +62,7 @@ export function createApp(deps: Deps, services: Services = createServices(deps))
   v1.use(deliveryRoutes(deps, services.delivery, services.parcels, services.tracking));
   v1.use(conversationRoutes(deps, services.conversations));
   v1.use(notificationRoutes(deps, services.notifications));
+  v1.use(walletRoutes(deps, services.wallet));
   // L'API du staff passe avant la limite globale des utilisateurs, avec sa propre limite par IP.
   const admin = adminRoutes(deps, services).router;
   if (deps.config.nodeEnv !== 'production') {
