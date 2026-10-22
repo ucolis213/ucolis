@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { registerAccountSchema, type RegisterAccountInput } from '@ucolis/shared';
 import { AuthHeader } from '@/components/AuthHeader';
@@ -62,34 +61,27 @@ export default function Register() {
   });
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Screen scroll background={colors.surface} edges={['top', 'bottom']}>
-        <AuthHeader title={t('registerTitle')} subtitle={t('registerSubtitle')} step="1 / 2" />
-        {FIELDS.map(({ name, label, props }) => (
-          <Controller
-            key={name}
-            control={control}
-            name={name}
-            render={({ field, fieldState }) => (
-              <TextField
-                label={t(label)}
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={fieldState.error?.message}
-                hint={name === 'phone' ? t('phoneHint') : undefined}
-                {...props}
-              />
-            )}
-          />
-        ))}
-        <Button label={t('common:next')} onPress={onNext} />
-      </Screen>
-    </KeyboardAvoidingView>
+    <Screen scroll background={colors.surface} edges={['top', 'bottom']}>
+      <AuthHeader title={t('registerTitle')} subtitle={t('registerSubtitle')} step="1 / 2" />
+      {FIELDS.map(({ name, label, props }) => (
+        <Controller
+          key={name}
+          control={control}
+          name={name}
+          render={({ field, fieldState }) => (
+            <TextField
+              label={t(label)}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              hint={name === 'phone' ? t('phoneHint') : undefined}
+              {...props}
+            />
+          )}
+        />
+      ))}
+      <Button label={t('common:next')} onPress={onNext} />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({ flex: { flex: 1 } });

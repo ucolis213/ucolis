@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { loginSchema, type AuthResponse } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
@@ -42,88 +42,85 @@ export default function Login() {
   });
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen scroll background={colors.surface} edges={['top', 'bottom']}>
-        <View style={styles.logo}>
-          <Logo size={30} />
-        </View>
-        <AuthHeader title={t('loginTitle')} subtitle={t('loginSubtitle')} />
+    <Screen scroll background={colors.surface} edges={['top', 'bottom']}>
+      <View style={styles.logo}>
+        <Logo size={30} />
+      </View>
+      <AuthHeader title={t('loginTitle')} subtitle={t('loginSubtitle')} />
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field, fieldState }) => (
-            <TextField
-              label={t('email')}
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={fieldState.error?.message}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="password"
-          render={({ field, fieldState }) => (
-            <TextField
-              label={t('password')}
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={fieldState.error?.message}
-              password
-              autoComplete="current-password"
-              textContentType="password"
-              onSubmitEditing={onSubmit}
-            />
-          )}
-        />
+      <Controller
+        control={control}
+        name="email"
+        render={({ field, fieldState }) => (
+          <TextField
+            label={t('email')}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={fieldState.error?.message}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="password"
+        render={({ field, fieldState }) => (
+          <TextField
+            label={t('password')}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={fieldState.error?.message}
+            password
+            autoComplete="current-password"
+            textContentType="password"
+            onSubmitEditing={onSubmit}
+          />
+        )}
+      />
 
+      <AppText
+        size="sm"
+        weight="medium"
+        color={colors.primaryDark}
+        align="right"
+        accessibilityRole="link"
+        onPress={() => router.push('/forgot-password')}
+      >
+        {t('forgotPassword')}
+      </AppText>
+
+      {formError && (
+        <AppText size="sm" color={colors.danger} accessibilityLiveRegion="polite">
+          {formError}
+        </AppText>
+      )}
+
+      <Button label={t('loginTitle')} onPress={onSubmit} loading={formState.isSubmitting} />
+
+      <View style={styles.footer}>
+        <AppText size="sm" color={colors.textMuted}>
+          {t('noAccount')}
+        </AppText>
         <AppText
           size="sm"
-          weight="medium"
+          weight="semibold"
           color={colors.primaryDark}
-          align="right"
           accessibilityRole="link"
-          onPress={() => router.push('/forgot-password')}
+          onPress={() => router.replace({ pathname: '/register', params: returnTo ? { returnTo } : {} })}
         >
-          {t('forgotPassword')}
+          {t('signUp')}
         </AppText>
-
-        {formError && (
-          <AppText size="sm" color={colors.danger} accessibilityLiveRegion="polite">
-            {formError}
-          </AppText>
-        )}
-
-        <Button label={t('loginTitle')} onPress={onSubmit} loading={formState.isSubmitting} />
-
-        <View style={styles.footer}>
-          <AppText size="sm" color={colors.textMuted}>
-            {t('noAccount')}
-          </AppText>
-          <AppText
-            size="sm"
-            weight="semibold"
-            color={colors.primaryDark}
-            accessibilityRole="link"
-            onPress={() => router.replace({ pathname: '/register', params: returnTo ? { returnTo } : {} })}
-          >
-            {t('signUp')}
-          </AppText>
-        </View>
-      </Screen>
-    </KeyboardAvoidingView>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   logo: { alignItems: 'center', marginVertical: space(4) },
   footer: { flexDirection: 'row', justifyContent: 'center', gap: space(1.5), marginTop: space(2) },
 });

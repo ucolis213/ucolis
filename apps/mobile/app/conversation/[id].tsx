@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -282,10 +281,7 @@ export default function Conversation() {
 
   const c = conv.data;
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <>
       <Screen
         padded={false}
         edges={['top', 'bottom']}
@@ -477,7 +473,7 @@ export default function Conversation() {
         index={viewer !== null && viewer >= 0 ? viewer : null}
         onClose={() => setViewer(null)}
       />
-    </KeyboardAvoidingView>
+    </>
   );
 }
 

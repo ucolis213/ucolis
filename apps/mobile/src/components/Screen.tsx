@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { colors, space } from '../theme';
 
@@ -29,26 +37,37 @@ export function Screen({
   onRefresh?: () => void;
 }) {
   const inner = [padded && styles.padded, contentStyle];
+  // Clavier ouvert : l'écran rétrécit, le bas du contenu et la barre d'actions restent accessibles.
   return (
-    <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: background }]}>
-      {header}
-      {scroll ? (
-        <ScrollView
-          contentContainerStyle={inner}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            onRefresh ? (
-              <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-            ) : undefined
-          }
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.root, ...inner]}>{children}</View>
-      )}
-      {footer && <View style={styles.footer}>{footer}</View>}
-    </SafeAreaView>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: background }]}>
+        {header}
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={inner}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl
+                  refreshing={!!refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={colors.primary}
+                />
+              ) : undefined
+            }
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={[styles.root, ...inner]}>{children}</View>
+        )}
+        {footer && <View style={styles.footer}>{footer}</View>}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

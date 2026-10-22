@@ -45,6 +45,8 @@ admin 9 ; mobile 31).
 - Correctif : badge des messages non lus resté affiché après la déconnexion.
 - Suppression d'une conversation pour soi seul : glisser la ligne (droite → gauche, inversé en arabe) ou appui long,
   avec confirmation (`DELETE /conversations/:id`). Elle revient au message suivant.
+- Correctif : bas des écrans caché par le clavier. `Screen` évite désormais le clavier (iOS) pour tous les écrans ;
+  les enveloppes propres à la connexion, l'inscription, la publication et la messagerie sont retirées.
 
 À tester sur téléphone : glissement en FR et en AR, défilement vertical de la liste qui ne doit pas ouvrir de ligne.
 
