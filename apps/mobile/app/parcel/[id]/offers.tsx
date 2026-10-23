@@ -8,17 +8,19 @@ import { useTranslation } from 'react-i18next';
 import { ACTIVE_OFFER_STATUSES, type OfferDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
 import { useParcel, useParcelOffers } from '@/api/queries';
+import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { confirm } from '@/components/ConfirmDialog';
 import { OfferCard } from '@/components/OfferCard';
-import { PromptModal } from '@/components/PromptModal';
+import { PriceProposalModal } from '@/components/PriceProposalModal';
 import { QueryView } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Segmented } from '@/components/Segmented';
 import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
-import { space } from '@/theme';
+import { useSocketEvent } from '@/realtime/socket';
+import { colors, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function ParcelOffers() {
@@ -31,23 +33,40 @@ export default function ParcelOffers() {
   const config = useAppConfig();
   const qc = useQueryClient();
   const [countering, setCountering] = useState<OfferDto | null>(null);
+  // Geste en cours (« action:offre ») : un seul à la fois, pour éviter les doubles envois.
+  const [busy, setBusy] = useState<string | null>(null);
   const maxCounters = config.data?.limits.maxCounterOffers ?? 3;
 
-  const run = async (fn: () => Promise<unknown>) => {
+  // Réponse du transporteur (nouveau prix, prix maintenu, retrait) : la liste se met à jour d'elle-même.
+  useSocketEvent<{ parcelId: string }>('offer:updated', (e) => {
+    if (e.parcelId === id) void query.refetch();
+  });
+
+  const run = async (key: string, fn: () => Promise<unknown>) => {
+    setBusy(key);
     try {
       await fn();
       void qc.invalidateQueries({ queryKey: ['parcel', id] });
     } catch (err) {
       Alert.alert(errorMessage(t, err));
+    } finally {
+      setBusy(null);
     }
   };
 
+  const btn = (key: string) => ({ loading: busy === key, disabled: busy !== null && busy !== key });
+
   async function accept(o: OfferDto) {
     if (!(await confirm({ title: t('accept'), message: t('acceptConfirm', { price: price(o.price) }) }))) return;
-    await run(async () => {
+    await run(`a:${o.id}`, async () => {
       await api.post(`/offers/${o.id}/accept`);
       router.replace({ pathname: '/parcel/[id]', params: { id } });
     });
+  }
+
+  async function reject(o: OfferDto) {
+    if (!(await confirm({ title: t('rejectConfirm'), message: t('rejectConfirmMessage'), destructive: true }))) return;
+    await run(`r:${o.id}`, () => api.post(`/offers/${o.id}/reject`));
   }
 
   return (
@@ -66,6 +85,7 @@ export default function ParcelOffers() {
           <View style={{ gap: space(3) }}>
             {data.items.map((o) => {
               const active = ACTIVE_OFFER_STATUSES.includes(o.status);
+              const rejectButton = <Button label={t('reject')} variant="ghost" fullWidth={false} {...btn(`r:${o.id}`)} onPress={() => reject(o)} />;
               return (
                 <OfferCard
                   key={o.id}
@@ -76,17 +96,25 @@ export default function ParcelOffers() {
                     o.status === 'pending' ? (
                       <>
                         <View style={{ flex: 1 }}>
-                          <Button label={t('accept')} onPress={() => accept(o)} />
+                          <Button label={t('accept')} {...btn(`a:${o.id}`)} onPress={() => accept(o)} />
                         </View>
                         {o.counterCount < maxCounters && (
                           <View style={{ flex: 1 }}>
-                            <Button label={t('counter')} variant="outline" onPress={() => setCountering(o)} />
+                            <Button label={t('counter')} variant="outline" disabled={busy !== null} onPress={() => setCountering(o)} />
                           </View>
                         )}
-                        <Button label={t('reject')} variant="ghost" fullWidth={false} onPress={() => run(() => api.post(`/offers/${o.id}/reject`))} />
+                        {rejectButton}
+                        <AppText size="xs" color={colors.textMuted} style={{ width: '100%' }}>
+                          {o.counterCount >= maxCounters ? t('counterLimit') : t('counterLeft', { count: maxCounters - o.counterCount })}
+                        </AppText>
                       </>
                     ) : active ? (
-                      <Button label={t('reject')} variant="ghost" fullWidth={false} onPress={() => run(() => api.post(`/offers/${o.id}/reject`))} />
+                      <>
+                        <AppText size="sm" color={colors.textMuted} style={{ flex: 1 }}>
+                          {t('waitingCarrier')}
+                        </AppText>
+                        {rejectButton}
+                      </>
                     ) : undefined
                   }
                 />
@@ -95,18 +123,22 @@ export default function ParcelOffers() {
           </View>
         )}
       </QueryView>
-      <PromptModal
+      <PriceProposalModal
         visible={countering !== null}
         title={t('counter')}
-        message={countering ? t('counterLeft', { count: maxCounters - countering.counterCount }) : undefined}
+        message={
+          countering
+            ? `${t('carrierAsks', { price: price(countering.price) })} ${t('counterLeft', { count: maxCounters - countering.counterCount })}`
+            : undefined
+        }
         label={t('counterPrice')}
-        required
-        inputProps={{ keyboardType: 'number-pad' }}
+        below={countering?.price}
+        confirmLabel={t('sendCounter')}
         onCancel={() => setCountering(null)}
-        onConfirm={async (value) => {
+        onConfirm={async (input) => {
           const o = countering!;
           setCountering(null);
-          await run(() => api.post(`/offers/${o.id}/counter`, { price: Number(value.replace(/\D/g, '')) }));
+          await run(`c:${o.id}`, () => api.post(`/offers/${o.id}/counter`, input));
         }}
       />
     </Screen>

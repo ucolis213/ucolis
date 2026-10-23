@@ -21,6 +21,17 @@ export const PUBLISH_WINDOW_DAYS = 60;
 /** Date souhaitée : n'importe quel jour jusqu'à un an. */
 export const DESIRED_DATE_MAX_DAYS = 365;
 export const MIN_PRICE_DA = 100;
+/** Tout prix saisi est un nombre rond : multiple de 10 DA (900, 17 820, jamais 101 ni 982). */
+export const PRICE_STEP_DA = 10;
+
+export const isRoundPrice = (price: number) => Number.isInteger(price) && price % PRICE_STEP_DA === 0;
+
+/** Prix d'une annonce, d'une offre ou d'une contre-offre. */
+export const priceSchema = z
+  .number()
+  .int()
+  .min(MIN_PRICE_DA, 'validation.minPrice')
+  .refine(isRoundPrice, 'validation.roundPrice');
 
 const DAY_MS = 86_400_000;
 
@@ -83,7 +94,7 @@ export const parcelOptionsSchema = z.object({
   urgent: z.boolean().default(false),
   recipient: recipientSchema.optional(),
   paymentArrangement: z.enum(PAYMENT_ARRANGEMENTS),
-  requestedPrice: z.number().int().min(MIN_PRICE_DA, 'validation.minPrice'),
+  requestedPrice: priceSchema,
 });
 
 /** Photos facultatives dans les deux modes : 0 à 5, la première sert de couverture. */

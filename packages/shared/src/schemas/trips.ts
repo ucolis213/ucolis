@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { TRIP_STATUSES, VEHICLE_TYPES, type VehicleType } from '../enums';
 import { latLngSchema, objectIdSchema, paginationSchema, placeSchema, wilayaCodeSchema } from './common';
+import { isRoundPrice } from './parcel';
 
 export const MAX_TRIP_STOPS = 5;
 export const MAX_RECURRENCE_WEEKS = 8;
@@ -23,6 +24,8 @@ export const tripInputSchema = z
     capacityM3: z.number().positive().max(200),
     priceHint: z
       .object({ mode: z.enum(['flat', 'per_kg']), amount: z.number().int().min(1) })
+      // Un forfait est un prix rond ; un tarif au kilo reste libre (15 DA/kg).
+      .refine((h) => h.mode !== 'flat' || isRoundPrice(h.amount), { message: 'validation.roundPrice', path: ['amount'] })
       .nullable()
       .optional(),
     recurrence: z

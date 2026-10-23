@@ -4,7 +4,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { api, errorMessage } from '@/api/client';
 import { useOffer } from '@/api/queries';
@@ -13,14 +13,14 @@ import { Button } from '@/components/Button';
 import { CommissionBreakdown, useWalletBlocked, WalletBlockedBanner } from '@/components/CommissionBreakdown';
 import { confirm } from '@/components/ConfirmDialog';
 import { OfferCard } from '@/components/OfferCard';
-import { PromptModal } from '@/components/PromptModal';
+import { PriceProposalModal } from '@/components/PriceProposalModal';
 import { QueryView } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { useSocketEvent } from '@/realtime/socket';
-import { colors, space } from '@/theme';
+import { colors, radii, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function OfferDetail() {
@@ -31,6 +31,8 @@ export default function OfferDetail() {
   const qc = useQueryClient();
   const config = useAppConfig();
   const [prompt, setPrompt] = useState<'counter' | 'reoffer' | null>(null);
+  // Geste en cours : un seul à la fois, pour éviter les doubles envois.
+  const [busy, setBusy] = useState<string | null>(null);
   const maxCounters = config.data?.limits.maxCounterOffers ?? 3;
   const blocked = useWalletBlocked();
 
@@ -38,7 +40,8 @@ export default function OfferDetail() {
     if (e.offerId === id) void query.refetch();
   });
 
-  const run = async (fn: () => Promise<unknown>) => {
+  const run = async (key: string, fn: () => Promise<unknown>) => {
+    setBusy(key);
     try {
       await fn();
       void qc.invalidateQueries({ queryKey: ['offer', id] });
@@ -46,6 +49,8 @@ export default function OfferDetail() {
       if (query.data) void qc.invalidateQueries({ queryKey: ['parcel', query.data.parcelId] });
     } catch (err) {
       Alert.alert(errorMessage(t, err));
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -54,21 +59,42 @@ export default function OfferDetail() {
       <QueryView query={query}>
         {(o) => {
           const sender = o.viewerIsSender;
+          const active = o.status === 'pending' || o.status === 'countered';
+          const btn = (key: string) => ({ loading: busy === key, disabled: busy !== null && busy !== key });
           const actions: React.ReactNode[] = [];
           if (!sender && o.status === 'countered' && o.counterPrice) {
+            const counterPrice = o.counterPrice;
             actions.push(
-              <Button key="ac" label={t('acceptCounter', { price: price(o.counterPrice) })} onPress={() => run(() => api.post(`/offers/${o.id}/accept-counter`))} />,
-              <Button key="rc" label={t('rejectCounter')} variant="outline" onPress={() => run(() => api.post(`/offers/${o.id}/reject-counter`))} />,
-              <Button key="ro" label={t('reoffer')} variant="outline" onPress={() => setPrompt('reoffer')} />,
+              <Button
+                key="ac"
+                label={t('acceptCounter', { price: price(counterPrice) })}
+                icon="checkmark-circle-outline"
+                {...btn('ac')}
+                disabled={blocked || (busy !== null && busy !== 'ac')}
+                onPress={async () =>
+                  (await confirm({ title: t('acceptCounter', { price: price(counterPrice) }), message: t('acceptCounterConfirm', { price: price(counterPrice) }) })) &&
+                  run('ac', () => api.post(`/offers/${o.id}/accept-counter`))
+                }
+              />,
+              <Button
+                key="ro"
+                label={t('reoffer')}
+                variant="outline"
+                icon="swap-horizontal-outline"
+                disabled={blocked || busy !== null}
+                onPress={() => setPrompt('reoffer')}
+              />,
+              <Button key="rc" label={t('rejectCounter', { price: price(o.price) })} variant="outline" {...btn('rc')} onPress={() => run('rc', () => api.post(`/offers/${o.id}/reject-counter`))} />,
             );
           }
-          if (!sender && (o.status === 'pending' || o.status === 'countered')) {
+          if (!sender && active) {
             actions.push(
               <Button
                 key="w"
                 label={t('withdraw')}
                 variant="ghost"
-                onPress={async () => (await confirm({ title: t('withdrawConfirm'), destructive: true })) && run(() => api.post(`/offers/${o.id}/withdraw`))}
+                {...btn('w')}
+                onPress={async () => (await confirm({ title: t('withdrawConfirm'), destructive: true })) && run('w', () => api.post(`/offers/${o.id}/withdraw`))}
               />,
             );
           }
@@ -77,11 +103,27 @@ export default function OfferDetail() {
               <Button
                 key="a"
                 label={t('accept')}
-                onPress={async () => (await confirm({ title: t('accept'), message: t('acceptConfirm', { price: price(o.price) }) })) && run(() => api.post(`/offers/${o.id}/accept`))}
+                icon="checkmark-circle-outline"
+                {...btn('a')}
+                onPress={async () => (await confirm({ title: t('accept'), message: t('acceptConfirm', { price: price(o.price) }) })) && run('a', () => api.post(`/offers/${o.id}/accept`))}
               />,
             );
-            if (o.counterCount < maxCounters) actions.push(<Button key="c" label={t('counter')} variant="outline" onPress={() => setPrompt('counter')} />);
-            actions.push(<Button key="r" label={t('reject')} variant="ghost" onPress={() => run(() => api.post(`/offers/${o.id}/reject`))} />);
+            if (o.counterCount < maxCounters) {
+              actions.push(<Button key="c" label={t('counter')} variant="outline" icon="swap-horizontal-outline" disabled={busy !== null} onPress={() => setPrompt('counter')} />);
+            }
+          }
+          if (sender && active) {
+            actions.push(
+              <Button
+                key="r"
+                label={t('reject')}
+                variant="ghost"
+                {...btn('r')}
+                onPress={async () =>
+                  (await confirm({ title: t('rejectConfirm'), message: t('rejectConfirmMessage'), destructive: true })) && run('r', () => api.post(`/offers/${o.id}/reject`))
+                }
+              />,
+            );
           }
           return (
             <View style={{ gap: space(4) }}>
@@ -89,33 +131,49 @@ export default function OfferDetail() {
                 {o.parcelTitle} · {price(o.parcelRequestedPrice)}
               </AppText>
               <OfferCard offer={o} viewerIsSender={sender} showRounds />
-              {!sender && blocked && (o.status === 'pending' || o.status === 'countered') && <WalletBlockedBanner />}
-              {!sender && <CommissionBreakdown grossPrice={o.finalPrice ?? o.counterPrice ?? o.price} />}
-              {sender && o.status === 'pending' && o.counterCount >= maxCounters && (
+              {!sender && o.status === 'countered' && o.counterPrice && (
+                <View style={styles.callout}>
+                  <AppText weight="bold">{t('counterReceived', { price: price(o.counterPrice) })}</AppText>
+                  <AppText size="sm" color={colors.textMuted}>
+                    {t('yourPrice', { price: price(o.price) })}
+                  </AppText>
+                </View>
+              )}
+              {((sender && o.status === 'countered') || (!sender && o.status === 'pending')) && (
                 <AppText size="sm" color={colors.textMuted}>
-                  {t('counterLimit')}
+                  {t(sender ? 'waitingCarrier' : 'waitingSender')}
                 </AppText>
               )}
-              {sender && o.status === 'pending' && o.counterCount < maxCounters && (
+              {!sender && blocked && active && <WalletBlockedBanner />}
+              {!sender && <CommissionBreakdown grossPrice={o.finalPrice ?? o.counterPrice ?? o.price} />}
+              {sender && o.status === 'pending' && (
                 <AppText size="sm" color={colors.textMuted}>
-                  {t('counterLeft', { count: maxCounters - o.counterCount })}
+                  {o.counterCount >= maxCounters ? t('counterLimit') : t('counterLeft', { count: maxCounters - o.counterCount })}
                 </AppText>
               )}
               {actions}
               {o.status === 'accepted' && (
                 <Button label={t('parcel:actions.message')} variant="outline" icon="chatbubble-outline" onPress={() => router.push({ pathname: '/parcel/[id]', params: { id: o.parcelId } })} />
               )}
-              <PromptModal
+              <PriceProposalModal
                 visible={prompt !== null}
                 title={prompt === 'counter' ? t('counter') : t('reoffer')}
+                message={
+                  prompt === 'counter'
+                    ? `${t('carrierAsks', { price: price(o.price) })} ${t('counterLeft', { count: maxCounters - o.counterCount })}`
+                    : o.counterPrice
+                      ? t('counterReceived', { price: price(o.counterPrice) })
+                      : undefined
+                }
                 label={prompt === 'counter' ? t('counterPrice') : t('price')}
-                required
-                inputProps={{ keyboardType: 'number-pad' }}
+                below={prompt === 'counter' ? o.price : undefined}
+                above={prompt === 'reoffer' ? (o.counterPrice ?? undefined) : undefined}
+                confirmLabel={prompt === 'counter' ? t('sendCounter') : t('sendReoffer')}
                 onCancel={() => setPrompt(null)}
-                onConfirm={async (v) => {
+                onConfirm={async (input) => {
                   const kind = prompt;
                   setPrompt(null);
-                  await run(() => api.post(`/offers/${o.id}/${kind === 'counter' ? 'counter' : 'reoffer'}`, { price: Number(v.replace(/\D/g, '')) }));
+                  await run(kind!, () => api.post(`/offers/${o.id}/${kind === 'counter' ? 'counter' : 'reoffer'}`, input));
                 }}
               />
             </View>
@@ -125,3 +183,7 @@ export default function OfferDetail() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  callout: { backgroundColor: colors.primarySoft, borderRadius: radii.card, padding: space(4), gap: space(1) },
+});

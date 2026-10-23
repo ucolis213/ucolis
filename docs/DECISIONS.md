@@ -277,6 +277,21 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   soir) : filtres et compatibilité des trajets restent fondés sur le créneau. Choisir un autre créneau efface
   l'heure.
 
+## 23 octobre 2026 : négociation et prix ronds
+
+- Tout prix saisi est un multiple de 10 DA (`PRICE_STEP_DA`, `priceSchema`, `isRoundPrice`) : prix demandé
+  d'une annonce, offre, contre-offre, nouvelle proposition, forfait indicatif d'un trajet. Le tarif au kilo
+  d'un trajet reste libre. Le barème (`roundTo`, `minPrice`) n'accepte que des multiples de 10, pour que le prix
+  suggéré reste rond. Les annonces existantes à prix non rond devront être corrigées à leur prochaine modification.
+- Cohérence de la négociation imposée par l'API : une contre-offre est strictement inférieure au prix du
+  transporteur (COUNTER_PRICE_NOT_LOWER), une nouvelle proposition strictement supérieure à la contre-offre
+  (REOFFER_PRICE_NOT_HIGHER). Sinon, il suffit d'accepter.
+- Boutons de négociation (mobile) : confirmation avant d'accepter une contre-offre (attribution du colis) et
+  avant de refuser une offre (définitif) ; « Garder mon prix » affiche le prix maintenu ; un seul geste à la fois
+  (pas de double envoi) ; message facultatif joint à la contre-offre et à la nouvelle proposition ; l'expéditeur
+  peut refuser une offre en contre-offre depuis son détail ; états d'attente explicites des deux côtés ; liste
+  des offres mise à jour en temps réel.
+
 ## 23 octobre 2026 : passage à Expo SDK 58
 
 - Expo Go installé sur les téléphones de test est en SDK 58 : montée 57 → 58 (React Native 0.88, React 19.3.0,

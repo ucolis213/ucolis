@@ -85,6 +85,12 @@ describe('trajet', () => {
     expect(tripInputSchema.safeParse({ ...base, recurrence: { weekdays: [1, 4], until: inDays(30) } }).success).toBe(true);
     expect(issues(tripInputSchema.safeParse({ ...base, departureAt: inDays(-1) }))).toContain('departureAt:validation.departure');
   });
+
+  it('exige un forfait rond, pas un tarif au kilo', () => {
+    expect(issues(tripInputSchema.safeParse({ ...base, priceHint: { mode: 'flat', amount: 1505 } }))).toContain('priceHint.amount:validation.roundPrice');
+    expect(tripInputSchema.safeParse({ ...base, priceHint: { mode: 'flat', amount: 1500 } }).success).toBe(true);
+    expect(tripInputSchema.safeParse({ ...base, priceHint: { mode: 'per_kg', amount: 15 } }).success).toBe(true);
+  });
 });
 
 describe('transporteur et professionnel', () => {

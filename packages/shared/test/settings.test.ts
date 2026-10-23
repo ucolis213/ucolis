@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_SETTING_KEYS,
+  APP_SETTING_SCHEMAS,
   DEFAULT_SETTINGS,
   compareVersions,
   toPublicConfig,
@@ -17,6 +18,13 @@ describe('réglages', () => {
     });
     expect(DEFAULT_SETTINGS.requireCarrierVerification).toBe(true);
     expect(APP_SETTING_KEYS).toContain('pricing');
+  });
+
+  it('garde un prix suggéré rond (multiple de 10 DA)', () => {
+    const pricing = APP_SETTING_SCHEMAS.pricing;
+    expect(pricing.safeParse(DEFAULT_SETTINGS.pricing).success).toBe(true);
+    expect(pricing.safeParse({ ...DEFAULT_SETTINGS.pricing, roundTo: 25 }).success).toBe(false);
+    expect(pricing.safeParse({ ...DEFAULT_SETTINGS.pricing, minPrice: 105 }).success).toBe(false);
   });
 
   it('expose uniquement les réglages publics', () => {

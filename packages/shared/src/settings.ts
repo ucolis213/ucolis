@@ -108,8 +108,9 @@ export const APP_SETTING_SCHEMAS: Record<AppSettingKey, z.ZodType> = {
       .refine((t) => t[t.length - 1]?.upToKm === null, 'La dernière tranche doit être ouverte'),
     perKg: z.number().min(0),
     volumetricFactor: z.number().positive(),
-    roundTo: positiveInt,
-    minPrice: z.number().int().min(0),
+    // Le prix suggéré doit rester rond (multiple de 10 DA), comme tout prix saisi.
+    roundTo: positiveInt.refine((n) => n % 10 === 0, 'validation.roundPrice'),
+    minPrice: z.number().int().min(0).refine((n) => n % 10 === 0, 'validation.roundPrice'),
   }),
   limits: z.object({
     activeParcelsIndividual: positiveInt,

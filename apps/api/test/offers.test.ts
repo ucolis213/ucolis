@@ -151,6 +151,23 @@ describe('négociation', () => {
     expect(parcel!.assignedCarrier!.toString()).toBe(karim.id);
   });
 
+  it('refuse une contre-offre non inférieure et une nouvelle proposition non supérieure', async () => {
+    const ctx = makeTestApp();
+    const amina = await verifiedUser(ctx);
+    const karim = await verifiedCarrier(ctx);
+    const p = await createParcel(ctx, amina);
+    const o = (await offer(ctx, karim, p.id, { price: 4000 })).body;
+    const same = await ctx.http().post(`/api/v1/offers/${o.id}/counter`).set(amina.auth).send({ price: 4000 });
+    expect(same.status).toBe(422);
+    expect(same.body.error).toMatchObject({ code: 'COUNTER_PRICE_NOT_LOWER', details: { price: 4000 } });
+    await ctx.http().post(`/api/v1/offers/${o.id}/counter`).set(amina.auth).send({ price: 3300 });
+    const low = await ctx.http().post(`/api/v1/offers/${o.id}/reoffer`).set(karim.auth).send({ price: 3300 });
+    expect(low.status).toBe(422);
+    expect(low.body.error).toMatchObject({ code: 'REOFFER_PRICE_NOT_HIGHER', details: { counterPrice: 3300 } });
+    const ok = await ctx.http().post(`/api/v1/offers/${o.id}/reoffer`).set(karim.auth).send({ price: 3600 });
+    expect(ok.body).toMatchObject({ status: 'pending', price: 3600 });
+  });
+
   it('retire une offre tant qu’elle n’est pas acceptée', async () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);

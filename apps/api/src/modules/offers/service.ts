@@ -320,6 +320,10 @@ export function createOfferService(deps: Deps) {
       if (o.counterCount >= limits.maxCounterOffers) {
         throw new AppError(422, 'COUNTER_LIMIT_REACHED', 'Nombre maximum de contre-offres atteint');
       }
+      // Une contre-offre au prix du transporteur ou au-dessus n'a pas de sens : il suffit d'accepter.
+      if (input.price >= o.price) {
+        throw new AppError(422, 'COUNTER_PRICE_NOT_LOWER', 'La contre-offre doit être inférieure au prix proposé', { price: o.price });
+      }
       const updated = await setOffer(o, {
         $set: { status: 'countered' },
         $inc: { counterCount: 1 },
@@ -368,6 +372,11 @@ export function createOfferService(deps: Deps) {
       const o = await loadOffer(offerId);
       assertCarrier(o, carrierId);
       assertOfferTransition(o, 'pending', 'carrier');
+      // Au prix de la contre-offre ou en dessous, le transporteur doit l'accepter plutôt que reproposer.
+      const lastSender = [...(o.rounds ?? [])].reverse().find((r) => r.by === 'sender');
+      if (lastSender && input.price <= lastSender.price) {
+        throw new AppError(422, 'REOFFER_PRICE_NOT_HIGHER', 'Le nouveau prix doit dépasser la contre-offre', { counterPrice: lastSender.price });
+      }
       await wallet.assertCanTakeJobs(carrierId);
       const updated = await setOffer(o, {
         $set: { status: 'pending', price: input.price, atAskingPrice: false },

@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { objectIdSchema } from './common';
-import { MIN_PRICE_DA } from './parcel';
-
-const priceSchema = z.number().int().min(MIN_PRICE_DA, 'validation.minPrice');
+import { priceSchema } from './parcel';
 const messageSchema = z.string().trim().max(500).optional();
 
 export const createOfferSchema = z.union([

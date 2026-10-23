@@ -156,7 +156,7 @@ export default function NewTrip() {
         <Chip label={t('flat')} selected={hintMode === 'flat'} onPress={() => setHintMode(hintMode === 'flat' ? null : 'flat')} />
         <Chip label={t('perKg')} selected={hintMode === 'per_kg'} onPress={() => setHintMode(hintMode === 'per_kg' ? null : 'per_kg')} />
       </View>
-      {hintMode && <PriceInput label={t('priceHint')} value={hintAmount} onChange={setHintAmount} />}
+      {hintMode && <PriceInput label={t('priceHint')} value={hintAmount} onChange={setHintAmount} error={errors['priceHint.amount']} />}
 
       <SwitchRow label={t('recurrence')} value={recurring} onChange={setRecurring} />
       {recurring && (

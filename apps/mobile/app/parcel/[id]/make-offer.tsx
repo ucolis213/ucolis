@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { MIN_PRICE_DA } from '@ucolis/shared';
+import { isRoundPrice, MIN_PRICE_DA } from '@ucolis/shared';
 import { api, errorMessage, fieldErrors } from '@/api/client';
 import { useParcel } from '@/api/queries';
 import { AppText } from '@/components/AppText';
@@ -67,6 +67,7 @@ export default function MakeOffer() {
   async function submit() {
     const e: Record<string, string> = {};
     if (!atAsking && (!offerPrice || offerPrice < MIN_PRICE_DA)) e.price = 'validation.minPrice';
+    else if (!atAsking && !isRoundPrice(offerPrice!)) e.price = 'validation.roundPrice';
     if (!pickupDate) e.proposedPickupDate = 'validation.required';
     setErrors(e);
     if (Object.keys(e).length) return;

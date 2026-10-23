@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import { counterOfferSchema, createOfferSchema } from '../src/schemas/offer';
 import {
   createParcelSchema,
+  isRoundPrice,
   isWithinPublishWindow,
   timeSlotOf,
   parcelDetailsSchema,
@@ -156,6 +157,7 @@ describe('schémas colis', () => {
   it('applique les règles du PRD', () => {
     const fails = (patch: object) => messages(createParcelSchema.safeParse({ ...parcel, ...patch }));
     expect(fails({ requestedPrice: 99 })).toContain('validation.minPrice');
+    expect(fails({ requestedPrice: 1255 })).toContain('validation.roundPrice');
     expect(createParcelSchema.safeParse({ ...parcel, photos: [] }).success).toBe(true);
     expect(fails({ photos: Array(6).fill(parcel.photos[0]) })).toContain('validation.photosCount');
     expect(fails({ vehicleTypes: [] })).toContain('validation.vehicleTypes');
@@ -213,5 +215,13 @@ describe('schémas offre', () => {
   it('contre-offre à 100 DA minimum', () => {
     expect(counterOfferSchema.safeParse({ price: 100 }).success).toBe(true);
     expect(counterOfferSchema.safeParse({ price: 99 }).success).toBe(false);
+  });
+
+  it('exige des prix ronds, par dizaine de DA', () => {
+    expect(isRoundPrice(17820)).toBe(true);
+    expect(isRoundPrice(982)).toBe(false);
+    expect(counterOfferSchema.safeParse({ price: 900 }).success).toBe(true);
+    expect(messages(counterOfferSchema.safeParse({ price: 101 }))).toContain('validation.roundPrice');
+    expect(messages(createOfferSchema.safeParse({ ...base, price: 982 }))).toContain('validation.roundPrice');
   });
 });
