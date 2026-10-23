@@ -132,7 +132,7 @@ Le projet est un monorepo TypeScript géré avec pnpm et Turborepo. Il contient 
 
 | Couche | Choix | Rôle |
 |---|---|---|
-| Mobile | Expo SDK 57, React Native 0.86, Expo Router, TypeScript | Application Android et iOS, téléphone et tablette, portrait |
+| Mobile | Expo SDK 58, React Native 0.88, Expo Router, TypeScript | Application Android et iOS, téléphone et tablette, portrait |
 | État serveur (mobile et back-office) | TanStack Query v5 | Cache, pagination infinie, mises à jour optimistes |
 | État client mobile | Contextes React (session, langue, socket) + Zustand persisté pour le brouillon de colis | — |
 | Formulaires | react-hook-form + zod, schémas importés de shared | Validation identique côté client et serveur |
@@ -855,7 +855,7 @@ Toutes ces exigences sont obligatoires dès la v1. Chacune se vérifie par un te
 | Qualité | TypeScript strict partout ; ESLint et Prettier ; tests de toutes les transitions des machines à états, de la négociation, des permissions staff et du masquage ; couverture ≥ 80 % sur shared et sur les services de l'API ; CI bloquante |
 | Internationalisation | Français par défaut, arabe avec bascule RTL complète (rechargement par Updates.reloadAsync) ; chiffres occidentaux dans les deux langues ; montants affichés « 3 250 DA » et « 3 250 دج » ; dates selon la langue |
 | Accessibilité | Cibles tactiles de 44 pt au minimum ; libellés d'accessibilité sur les icônes ; contraste AA ; respect de la taille de police du système jusqu'à 130 % |
-| Plateformes | Android 8 et plus, iOS 16.4 et plus, téléphone et tablette, portrait ; Expo SDK 57 ; builds EAS ; mises à jour OTA par canal (preview, production) |
+| Plateformes | Android 8 et plus, iOS 16.4 et plus, téléphone et tablette, portrait ; Expo SDK 58 ; builds EAS ; mises à jour OTA par canal (preview, production) |
 | Stores | Suppression de compte dans l'application ; politique de confidentialité accessible sans compte ; déclaration de localisation en arrière-plan pour Google Play ; questionnaires de confidentialité Apple remplis |
 
 ## Design, écrans et i18n

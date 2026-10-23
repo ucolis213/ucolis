@@ -59,7 +59,7 @@ export default function ChangePassword() {
           />
         ))}
         {formError && <AppText color={colors.danger}>{formError}</AppText>}
-        <Button label={t('common:save')} onPress={onSubmit} loading={formState.isSubmitting} />
+        <Button label={t('common:save')} onPress={() => void onSubmit()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

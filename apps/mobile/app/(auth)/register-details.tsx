@@ -190,7 +190,7 @@ export default function RegisterDetails() {
           {formError}
         </AppText>
       )}
-      <Button label={t('signUp')} onPress={onSubmit} loading={formState.isSubmitting} />
+      <Button label={t('signUp')} onPress={() => void onSubmit()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

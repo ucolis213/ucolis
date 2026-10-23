@@ -78,7 +78,7 @@ export default function Login() {
             password
             autoComplete="current-password"
             textContentType="password"
-            onSubmitEditing={onSubmit}
+            onSubmitEditing={() => void onSubmit()}
           />
         )}
       />
@@ -100,7 +100,7 @@ export default function Login() {
         </AppText>
       )}
 
-      <Button label={t('loginTitle')} onPress={onSubmit} loading={formState.isSubmitting} />
+      <Button label={t('loginTitle')} onPress={() => void onSubmit()} loading={formState.isSubmitting} />
 
       <View style={styles.footer}>
         <AppText size="sm" color={colors.textMuted}>

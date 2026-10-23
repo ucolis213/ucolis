@@ -8,8 +8,9 @@ import { colors, fontFamily, shadow } from '@/theme';
 type IconName = keyof typeof Ionicons.glyphMap;
 
 const icon = (name: IconName, active: IconName) =>
+  // Les onglets passent une couleur en chaîne ; les types d'Ionicons ne connaissent pas encore le ColorValue strict de RN 0.88.
   function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
-    return <Ionicons name={focused ? active : name} size={24} color={color} />;
+    return <Ionicons name={focused ? active : name} size={24} color={color as string} />;
   };
 
 export default function TabsLayout() {

@@ -31,6 +31,8 @@ export async function registerForPush(): Promise<string | null> {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'UCOLIS',
+      // Faux positif d'import/namespace sur la build SDK 58 d'expo-notifications (l'enum est bien exporté).
+      // eslint-disable-next-line import/namespace
       importance: Notifications.AndroidImportance.HIGH,
       lightColor: '#FF6B35',
     });

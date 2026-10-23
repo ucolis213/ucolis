@@ -67,7 +67,7 @@ export default function ResetPassword() {
         />
       ))}
       {formError && <AppText color={colors.danger}>{formError}</AppText>}
-      <Button label={t('resetTitle')} onPress={onSubmit} loading={formState.isSubmitting} />
+      <Button label={t('resetTitle')} onPress={() => void onSubmit()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

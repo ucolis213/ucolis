@@ -276,3 +276,12 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   Quand elle est donnée, l'API impose le créneau correspondant (avant 12 h matin, avant 18 h après-midi, sinon
   soir) : filtres et compatibilité des trajets restent fondés sur le créneau. Choisir un autre créneau efface
   l'heure.
+
+## 23 octobre 2026 : passage à Expo SDK 58
+
+- Expo Go installé sur les téléphones de test est en SDK 58 : montée 57 → 58 (React Native 0.88, React 19.3.0,
+  Jest 30). Le back-office suit React 19.3.0 pour garder une seule copie de React dans le monorepo.
+- `react-test-renderer` et `@react-native/jest-preset` sont déclarés explicitement en dépendances de développement
+  du mobile : sinon pnpm garde d'anciennes versions remontées (19.2.3, 0.86.3) et les tests ne démarrent plus.
+- En test, `expo-font` est simulé (polices tenues pour chargées) : avec RN 0.88, `expo-asset` lit le registre
+  d'assets privé de react-native, que `jest-expo` 58.0.12 ne simule pas.

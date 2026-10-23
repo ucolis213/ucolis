@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, fontFamily, fontSizes, MAX_FONT_SCALE, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
@@ -14,7 +14,7 @@ export interface TextFieldProps extends TextInputProps {
 }
 
 /** Champ de saisie : libellé au-dessus, erreur sous le champ concerné. */
-export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
+export const TextField = forwardRef<TextInputInstance, TextFieldProps>(function TextField(
   { label, error, hint, password, style, ...rest },
   ref,
 ) {

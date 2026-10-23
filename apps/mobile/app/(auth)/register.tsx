@@ -81,7 +81,7 @@ export default function Register() {
           )}
         />
       ))}
-      <Button label={t('common:next')} onPress={onNext} />
+      <Button label={t('common:next')} onPress={() => void onNext()} />
     </Screen>
   );
 }

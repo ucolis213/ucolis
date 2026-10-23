@@ -13,7 +13,7 @@ Place de marché mobile de livraison de colis en Algérie (expéditeurs ↔ tran
 | `packages/shared` | enums, erreurs, `pricing.ts`, `geo/` (wilayas.json), `stateMachines.ts`, `permissions.ts`, `notifications.ts`, `settings.ts`, `theme.ts`, `schemas/` (zod), `i18n/` (fr.json, ar.json) |
 | `apps/api` | Express 5, Mongoose 8, zod. `src/modules/<domaine>/{routes,controller,service,model,schemas}.ts` |
 | `apps/admin` | Back-office React 19 + Vite 6 + React Router 7 + TanStack Query + Tailwind 4 |
-| `apps/mobile` | Expo SDK 57, RN 0.86, Expo Router 57 |
+| `apps/mobile` | Expo SDK 58, RN 0.88, Expo Router 58 |
 
 `shared` est consommé en TypeScript source (pas de build) ; l'API l'embarque via tsup.
 

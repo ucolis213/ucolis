@@ -3,7 +3,7 @@
 // automatique du code reçu (iOS) fonctionnent comme sur un champ classique.
 
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, fontFamily, MAX_FONT_SCALE, radii, space } from '../theme';
 import { AppText } from './AppText';
@@ -31,7 +31,7 @@ export function CodeInput({
   oneTimeCode?: boolean;
 }) {
   const { t } = useTranslation();
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(false);
   const message = error ? t(`errors:${error}`, { defaultValue: error }) : undefined;
   const digits = value.split('');

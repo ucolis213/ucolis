@@ -2,7 +2,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { DESIRED_DATE_MAX_DAYS } from '@ucolis/shared';
@@ -438,7 +438,7 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
 
 /** Roue verticale : la valeur au centre est la valeur choisie ; le défilement se cale sur un élément. */
 function Wheel({ items, index, onChange, label }: { items: string[]; index: number; onChange: (i: number) => void; label: string }) {
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ScrollViewInstance>(null);
   const [current, setCurrent] = useState(index);
   const at = (y: number) => Math.max(0, Math.min(items.length - 1, Math.round(y / WHEEL_ITEM)));
   const select = (i: number, scroll: boolean) => {
