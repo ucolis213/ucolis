@@ -33,14 +33,35 @@ export function Markdown({ body }: { body: string }) {
   );
 }
 
-/** FAQ : chaque « ## Question » suivi de sa réponse. */
-export function parseFaq(body: string): { question: string; answer: string }[] {
-  return body
-    .split(/^##\s+/m)
-    .slice(1)
-    .map((chunk) => {
-      const [question = '', ...rest] = chunk.split('\n');
-      return { question: question.trim(), answer: rest.join('\n').trim() };
-    })
-    .filter((e) => e.question);
+export interface FaqEntry {
+  /** Rubrique « # Titre » qui précède la question ; vide si la FAQ n'en a pas. */
+  section: string;
+  question: string;
+  answer: string;
+}
+
+/** FAQ : rubriques « # Rubrique », puis chaque « ## Question » suivi de sa réponse. */
+export function parseFaq(body: string): FaqEntry[] {
+  const entries: FaqEntry[] = [];
+  let section = '';
+  let current: { section: string; question: string; lines: string[] } | null = null;
+  const flush = () => {
+    if (current?.question) entries.push({ section: current.section, question: current.question, answer: current.lines.join('\n').trim() });
+    current = null;
+  };
+  for (const line of body.split('\n')) {
+    const h1 = /^#\s+(.*)$/.exec(line);
+    const h2 = /^##\s+(.*)$/.exec(line);
+    if (h1) {
+      flush();
+      section = h1[1]!.trim();
+    } else if (h2) {
+      flush();
+      current = { section, question: h2[1]!.trim(), lines: [] };
+    } else {
+      current?.lines.push(line);
+    }
+  }
+  flush();
+  return entries;
 }

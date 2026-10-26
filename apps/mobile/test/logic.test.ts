@@ -84,8 +84,17 @@ describe('parseFaq', () => {
       '- À la livraison',
     ].join('\n');
     expect(parseFaq(body)).toEqual([
-      { question: 'Comment publier ?', answer: 'Touchez Publier.' },
-      { question: 'Qui paie ?', answer: '- En espèces\n- À la livraison' },
+      { section: 'FAQ', question: 'Comment publier ?', answer: 'Touchez Publier.' },
+      { section: 'FAQ', question: 'Qui paie ?', answer: '- En espèces\n- À la livraison' },
+    ]);
+  });
+
+  it('rattache chaque question à sa rubrique', () => {
+    const body = ['## Sans rubrique', 'Oui.', '', '# Livraison', '', '## Code ?', 'Quatre chiffres.', '', '# Compte', '## Supprimer ?', 'Profil.'].join('\n');
+    expect(parseFaq(body)).toEqual([
+      { section: '', question: 'Sans rubrique', answer: 'Oui.' },
+      { section: 'Livraison', question: 'Code ?', answer: 'Quatre chiffres.' },
+      { section: 'Compte', question: 'Supprimer ?', answer: 'Profil.' },
     ]);
   });
 });

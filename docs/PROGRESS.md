@@ -38,6 +38,49 @@ Reste : tests de bout en bout Playwright.
 `pnpm turbo run lint typecheck test` : 12 tâches sur 12 au vert (shared 90 tests ; API 172, couverture ≈ 94 % ;
 admin 9 ; mobile 31).
 
+## Avant la publication sur les stores (bilan du 26 octobre 2026)
+
+Déjà conforme : suppression du compte dans l'application (Apple 5.1.1(v), Google « Account deletion ») ;
+politique de confidentialité lisible sans compte ; contenus d'utilisateurs encadrés (CGU acceptées, signaler,
+bloquer, modération : Apple 1.2, Google « UGC ») ; écran d'explication avant la localisation en arrière-plan
+(`parcel/[id]/start.tsx`) ; textes des autorisations iOS en français et en arabe ; service de premier plan
+`FOREGROUND_SERVICE_LOCATION` ; pas d'achat intégré imposé (service physique réglé hors application) ;
+« Sign in with Apple » non requis (connexion par email seulement) ; contact du support.
+
+### Bloquant
+- [ ] Icône, icône adaptative Android et image de splash : absentes de `app.config.ts`, pas de dossier
+      `apps/mobile/assets/` (logo PNG 1024 × 1024 à fournir).
+- [ ] `eas.json` avec les profils `preview` et `production`.
+- [ ] Pages web publiques : politique de confidentialité, et demande de suppression de compte sans
+      l'application (exigée par Google Play). Piste : routes HTML `/privacy` et `/account-deletion` servies par
+      l'API à partir des contenus du back-office.
+- [ ] Champs entre crochets des CGU et de la confidentialité (raison sociale, forme, capital, RC, NIF, siège,
+      récépissé de l'ANPDP), à compléter dans le back-office (page Contenus) ; relecture juridique et relecture
+      de la version arabe.
+- [ ] Comptes de démonstration pour les relecteurs : un expéditeur et un transporteur déjà vérifié.
+
+### Démarches dans les consoles
+- [ ] Google Play : déclaration de la localisation en arrière-plan (vidéo : écran d'explication puis suivi en
+      livraison), déclaration du service de premier plan « location » (vidéo), formulaire « Sécurité des
+      données ». Compte personnel récent : test fermé de 12 testeurs pendant 14 jours avant la production ;
+      compte d'organisation : numéro D-U-N-S.
+- [ ] Apple : étiquettes « App Privacy », classification par âge, justification de la localisation en
+      arrière-plan dans les notes de revue ; numéro D-U-N-S pour un compte d'organisation.
+
+### Conseillé
+- [ ] `ITSAppUsesNonExemptEncryption: false` dans `ios.infoPlist` (HTTPS seulement).
+- [ ] Retirer `remote-notification` de `UIBackgroundModes` si aucune notification silencieuse n'est envoyée.
+- [ ] Sentry sur le mobile (prévu par le PRD, absent de l'application).
+- [ ] Photon auto-hébergé ou Google Places à la place du Photon public (8 à 10 s par recherche).
+
+## Journal du 26 octobre 2026 : aide, CGU, confidentialité et À propos
+
+- Première version de la FAQ (50 questions, 7 rubriques), des CGU et de la politique de confidentialité, en
+  français et en arabe : `apps/api/src/modules/content/defaults/`, publiées en v1 sur la base de développement
+  par `pnpm --filter api seed:content` (ne remplace jamais un contenu déjà publié).
+- Écran Aide : titres de rubriques (`# Rubrique`) dans la FAQ. Écran À propos : présentation, fonctionnement,
+  engagements, contact, liens légaux et version.
+
 ## Journal du 22 octobre 2026 : messagerie
 
 - Correctif : aperçu « Offre acceptée à {{price}} » dans la liste des conversations. Le dernier message garde ses

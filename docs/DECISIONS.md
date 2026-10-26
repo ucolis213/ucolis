@@ -300,3 +300,18 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   du mobile : sinon pnpm garde d'anciennes versions remontées (19.2.3, 0.86.3) et les tests ne démarrent plus.
 - En test, `expo-font` est simulé (polices tenues pour chargées) : avec RN 0.88, `expo-asset` lit le registre
   d'assets privé de react-native, que `jest-expo` 58.0.12 ne simule pas.
+
+## 26 octobre 2026 : contenus d'aide, CGU, confidentialité et À propos
+
+- Première version de la FAQ (50 questions en 7 rubriques), des CGU (27 articles) et de la politique de
+  confidentialité (13 sections), en français et en arabe, rédigées d'après le PRD et les décisions ci-dessus.
+  Sources dans `apps/api/src/modules/content/defaults/<clé>.<langue>.md`, publiées par
+  `pnpm --filter api seed:content` (v1). Le script ne touche jamais un contenu déjà publié : les versions
+  suivantes passent par la page Contenus du back-office, qui reste la référence.
+- Identité légale de l'éditeur (raison sociale, forme, capital, RC, NIF, siège) et numéro de récépissé de
+  l'ANPDP laissés entre crochets dans les CGU et la politique : à compléter depuis le back-office avant la
+  soumission aux stores. Âge minimal : majorité civile algérienne (19 ans). Référence légale : loi 18-07.
+- FAQ par rubriques (PRD F17) : `# Rubrique` regroupe les `## Question` qui suivent ; l'écran Aide affiche le
+  titre de la rubrique avant sa première question, recherche comprise. Une FAQ sans rubrique reste valide.
+- À propos : présentation, mission, fonctionnement en 4 étapes, engagements, contact, liens vers les CGU et la
+  confidentialité, puis les informations de version (PRD F17). Nombre de wilayas lu dans `shared/geo`.

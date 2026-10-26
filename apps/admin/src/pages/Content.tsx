@@ -18,7 +18,7 @@ interface ContentRow {
 }
 
 const KEYS = [
-  { key: 'faq', label: 'FAQ', hint: 'Une question par titre « ## Question », suivie de sa réponse.' },
+  { key: 'faq', label: 'FAQ', hint: 'Rubriques en « # Rubrique », puis une question par titre « ## Question », suivie de sa réponse.' },
   { key: 'terms', label: 'CGU', hint: 'La publication crée une nouvelle version : les utilisateurs devront l’accepter à leur prochaine ouverture.' },
   { key: 'privacy', label: 'Confidentialité', hint: 'Page publique, accessible sans compte.' },
 ] as const;

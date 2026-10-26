@@ -1,7 +1,7 @@
 // Aide : FAQ éditable depuis le back-office (recherche, accordéon) et contact du support.
 
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useContent } from '@/api/queries';
@@ -38,20 +38,27 @@ export default function Help() {
       <TextField label={t('help.searchFaq')} value={search} onChangeText={setSearch} />
       {entries.length === 0 && !faq.isLoading && <AppText color={colors.textMuted}>{t('help.noContent')}</AppText>}
       {entries.map((e, i) => (
-        <SectionCard key={e.question}>
-          <Pressable
-            onPress={() => setOpen(open === i ? null : i)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: open === i }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: space(2) }}
-          >
-            <AppText weight="semibold" style={{ flex: 1 }}>
-              {e.question}
+        <Fragment key={`${e.section}/${e.question}`}>
+          {e.section && e.section !== entries[i - 1]?.section && (
+            <AppText weight="bold" color={colors.primaryDark} style={{ marginTop: space(2) }}>
+              {e.section}
             </AppText>
-            <Ionicons name={open === i ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
-          </Pressable>
-          {open === i && <Markdown body={e.answer} />}
-        </SectionCard>
+          )}
+          <SectionCard>
+            <Pressable
+              onPress={() => setOpen(open === i ? null : i)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: open === i }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: space(2) }}
+            >
+              <AppText weight="semibold" style={{ flex: 1 }}>
+                {e.question}
+              </AppText>
+              <Ionicons name={open === i ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
+            </Pressable>
+            {open === i && <Markdown body={e.answer} />}
+          </SectionCard>
+        </Fragment>
       ))}
       {support && (
         <View style={{ gap: space(1) }}>
