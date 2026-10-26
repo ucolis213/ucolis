@@ -14,7 +14,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Segmented } from '@/components/Segmented';
 import { placeLabel } from '@/format';
-import { colors, space } from '@/theme';
+import { colors, routeArrow, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function MyOffers() {
@@ -42,7 +42,7 @@ export default function MyOffers() {
                 <Pressable onPress={() => router.push({ pathname: '/offer/[id]', params: { id: item.id } })} accessibilityRole="button">
                   {item.parcel && (
                     <AppText size="sm" weight="semibold" color={colors.primaryDark} style={{ marginBottom: space(1) }}>
-                      {item.parcel.title} · {placeLabel(item.parcel.from)} → {placeLabel(item.parcel.to)}
+                      {item.parcel.title} · {placeLabel(item.parcel.from)} {routeArrow()} {placeLabel(item.parcel.to)}
                     </AppText>
                   )}
                   <OfferCard offer={item} viewerIsSender={false} />

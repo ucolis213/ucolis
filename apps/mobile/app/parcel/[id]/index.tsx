@@ -36,6 +36,7 @@ import { StatusTimeline } from '@/components/StatusTimeline';
 import { UserRow } from '@/components/UserRow';
 import { distance, formatDate, formatDateTime, placeLabel, price, weight } from '@/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { askToVerify } from '@/components/VerificationNotice';
 import { useSession } from '@/session/SessionContext';
 import { draftFromParcel } from '@/state/draftFromParcel';
 import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
@@ -60,7 +61,6 @@ const DANGER: ParcelAction[] = ['cancel_listing', 'cancel_delivery', 'withdraw_a
 
 const ICONS: Partial<Record<ParcelAction, keyof typeof Ionicons.glyphMap>> = {
   make_offer: 'pricetag-outline',
-  ask_question: 'help-circle-outline',
   favorite: 'heart-outline',
   report: 'flag-outline',
   message: 'chatbubble-outline',
@@ -132,6 +132,7 @@ export default function ParcelDetail() {
   const actions = parcelActionsFor(viewer, p.status, {
     hasCounterOffer: p.viewer.myOffer?.status === 'countered',
     hasReviewed: p.viewer.hasReviewed,
+    deliveryCodeLocked: p.deliveryCodeLocked,
   }).filter((a) => !(a === 'call' && !p.viewer.counterpartPhone));
   const isProSender = viewer === 'sender' && user?.accountType === 'professional';
 
@@ -152,14 +153,9 @@ export default function ParcelDetail() {
 
   function needCarrier(action: () => void) {
     requireAuth(() => {
-      if (user && user.carrierVerification.status !== 'approved') {
-        Alert.alert(t('offer:needVerification'), undefined, [
-          { text: t('common:cancel'), style: 'cancel' },
-          { text: t('common:continue'), onPress: () => router.push('/me/carrier-verification') },
-        ]);
-        return;
-      }
-      action();
+      // Vérification conseillée, pas exigée : invitation à la faire, ou à continuer sans (l'API refuse si elle est exigée).
+      if (user) askToVerify(t, user.carrierVerification.status, action);
+      else action();
     }, { needsVerifiedEmail: true });
   }
 
@@ -171,7 +167,6 @@ export default function ParcelDetail() {
         return needCarrier(() => router.push({ pathname: '/parcel/[id]/make-offer', params: { id: p!.id, asking: '1' } }));
       case 'make_offer':
         return needCarrier(() => router.push({ pathname: '/parcel/[id]/make-offer', params: { id: p!.id } }));
-      case 'ask_question':
       case 'message':
         return requireAuth(() => run(openConversation), { needsVerifiedEmail: true });
       case 'favorite':
@@ -252,16 +247,40 @@ export default function ParcelDetail() {
               <Button key={a} label={t(`actions.${a}`)} onPress={() => onAction(a)} />
             ))}
             {secondary.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.secondary}>
-                {secondary.map((a) => (
-                  <Pressable key={a} onPress={() => onAction(a)} style={styles.secondaryBtn} accessibilityRole="button" accessibilityLabel={t(`actions.${a}`)}>
-                    <Ionicons name={ICONS[a] ?? 'ellipsis-horizontal'} size={20} color={DANGER.includes(a) ? colors.danger : colors.navy} />
-                    <AppText size="xs" weight="medium" color={DANGER.includes(a) ? colors.danger : colors.navy}>
-                      {t(`actions.${a}`)}
-                    </AppText>
-                  </Pressable>
-                ))}
-              </ScrollView>
+              // Grille de tuiles de même largeur (4 par ligne au plus) : toutes les actions restent visibles, sans défilement.
+              <View style={styles.secondary}>
+                {secondary.map((a) => {
+                  const danger = DANGER.includes(a);
+                  const fg = danger ? colors.danger : colors.navy;
+                  // Favori actif : cœur plein et rouge, comme celui de la photo.
+                  const liked = a === 'favorite' && p.isFavorite;
+                  return (
+                    <Pressable
+                      key={a}
+                      onPress={() => onAction(a)}
+                      style={({ pressed }) => [
+                        styles.secondaryBtn,
+                        { width: `${100 / Math.min(secondary.length, 4)}%` },
+                        pressed && { opacity: 0.6 },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(`actions.${a}`)}
+                      accessibilityState={a === 'favorite' ? { selected: liked } : undefined}
+                    >
+                      <View style={[styles.secondaryIcon, danger && styles.secondaryIconDanger]}>
+                        <Ionicons
+                          name={liked ? 'heart' : (ICONS[a] ?? 'ellipsis-horizontal')}
+                          size={20}
+                          color={liked ? colors.danger : fg}
+                        />
+                      </View>
+                      <AppText size="xs" weight="medium" color={fg} align="center" numberOfLines={2}>
+                        {t(`actions.${a}`)}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
             )}
           </View>
         ) : undefined
@@ -439,6 +458,8 @@ const styles = StyleSheet.create({
   contact: { flexDirection: 'row', gap: space(2) },
   proof: { width: '100%', height: 200, borderRadius: radii.input },
   footer: { gap: space(2) },
-  secondary: { gap: space(2) },
-  secondaryBtn: { alignItems: 'center', gap: space(1), minWidth: 72, paddingVertical: space(1), paddingHorizontal: space(2) },
+  secondary: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space(2) },
+  secondaryBtn: { alignItems: 'center', gap: space(1), paddingVertical: space(1), paddingHorizontal: space(1) },
+  secondaryIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  secondaryIconDanger: { backgroundColor: colors.dangerSoft },
 });

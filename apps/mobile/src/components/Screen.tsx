@@ -1,15 +1,17 @@
-import type { ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { colors, space } from '../theme';
+import { SheetContext } from './SheetContext';
 
 export function Screen({
   children,
@@ -37,37 +39,51 @@ export function Screen({
   onRefresh?: () => void;
 }) {
   const inner = [padded && styles.padded, contentStyle];
+  // KeyboardAvoidingView compare le clavier (coordonnées de l'écran) à sa propre position relative à son parent.
+  // Une feuille iOS (connexion, inscription, signalement, filtres) commence plus bas que le haut de l'écran mais
+  // descend jusqu'en bas : le décalage est la hauteur de l'écran moins celle de la feuille. Sans lui, le bas du
+  // formulaire et la barre d'actions restent cachés sous le clavier.
+  const inSheet = useContext(SheetContext) && Platform.OS === 'ios';
+  const { height: windowHeight } = useWindowDimensions();
+  const [sheetHeight, setSheetHeight] = useState<number | null>(null);
+  const offset = inSheet && sheetHeight ? Math.max(0, Math.round(windowHeight - sheetHeight)) : 0;
   // Clavier ouvert : l'écran rétrécit, le bas du contenu et la barre d'actions restent accessibles.
   return (
-    <KeyboardAvoidingView
+    <View
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      onLayout={inSheet ? (e) => setSheetHeight(e.nativeEvent.layout.height) : undefined}
     >
-      <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: background }]}>
-        {header}
-        {scroll ? (
-          <ScrollView
-            contentContainerStyle={inner}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="interactive"
-            refreshControl={
-              onRefresh ? (
-                <RefreshControl
-                  refreshing={!!refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={colors.primary}
-                />
-              ) : undefined
-            }
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View style={[styles.root, ...inner]}>{children}</View>
-        )}
-        {footer && <View style={styles.footer}>{footer}</View>}
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={offset}
+      >
+        <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: background }]}>
+          {header}
+          {scroll ? (
+            <ScrollView
+              contentContainerStyle={inner}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              refreshControl={
+                onRefresh ? (
+                  <RefreshControl
+                    refreshing={!!refreshing}
+                    onRefresh={onRefresh}
+                    tintColor={colors.primary}
+                  />
+                ) : undefined
+              }
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={[styles.root, ...inner]}>{children}</View>
+          )}
+          {footer && <View style={styles.footer}>{footer}</View>}
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

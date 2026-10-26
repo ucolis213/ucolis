@@ -2,9 +2,10 @@
 
 /* Mêmes valeurs que packages/shared/src/theme.ts (vérifié par test/theme.test.ts). */
 @theme {
-  --color-primary: #ff6b35;
-  --color-primary-dark: #e5531f;
-  --color-primary-soft: #fff0ea;
+  /* Couleur de marque par défaut ; remplacée à l'exécution par le réglage branding (src/brand.ts). */
+  --color-primary: #1a73e8;
+  --color-primary-dark: #155ebe;
+  --color-primary-soft: #e8f1fd;
   --color-navy: #1c1c2e;
   --color-accent: #4ecdc4;
   --color-danger: #e5484d;
@@ -13,7 +14,8 @@
   --color-background: #f6f7f9;
   --color-border: #e4e6eb;
   --color-muted: #6b6f80;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  /* Cairo prend le relais pour les caractères arabes (Inter n'en a pas). */
+  --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
   --radius-card: 12px;
 }
 

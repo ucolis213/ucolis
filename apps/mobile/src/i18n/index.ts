@@ -27,7 +27,7 @@ export function pickLocale(stored: string | null, device: string | null | undefi
   return DEFAULT_LOCALE;
 }
 
-async function reloadApp() {
+export async function reloadApp() {
   // En développement (Expo Go, build de dev), Updates.reloadAsync relance le runtime avant que les modules
   // natifs soient prêts (« Cannot find native module 'ExpoAsset' ») : on recharge depuis Metro.
   if (__DEV__) return DevSettings.reload();

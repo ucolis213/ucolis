@@ -205,9 +205,8 @@ export function createOfferService(deps: Deps) {
                 },
                 price,
                 atAskingPrice: !!input.atAskingPrice,
-                message: input.message ?? null,
                 proposedPickupDate: input.proposedPickupDate,
-                rounds: [{ by: 'carrier', price, message: input.message ?? null, at: now }],
+                rounds: [{ by: 'carrier', price, at: now }],
               },
             ],
             { session },
@@ -327,7 +326,7 @@ export function createOfferService(deps: Deps) {
       const updated = await setOffer(o, {
         $set: { status: 'countered' },
         $inc: { counterCount: 1 },
-        $push: { rounds: { by: 'sender', price: input.price, message: input.message ?? null, at: deps.now() } },
+        $push: { rounds: { by: 'sender', price: input.price, at: deps.now() } },
       });
       await deps.bus.emit('offer.countered', {
         offerId,
@@ -354,7 +353,7 @@ export function createOfferService(deps: Deps) {
       assertOfferTransition(o, 'pending', 'carrier');
       const updated = await setOffer(o, {
         $set: { status: 'pending' },
-        $push: { rounds: { by: 'carrier', price: o.price, message: null, at: deps.now() } },
+        $push: { rounds: { by: 'carrier', price: o.price, at: deps.now() } },
       });
       const parcel = await loadParcel(o.parcel);
       await deps.bus.emit('offer.counter_rejected', {
@@ -380,7 +379,7 @@ export function createOfferService(deps: Deps) {
       await wallet.assertCanTakeJobs(carrierId);
       const updated = await setOffer(o, {
         $set: { status: 'pending', price: input.price, atAskingPrice: false },
-        $push: { rounds: { by: 'carrier', price: input.price, message: input.message ?? null, at: deps.now() } },
+        $push: { rounds: { by: 'carrier', price: input.price, at: deps.now() } },
       });
       const parcel = await loadParcel(o.parcel);
       await deps.bus.emit('offer.created', {

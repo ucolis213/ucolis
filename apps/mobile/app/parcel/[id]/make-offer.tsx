@@ -1,4 +1,5 @@
-// Faire une offre (F8) : au prix demandé en un geste, ou prix proposé avec message, véhicule et date d'enlèvement.
+// Faire une offre (F8) : au prix demandé en un geste, ou prix proposé, avec véhicule et date
+// d'enlèvement. Pas de message : aucun échange avant l'acceptation.
 
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -8,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { isRoundPrice, MIN_PRICE_DA } from '@ucolis/shared';
 import { api, errorMessage, fieldErrors } from '@/api/client';
 import { useParcel } from '@/api/queries';
+import { CarrierVerificationTip, showVerificationRequired } from '@/components/VerificationNotice';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
@@ -17,7 +19,6 @@ import { LoadingSkeleton } from '@/components/QueryView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmptyState } from '@/components/States';
-import { TextField } from '@/components/TextField';
 import { price } from '@/format';
 import { useSession } from '@/session/SessionContext';
 import { colors, space } from '@/theme';
@@ -35,7 +36,6 @@ export default function MakeOffer() {
   );
   const [vehicleId, setVehicleId] = useState<string | null>(null);
   const [offerPrice, setOfferPrice] = useState<number | null>(null);
-  const [message, setMessage] = useState('');
   const [pickupDate, setPickupDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
@@ -52,12 +52,22 @@ export default function MakeOffer() {
   const selectedVehicle = vehicleId ?? compatible.find((v) => v.isDefault)?.id ?? compatible[0]?.id ?? null;
 
   if (!user?.vehicles.length || !compatible.length) {
+    const hasVehicles = !!user?.vehicles.length;
+    const sep = t('listSeparator');
+    // Véhicules présents mais d'un type non accepté : on dit lesquels sont demandés et lesquels on a.
+    const mismatch = hasVehicles
+      ? t('noVehicleMatchBody', {
+          accepted: p.vehicleTypes.map((v) => t(`parcel:vehicleTypes.${v}`)).join(sep),
+          mine: user!.vehicles.map((v) => `${t(`parcel:vehicleTypes.${v.type}`)} · ${v.brand}`).join(sep),
+        })
+      : undefined;
     return (
       <Screen edges={['top', 'bottom']} header={<ScreenHeader title={t('parcel:actions.make_offer')} />}>
         <EmptyState
           icon="car-outline"
-          title={user?.vehicles.length ? t('noVehicleMatch') : t('needVehicle')}
-          actionLabel={t('profile:addVehicle')}
+          title={hasVehicles ? t('noVehicleMatch') : t('needVehicle')}
+          body={mismatch}
+          actionLabel={hasVehicles ? t('manageVehicles') : t('profile:addVehicle')}
           onAction={() => router.push('/me/vehicles')}
         />
       </Screen>
@@ -77,13 +87,13 @@ export default function MakeOffer() {
         ...(atAsking ? { atAskingPrice: true } : { price: offerPrice }),
         vehicleId: selectedVehicle,
         proposedPickupDate: pickupDate!.toISOString(),
-        message: message.trim() || undefined,
       });
       void qc.invalidateQueries({ queryKey: ['parcel', id] });
       void qc.invalidateQueries({ queryKey: ['me', 'offers'] });
       Alert.alert(t('sent'));
       router.replace({ pathname: '/offer/[id]', params: { id: offer.id } });
     } catch (err) {
+      if (showVerificationRequired(t, err)) return;
       const fields = fieldErrors(err);
       setErrors(fields);
       if (!Object.keys(fields).length) Alert.alert(errorMessage(t, err));
@@ -106,6 +116,7 @@ export default function MakeOffer() {
         </AppText>
       </SectionCard>
       {blocked && <WalletBlockedBanner />}
+      {user && <CarrierVerificationTip status={user.carrierVerification.status} />}
       {atAsking ? (
         <AppText size="xl" weight="bold" color={colors.primary}>
           {price(p.requestedPrice)}
@@ -121,7 +132,6 @@ export default function MakeOffer() {
         ))}
       </View>
       <DateSelect label={t('pickupDate')} value={pickupDate} onChange={setPickupDate} error={errors.proposedPickupDate} />
-      <TextField label={t('message')} value={message} onChangeText={setMessage} multiline maxLength={500} style={{ minHeight: 80, textAlignVertical: 'top' }} />
     </Screen>
   );
 }

@@ -54,7 +54,7 @@ export function createApp(deps: Deps, services: Services = createServices(deps))
   v1.use(proRoutes(deps, services.pro));
   v1.use(tripRoutes(deps, services.trips, services.alerts));
   v1.use(contentRoutes(deps, services.content));
-  v1.use(userRoutes());
+  v1.use(userRoutes(deps));
   v1.use(geoRoutes(deps, deps.geocoder));
   v1.use(parcelRoutes(deps, services.parcels));
   v1.use(carrierRoutes(deps, services.carrier));

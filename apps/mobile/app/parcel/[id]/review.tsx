@@ -27,7 +27,18 @@ export default function ReviewParcel() {
   const status = useReviewStatus(id);
   const qc = useQueryClient();
   const [rating, setRating] = useState(0);
+  // Tant que la note globale n'a pas été choisie, elle suit la moyenne des critères saisis.
+  const [ratingChosen, setRatingChosen] = useState(false);
   const [criteria, setCriteria] = useState<Record<string, number>>({});
+
+  function rateCriterion(c: string, v: number) {
+    const next = { ...criteria, [c]: v };
+    setCriteria(next);
+    if (!ratingChosen) {
+      const values = Object.values(next);
+      setRating(Math.round(values.reduce((a, b) => a + b, 0) / values.length));
+    }
+  }
   const [comment, setComment] = useState('');
   const [pending, setPending] = useState(false);
 
@@ -50,17 +61,36 @@ export default function ReviewParcel() {
       <QueryView query={status}>
         {(s) =>
           !s.canReview ? (
-            <EmptyState icon="star-outline" title={s.alreadyReviewed ? t('reviewThanks') : t('common:unavailable')} body={s.alreadyReviewed ? t('reviewBlind') : undefined} />
+            <EmptyState
+              icon="star-outline"
+              title={s.alreadyReviewed ? t('reviewThanks') : t('common:unavailable')}
+              body={s.alreadyReviewed ? t('reviewBlind') : s.alreadyRatedUser ? t('reviewAlreadyRatedUser') : undefined}
+            />
           ) : (
             <View style={{ gap: space(4) }}>
               {s.target && <UserRow user={s.target} />}
               <AppText weight="bold">{s.direction === 'sender_to_carrier' ? t('reviewRateCarrier') : t('reviewRateSender')}</AppText>
-              <RatingStars value={rating} onChange={setRating} size={36} />
+              <View style={{ gap: space(1) }}>
+                <AppText size="sm" weight="semibold">
+                  {t('reviewOverall')}
+                </AppText>
+                <RatingStars
+                  value={rating}
+                  onChange={(v) => {
+                    setRatingChosen(true);
+                    setRating(v);
+                  }}
+                  size={36}
+                />
+              </View>
               <SectionCard>
+                <AppText size="sm" weight="semibold" color={colors.textMuted}>
+                  {t('reviewCriteriaOptional')}
+                </AppText>
                 {(s.direction === 'sender_to_carrier' ? CARRIER_CRITERIA : SENDER_CRITERIA).map((c) => (
                   <View key={c} style={{ gap: space(1) }}>
                     <AppText size="sm">{t(`criteria.${c}`)}</AppText>
-                    <RatingStars value={criteria[c] ?? 0} onChange={(v) => setCriteria((cur) => ({ ...cur, [c]: v }))} size={22} />
+                    <RatingStars value={criteria[c] ?? 0} onChange={(v) => rateCriterion(c, v)} size={22} />
                   </View>
                 ))}
               </SectionCard>
@@ -68,6 +98,11 @@ export default function ReviewParcel() {
               <AppText size="xs" color={colors.textMuted}>
                 {t('reviewBlind')} {s.deadline ? `(${formatDate(s.deadline)})` : ''}
               </AppText>
+              {rating === 0 && (
+                <AppText size="sm" color={colors.danger} align="center">
+                  {t('reviewNeedRating')}
+                </AppText>
+              )}
               <Button label={t('common:send')} onPress={submit} loading={pending} disabled={rating === 0} />
             </View>
           )

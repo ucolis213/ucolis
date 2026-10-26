@@ -7,7 +7,6 @@ export function toOfferDto(o: OfferLean, carrier: UserLean, opts: { fullPlate?: 
   const rounds = (o.rounds ?? []).map((r) => ({
     by: r.by,
     price: r.price,
-    message: r.message ?? null,
     at: r.at.toISOString(),
   }));
   const lastSender = [...rounds].reverse().find((r) => r.by === 'sender');
@@ -21,13 +20,12 @@ export function toOfferDto(o: OfferLean, carrier: UserLean, opts: { fullPlate?: 
       brand: v.brand ?? '',
       model: v.model ?? '',
       plate: opts.fullPlate ? (v.plate ?? '') : maskPlate(v.plate ?? ''),
-      capacityKg: v.capacityKg ?? 0,
-      volumeM3: v.volumeM3 ?? 0,
+      capacityKg: v.capacityKg ?? null,
+      volumeM3: v.volumeM3 ?? null,
       photo: v.photo ?? null,
     },
     price: o.price,
     atAskingPrice: o.atAskingPrice,
-    message: o.message ?? null,
     proposedPickupDate: o.proposedPickupDate.toISOString(),
     status: o.status,
     rounds,

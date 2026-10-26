@@ -301,6 +301,132 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
 - En test, `expo-font` est simulé (polices tenues pour chargées) : avec RN 0.88, `expo-asset` lit le registre
   d'assets privé de react-native, que `jest-expo` 58.0.12 ne simule pas.
 
+## 24 octobre 2026 : code de remise après une déclaration de livraison
+
+- Le transporteur retenu peut saisir le code de remise en delivered_pending (nouvelle transition
+  delivered_pending → delivered, par le transporteur, avec le code correct) : il finalise sans attendre la
+  confirmation de l'expéditeur ni les 72 h. Mêmes effets que la remise avec code ; mêmes 5 essais au total.
+- En delivered_pending, le transporteur retrouve aussi « Message » et « Ouvrir un litige » (le litige était déjà
+  permis par la machine à états, mais aucune action ne l'affichait).
+- « Saisir le code de remise » disparaît des actions quand la saisie est bloquée (`deliveryCodeLocked`).
+
+## 24 octobre 2026 : avis, signalement d'un avis, badge des messages
+
+- Une seule note par personne : un avis par auteur et par personne notée, tous colis confondus (auparavant un par
+  colis). Sur un nouveau colis, « Noter » disparaît si l'autre partie est déjà notée, pas de relance, et l'API
+  répond 409 ALREADY_REVIEWED. Contrôle applicatif (`hasRated`), sans index unique : la base peut contenir des
+  doublons antérieurs.
+- Double aveugle : la publication a lieu dès que les deux personnes se sont notées, même sur deux colis
+  différents (sinon l'avis de l'une attendrait 14 jours une réponse devenue impossible).
+- Signaler un avis (déjà prévu par l'API, F16) : drapeau sur chaque avis du profil public (sauf les siens) et
+  sur les avis reçus dans « Mes avis ».
+- Écran de notation : « Note globale » obligatoire et nommée, critères marqués facultatifs ; la note globale suit
+  la moyenne des critères tant qu'elle n'a pas été choisie.
+- Lecture d'une discussion : le badge est remis à zéro tout de suite dans la liste, et la liste n'est relue
+  qu'après l'accusé de lecture du serveur (avant, elle était relue trop tôt et gardait l'ancien compteur).
+
+## 24 octobre 2026 : couleur de marque bleue et réglable
+
+- La couleur de marque passe de l'orange (#FF6B35) au bleu #0069D8 (le bleu principal de Cocolis, blue-500),
+  jugé plus rassurant ; la nuance foncée dérivée (#0056B1) est proche de leur blue-600 (#0055AF). Les nuances
+  `primaryDark` et `primarySoft` sont calculées à partir d'elle (`brandPalette`, shared/theme.ts).
+- Nouveau réglage `branding.primaryColor` (super-administrateur, page Réglages avec sélecteur de couleur et
+  aperçu), exposé dans la configuration publique. Refus d'une couleur trop claire pour du texte blanc
+  (contraste WCAG < 4,5).
+- Mobile : les styles étant figés au chargement des modules, la couleur est appliquée de façon synchrone au
+  chargement de `src/theme` (SecureStore), avant tout écran. Une couleur différente reçue du serveur est
+  enregistrée puis appliquée par un redémarrage unique de l'application (pas de boucle : relecture vérifiée).
+  Remplacé le 25 octobre 2026 : plus de redémarrage, voir plus bas.
+- Back-office : variables CSS de Tailwind redéfinies à l'exécution (src/brand.ts), dernière couleur gardée en
+  localStorage ; appliquée tout de suite après l'enregistrement du réglage.
+- Reste fixe : la couleur des notifications Android déclarée dans app.config.ts (prise au build).
+
+## 24 octobre 2026 : police Cairo et flèches en arabe
+
+- Police arabe : Cairo remplace IBM Plex Sans Arabic, partout (application mobile ; back-office pour les textes
+  arabes, après Inter dans la pile de polices). Mêmes graisses 400, 500, 600 et 700.
+- Flèche d'un trajet (départ → arrivée) : `routeArrow()` (src/theme) donne ← en arabe, pour qu'elle pointe vers
+  l'arrivée dans le sens de lecture. Même principe pour la flèche « déplacer la photo » de la grille de photos.
+- La police arabe et la flèche suivent la langue choisie (`readsRtl()` dans src/theme), pas seulement
+  `I18nManager.isRTL` : la mise en page RTL n'est effective qu'après un redémarrage natif (dans Expo Go, parfois
+  seulement après fermeture complète), alors que les textes arabes se lisent déjà de droite à gauche.
+
+## 24 octobre 2026 : adresses d'un trajet saisies comme celles d'un colis
+
+- « Proposer un trajet » : départ et arrivée se choisissent avec la même recherche que pour un colis (recherche,
+  position actuelle, adresses récentes, carte), via `RouteFields` extrait de `RoutePicker`. Wilaya et commune
+  sont déduites de l'adresse ; la position envoyée est celle de l'adresse choisie, et non plus le centre de la
+  commune. Le départ est prérempli avec la commune du profil. Textes d'invite propres aux trajets
+  (`trip.whereFrom`, `trip.whereTo`).
+
+## 25 octobre 2026 : étapes d'un trajet saisies comme le départ et l'arrivée
+
+- Les étapes de « Proposer un trajet » se choisissent avec la même recherche d'adresse (recherche, position
+  actuelle, adresses récentes, carte) : `AddressSearch` accepte désormais une liste de champs (`fields`) et un
+  titre, et sert ici sur le seul champ `stop`. Le modèle ne change pas (PRD F9 : de 0 à 5 wilayas étapes) :
+  seule la wilaya de l'adresse choisie est envoyée, sans doublon ; l'adresse complète n'est qu'affichée.
+
+## 25 octobre 2026 : couleur de marque sans redémarrage, bleu par défaut éclairci
+
+- Le redémarrage automatique après un changement de couleur est supprimé : relancer le runtime pendant le
+  démarrage fait planter Expo Go (« Cannot find native module 'ExpoAsset' », puis « "main" has not been
+  registered »). La couleur reçue du serveur est enregistrée (SecureStore) et appliquée au prochain lancement.
+- Bleu par défaut : #1A73E8 au lieu de #0069D8, plus clair et plus engageant (contraste avec le blanc 4,51,
+  juste au-dessus du minimum de 4,5 exigé pour le texte des boutons). Nuances dérivées : #155EBE (foncée),
+  #E8F1FD (douce).
+
+## 25 octobre 2026 : aucune messagerie avant l'acceptation d'une offre
+
+- Expéditeur et transporteur n'échangent aucun message tant qu'une offre n'est pas acceptée : la négociation
+  porte uniquement sur le prix. « Poser une question » disparaît de l'annonce, et « Message » des actions d'un
+  transporteur qui a une offre en cours.
+- Règle dans l'API (`canMessage`, conversations/service.ts) : une conversation de colis exige une offre acceptée
+  sur ce colis entre les deux ; une conversation générale (« Contacter ») exige une livraison acceptée ensemble,
+  sur n'importe quel colis. Une offre acceptée puis abandonnée par le transporteur compte. Refus : 403
+  MESSAGING_LOCKED, à l'ouverture comme à l'envoi (HTTP et Socket.IO).
+- Les conversations ouvertes avant cette règle restent lisibles mais verrouillées : `ConversationDto.locked`, et
+  l'écran de conversation explique que les messages s'ouvrent une fois l'offre acceptée.
+- Les offres et contre-offres ne portent plus de message libre (champ retiré du schéma, du modèle et du DTO ;
+  un message envoyé par une ancienne version de l'application est ignoré) : il aurait permis d'échanger des
+  coordonnées avant l'acceptation.
+
+## 25 octobre 2026 : véhicule, clavier et message d'incompatibilité
+
+- Ajout d'un véhicule : seuls le type, la marque et l'immatriculation sont obligatoires. Modèle (chaîne vide),
+  capacité et volume (null) sont facultatifs, dans le schéma partagé, le modèle Mongoose et les DTO ; les
+  affichages omettent ce qui n'est pas précisé.
+- « Faire une offre » sans véhicule compatible : l'écran indique les types demandés par le colis et les
+  véhicules du transporteur, avec « Gérer mes véhicules ».
+- Clavier dans les feuilles iOS (connexion, inscription, signalement, filtres) : `KeyboardAvoidingView` compare
+  le clavier à sa position relative à son parent. Les écrans en feuille sont enveloppés dans `<Sheet>`
+  (src/components/SheetContext.tsx) ; `Screen` y passe en `keyboardVerticalOffset` la hauteur de l'écran moins
+  celle de la feuille (une feuille descend jusqu'en bas). La mesure par measureInWindow, peu fiable dans une
+  feuille, est abandonnée. Tout nouvel écran présenté en feuille doit être enveloppé dans `<Sheet>`.
+
+
+## 25 octobre 2026 : vérification des transporteurs conseillée, non bloquante
+
+- `requireCarrierVerification` vaut désormais false par défaut (shared/settings.ts) et sur l'instance ; le PRD
+  (« Décisions arrêtées ») est mis à jour. Un transporteur non vérifié peut faire une offre et publier un trajet.
+- Mobile : plus aucun blocage local (la configuration en cache pouvait être périmée). Si le réglage est activé,
+  l'API refuse avec CARRIER_NOT_VERIFIED et l'application propose alors de compléter la vérification.
+- Écran « Faire une offre » : tant que le compte n'est pas vérifié, un encadré conseille la vérification (ou
+  indique qu'elle est en cours d'examen) avec « Vérifier mon compte ».
+- « Accepter le prix » ou « Proposer un prix » par un transporteur sans dossier (ou refusé, expiré) : un message
+  l'invite à se faire vérifier, avec deux choix, « Vérifier mon compte » ou « Continuer sans vérifier »
+  (`askToVerify`). Dossier en cours d'examen : pas de message, il continue directement.
+- Côté expéditeur, une offre d'un transporteur non vérifié porte une mention neutre : identité pas encore
+  vérifiée par UCOLIS, avis et historique pour aider au choix.
+- Détail d'une annonce : la tuile « Favori » passe au cœur plein rouge quand l'annonce est en favori.
+
+## 25 octobre 2026 : profil public remanié, « Contacter » après une offre acceptée
+
+- Profil public : drapeau « Signaler » et menu « Plus » (Bloquer / Débloquer) dans l'en-tête ; carte de
+  présentation avec « Contacter » en bouton principal ; statistiques de confiance en tuiles.
+- `GET /users/:id` accepte une authentification facultative et renvoie `canContact` (même règle que
+  `canMessage` : livraison acceptée entre le visiteur et ce profil). « Contacter » n'apparaît que dans ce cas.
+
+
 ## 26 octobre 2026 : contenus d'aide, CGU, confidentialité et À propos
 
 - Première version de la FAQ (50 questions en 7 rubriques), des CGU (27 articles) et de la politique de

@@ -13,7 +13,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Segmented } from '@/components/Segmented';
 import { placeLabel, price } from '@/format';
-import { colors, space } from '@/theme';
+import { colors, routeArrow, space } from '@/theme';
 
 export default function MyDeliveries() {
   const { t } = useTranslation(['profile', 'common']);
@@ -50,7 +50,7 @@ export default function MyDeliveries() {
                     <SectionCard>
                       <AppText weight="bold">{o.parcel.title}</AppText>
                       <AppText size="sm" color={colors.textMuted}>
-                        {placeLabel(o.parcel.from)} → {placeLabel(o.parcel.to)}
+                        {placeLabel(o.parcel.from)} {routeArrow()} {placeLabel(o.parcel.to)}
                       </AppText>
                       <AppText size="sm" weight="semibold">
                         {t(`common:parcelStatus.${o.parcel.status}`)} · {price(o.finalPrice ?? o.price)}

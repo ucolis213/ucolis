@@ -1,9 +1,12 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { io as connect, type Socket } from 'socket.io-client';
+import { Types } from 'mongoose';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConversationModel, MessageModel } from '../src/modules/conversations/model';
 import { NotificationModel } from '../src/modules/notifications/model';
+import { OfferModel } from '../src/modules/offers/model';
+import { ParcelModel } from '../src/modules/parcels/model';
 import { UserModel } from '../src/modules/users/model';
 import { createApp } from '../src/app';
 import { attachSocketServer, createDeferredRealtime, socketRealtime } from '../src/realtime/socket';
@@ -28,6 +31,19 @@ async function acceptedDeal(ctx: TestApp) {
   ).body;
   await ctx.http().post(`/api/v1/offers/${o.id}/accept`).set(amina.auth);
   return { amina, karim, parcel: p, offer: o };
+}
+
+/** Livraison acceptée inscrite directement en base (sans passer par les offres) : ouvre la messagerie. */
+async function fakeDeal(senderId: string, carrierId: string) {
+  const parcel = await ParcelModel.collection.insertOne({
+    sender: new Types.ObjectId(senderId),
+    reference: `UC-TEST-${new Types.ObjectId().toString()}`,
+  });
+  await OfferModel.collection.insertOne({
+    parcel: parcel.insertedId,
+    carrier: new Types.ObjectId(carrierId),
+    status: 'accepted',
+  });
 }
 
 describe('notifications des offres', () => {
@@ -127,34 +143,58 @@ describe('notifications des offres', () => {
 });
 
 describe('messagerie', () => {
-  it('ouvre une conversation unique par paire et par colis', async () => {
+  it("refuse tout échange avant l'acceptation d'une offre, puis ouvre une conversation unique par paire et par colis", async () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
     const p = await createParcel(ctx, amina);
-    const a = await ctx
+    const open = (who: { auth: Record<string, string> }, body: Record<string, string>) =>
+      ctx.http().post('/api/v1/conversations').set(who.auth).send(body);
+
+    // Annonce ouverte, puis offre en cours : ni « Poser une question », ni « Contacter ».
+    expect((await open(karim, { userId: amina.id, parcelId: p.id })).body.error.code).toBe('MESSAGING_LOCKED');
+    const o = (
+      await ctx
+        .http()
+        .post(`/api/v1/parcels/${p.id}/offers`)
+        .set(karim.auth)
+        .send({ price: 3250, vehicleId: karim.vehicleId, proposedPickupDate: pickup() })
+    ).body;
+    const locked = await open(amina, { userId: karim.id, parcelId: p.id });
+    expect(locked.status).toBe(403);
+    expect(locked.body.error.code).toBe('MESSAGING_LOCKED');
+    expect((await open(karim, { userId: amina.id })).body.error.code).toBe('MESSAGING_LOCKED');
+
+    // Conversation ouverte avant la règle : lisible, mais verrouillée.
+    const legacy = await ConversationModel.create({
+      participants: [amina.id, karim.id].sort(),
+      parcel: p.id,
+      pairKey: [amina.id, karim.id].sort().join(':'),
+    });
+    const view = await ctx.http().get(`/api/v1/conversations/${legacy.id}`).set(karim.auth);
+    expect(view.body).toMatchObject({ locked: true, canSend: false });
+    const early = await ctx
       .http()
-      .post('/api/v1/conversations')
+      .post(`/api/v1/conversations/${legacy.id}/messages`)
       .set(karim.auth)
-      .send({ userId: amina.id, parcelId: p.id });
-    const b = await ctx
-      .http()
-      .post('/api/v1/conversations')
-      .set(amina.auth)
-      .send({ userId: karim.id, parcelId: p.id });
-    expect(a.body.id).toBe(b.body.id);
-    const general = await ctx
-      .http()
-      .post('/api/v1/conversations')
-      .set(karim.auth)
-      .send({ userId: amina.id });
+      .send({ type: 'text', clientId: 'client-early', text: 'Mon numéro : 0555' });
+    expect(early.body.error.code).toBe('MESSAGING_LOCKED');
+
+    await ctx.http().post(`/api/v1/offers/${o.id}/accept`).set(amina.auth);
+    const a = await open(karim, { userId: amina.id, parcelId: p.id });
+    const b = await open(amina, { userId: karim.id, parcelId: p.id });
+    expect(a.body.id).toBe(legacy.id);
+    expect(b.body.id).toBe(a.body.id);
+    expect(a.body).toMatchObject({ locked: false, canSend: true });
+    const general = await open(karim, { userId: amina.id });
     expect(general.body.id).not.toBe(a.body.id);
     expect(general.body.parcel).toBeNull();
-    const self = await ctx
-      .http()
-      .post('/api/v1/conversations')
-      .set(karim.auth)
-      .send({ userId: karim.id });
+    // Une livraison acceptée ne vaut que pour cette paire et ce colis.
+    const other = await createParcel(ctx, amina);
+    expect((await open(karim, { userId: amina.id, parcelId: other.id })).body.error.code).toBe('MESSAGING_LOCKED');
+    const stranger = await verifiedUser(ctx);
+    expect((await open(karim, { userId: stranger.id })).body.error.code).toBe('MESSAGING_LOCKED');
+    const self = await open(karim, { userId: karim.id });
     expect(self.status).toBe(400);
   });
 
@@ -162,6 +202,7 @@ describe('messagerie', () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
+    await fakeDeal(amina.id, karim.id);
     const conv = (
       await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
     ).body;
@@ -206,6 +247,7 @@ describe('messagerie', () => {
     const ctx = makeTestApp();
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
+    await fakeDeal(amina.id, karim.id);
     const conv = (
       await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
     ).body;
@@ -249,6 +291,7 @@ describe('messagerie', () => {
       .post('/api/v1/me/push-tokens')
       .set(amina.auth)
       .send({ token: 'ExponentPushToken[a]', platform: 'ios', deviceId: amina.deviceId });
+    await fakeDeal(amina.id, karim.id);
     const conv = (
       await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
     ).body;
@@ -279,6 +322,7 @@ describe('messagerie', () => {
     const amina = await verifiedUser(ctx);
     const karim = await verifiedCarrier(ctx);
     const intrus = await verifiedUser(ctx);
+    await fakeDeal(amina.id, karim.id);
     const conv = (
       await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: amina.id })
     ).body;
@@ -332,12 +376,14 @@ describe('messagerie', () => {
     const karim = await verifiedCarrier(ctx);
     for (let i = 0; i < 10; i++) {
       const other = await verifiedUser(ctx);
+      await fakeDeal(other.id, karim.id);
       expect(
         (await ctx.http().post('/api/v1/conversations').set(karim.auth).send({ userId: other.id }))
           .status,
       ).toBe(200);
     }
     const last = await verifiedUser(ctx);
+    await fakeDeal(last.id, karim.id);
     const res = await ctx
       .http()
       .post('/api/v1/conversations')
@@ -410,6 +456,7 @@ describe('Socket.IO', () => {
     };
     const amina = await reg('Amina');
     const karim = await reg('Karim');
+    await fakeDeal(amina.id, karim.id);
     const conv = (
       await request
         .post('/api/v1/conversations')
@@ -451,5 +498,23 @@ describe('Socket.IO', () => {
       conversationId: conv.id,
     });
     expect(denied).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } });
+  });
+});
+
+describe('profil public', () => {
+  it("ne propose « Contacter » qu'après une livraison acceptée entre les deux", async () => {
+    const ctx = makeTestApp();
+    const amina = await verifiedUser(ctx);
+    const karim = await verifiedCarrier(ctx);
+    const profile = (who?: { auth: Record<string, string> }) => {
+      const req = ctx.http().get(`/api/v1/users/${karim.id}`);
+      return who ? req.set(who.auth) : req;
+    };
+    expect((await profile()).body.canContact).toBe(false);
+    expect((await profile(amina)).body.canContact).toBe(false);
+    expect((await profile(karim)).body.canContact).toBe(false);
+    await fakeDeal(amina.id, karim.id);
+    expect((await profile(amina)).body.canContact).toBe(true);
+    expect((await profile()).body.canContact).toBe(false);
   });
 });

@@ -27,7 +27,8 @@ export const PARCEL_TRANSITIONS: readonly Transition<ParcelStatus, ParcelActor>[
   },
   { from: ['open', 'negotiating'], to: 'expired', by: ['job'], trigger: 'expired' },
   { from: ['assigned'], to: 'in_transit', by: ['carrier'], trigger: 'delivery_started' },
-  { from: ['in_transit'], to: 'delivered', by: ['carrier'], trigger: 'delivery_code' },
+  // Le code reste valable après une déclaration : le transporteur peut finaliser sans attendre l'expéditeur.
+  { from: ['in_transit', 'delivered_pending'], to: 'delivered', by: ['carrier'], trigger: 'delivery_code' },
   { from: ['in_transit'], to: 'delivered_pending', by: ['carrier'], trigger: 'delivery_declared' },
   {
     from: ['delivered_pending'],
@@ -101,7 +102,6 @@ export type ParcelAction =
   | 'login_to_offer'
   | 'accept_asking_price'
   | 'make_offer'
-  | 'ask_question'
   | 'favorite'
   | 'report'
   | 'view_my_offer'
@@ -130,12 +130,13 @@ const ACTIONS: Partial<Record<ParcelViewer, Partial<Record<ParcelStatus, ParcelA
     negotiating: ['login_to_offer'],
   },
   carrier_no_offer: {
-    open: ['accept_asking_price', 'make_offer', 'ask_question', 'favorite', 'report'],
-    negotiating: ['accept_asking_price', 'make_offer', 'ask_question', 'favorite', 'report'],
+    open: ['accept_asking_price', 'make_offer', 'favorite', 'report'],
+    negotiating: ['accept_asking_price', 'make_offer', 'favorite', 'report'],
   },
+  // Pas de messagerie avant l'acceptation d'une offre : la négociation porte uniquement sur le prix.
   carrier_with_offer: {
-    open: ['view_my_offer', 'answer_counter', 'withdraw_offer', 'message'],
-    negotiating: ['view_my_offer', 'answer_counter', 'withdraw_offer', 'message'],
+    open: ['view_my_offer', 'answer_counter', 'withdraw_offer'],
+    negotiating: ['view_my_offer', 'answer_counter', 'withdraw_offer'],
   },
   sender: {
     open: ['view_offers', 'edit', 'cancel_listing', 'share'],
@@ -148,6 +149,7 @@ const ACTIONS: Partial<Record<ParcelViewer, Partial<Record<ParcelStatus, ParcelA
   assigned_carrier: {
     assigned: ['start_delivery', 'message', 'call', 'withdraw_assignment'],
     in_transit: ['enter_delivery_code', 'declare_delivery', 'message', 'open_dispute'],
+    delivered_pending: ['enter_delivery_code', 'message', 'open_dispute'],
     delivered: ['rate', 'message'],
   },
 };
@@ -157,6 +159,8 @@ export interface ParcelActionContext {
   hasCounterOffer?: boolean;
   /** L'utilisateur a déjà noté ce colis. */
   hasReviewed?: boolean;
+  /** Saisie du code bloquée après 5 erreurs : l'action « Saisir le code » disparaît. */
+  deliveryCodeLocked?: boolean;
 }
 
 export function parcelActionsFor(
@@ -168,6 +172,7 @@ export function parcelActionsFor(
   return actions.filter((a) => {
     if (a === 'answer_counter') return Boolean(ctx.hasCounterOffer);
     if (a === 'rate') return !ctx.hasReviewed;
+    if (a === 'enter_delivery_code') return !ctx.deliveryCodeLocked;
     return true;
   });
 }

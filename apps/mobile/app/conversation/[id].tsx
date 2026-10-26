@@ -23,6 +23,7 @@ import {
   TYPING_TIMEOUT_MS,
   formatNotificationParams,
   formatPrice,
+  type ConversationDto,
   type FileRef,
   type MessageDto,
 } from '@ucolis/shared';
@@ -85,9 +86,18 @@ export default function Conversation() {
   );
 
   const markRead = useCallback(() => {
-    if (socket?.connected) socket.emit('conversation:read', { conversationId: id });
-    else void api.post(`/conversations/${id}/read`).catch(() => undefined);
-    void qc.invalidateQueries({ queryKey: ['conversations'] });
+    // Badge remis à zéro tout de suite dans la liste ; rechargement seulement une fois la lecture
+    // enregistrée par le serveur, sinon la liste relue garde l'ancien compteur.
+    qc.setQueryData<{ items: ConversationDto[] }>(['conversations'], (old) =>
+      old ? { ...old, items: old.items.map((c) => (c.id === id ? { ...c, unread: 0 } : c)) } : old,
+    );
+    const done = socket?.connected ? emitWithAck(socket, 'conversation:read', { conversationId: id }) : api.post(`/conversations/${id}/read`);
+    void done
+      .then(() => {
+        void qc.invalidateQueries({ queryKey: ['conversations'] });
+        void qc.invalidateQueries({ queryKey: ['notifications'] });
+      })
+      .catch(() => undefined);
   }, [socket, id, qc]);
 
   // Room de la conversation : pas de push pendant qu'elle est ouverte à l'écran.
@@ -388,7 +398,11 @@ export default function Conversation() {
         {c && !c.canSend ? (
           <View style={styles.blockedBar}>
             <AppText size="sm" color={colors.textMuted} align="center">
-              {c.blockedByMe ? t('blockedByMe', { name: c.other.displayName }) : t('cannotReply')}
+              {c.blockedByMe
+                ? t('blockedByMe', { name: c.other.displayName })
+                : c.locked
+                  ? t('lockedUntilAccepted')
+                  : t('cannotReply')}
             </AppText>
             {c.blockedByMe && (
               <Button

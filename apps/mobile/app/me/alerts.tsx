@@ -16,7 +16,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { wilayaName } from '@/format';
 import { useFilters, type ParcelFilters, type TripFilters } from '@/state/filters';
-import { colors, space } from '@/theme';
+import { colors, routeArrow, space } from '@/theme';
 
 export default function Alerts() {
   const { t } = useTranslation(['profile', 'common', 'trip']);
@@ -61,7 +61,7 @@ export default function Alerts() {
                   }
                 >
                   <AppText size="sm" color={colors.textMuted}>
-                    {t(`trip:${a.scope}`)} · {[f.fromWilaya && wilayaName(f.fromWilaya), f.toWilaya && wilayaName(f.toWilaya)].filter(Boolean).join(' → ')}
+                    {t(`trip:${a.scope}`)} · {[f.fromWilaya && wilayaName(f.fromWilaya), f.toWilaya && wilayaName(f.toWilaya)].filter(Boolean).join(` ${routeArrow()} `)}
                   </AppText>
                   <View style={{ flexDirection: 'row', gap: space(2) }}>
                     <Button label={t('common:apply')} variant="outline" fullWidth={false} onPress={() => apply(a)} />

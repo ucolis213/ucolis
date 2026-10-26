@@ -1,4 +1,4 @@
-// Contre-offre de l'expéditeur ou nouvelle proposition du transporteur (F8) : montant borné, message facultatif.
+// Contre-offre de l'expéditeur ou nouvelle proposition du transporteur (F8) : montant borné, sans message.
 // Les bornes reprennent les règles de l'API (COUNTER_PRICE_NOT_LOWER, REOFFER_PRICE_NOT_HIGHER), qui les impose.
 
 import { useEffect, useState } from 'react';
@@ -11,7 +11,6 @@ import { AppModal } from './AppModal';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { PriceInput } from './FormBits';
-import { TextField } from './TextField';
 
 export function PriceProposalModal({
   visible,
@@ -34,16 +33,14 @@ export function PriceProposalModal({
   above?: number;
   confirmLabel: string;
   onCancel: () => void;
-  onConfirm: (input: { price: number; message?: string }) => void | Promise<void>;
+  onConfirm: (input: { price: number }) => void | Promise<void>;
 }) {
   const { t } = useTranslation(['offer', 'common']);
   const [value, setValue] = useState<number | null>(null);
-  const [note, setNote] = useState('');
   const [pending, setPending] = useState(false);
   useEffect(() => {
     if (visible) {
       setValue(null);
-      setNote('');
     }
   }, [visible]);
 
@@ -71,26 +68,22 @@ export function PriceProposalModal({
             </AppText>
           )}
           <PriceInput label={label} value={value} onChange={setValue} error={error} hint={hint} autoFocus />
-          <TextField label={t('message')} value={note} onChangeText={setNote} maxLength={500} multiline />
+          {/* Action principale pleine largeur, annulation discrète en dessous : aucun libellé tronqué. */}
           <View style={styles.actions}>
-            <View style={styles.flex}>
-              <Button label={t('common:cancel')} variant="outline" onPress={onCancel} />
-            </View>
-            <View style={styles.flex}>
-              <Button
-                label={confirmLabel}
-                loading={pending}
-                disabled={value === null || !!error}
-                onPress={async () => {
-                  setPending(true);
-                  try {
-                    await onConfirm({ price: value!, message: note.trim() || undefined });
-                  } finally {
-                    setPending(false);
-                  }
-                }}
-              />
-            </View>
+            <Button
+              label={confirmLabel}
+              loading={pending}
+              disabled={value === null || !!error}
+              onPress={async () => {
+                setPending(true);
+                try {
+                  await onConfirm({ price: value! });
+                } finally {
+                  setPending(false);
+                }
+              }}
+            />
+            <Button label={t('common:cancel')} variant="ghost" onPress={onCancel} />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -99,8 +92,7 @@ export function PriceProposalModal({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(28,28,46,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radii.card * 2, borderTopRightRadius: radii.card * 2, padding: space(5), gap: space(4) },
-  actions: { flexDirection: 'row', gap: space(3) },
+  actions: { gap: space(1) },
 });

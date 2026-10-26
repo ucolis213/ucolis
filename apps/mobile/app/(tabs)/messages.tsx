@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatNotificationParams, formatPrice, type ConversationDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
@@ -19,7 +19,7 @@ import { SwipeableRow } from '@/components/SwipeableRow';
 import { formatRelative } from '@/format';
 import { currentLocale } from '@/i18n';
 import { useSession } from '@/session/SessionContext';
-import { colors, radii, space } from '@/theme';
+import { badgeText, colors, MAX_FONT_SCALE, radii, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Messages() {
@@ -109,9 +109,9 @@ function ConversationRow({ conv }: { conv: ConversationDto }) {
             {conv.muted && <Ionicons name="notifications-off-outline" size={14} color={colors.textMuted} />}
             {conv.unread > 0 && (
               <View style={styles.badge}>
-                <AppText size="xs" weight="bold" color="#FFFFFF">
-                  {conv.unread}
-                </AppText>
+                <Text style={badgeText} maxFontSizeMultiplier={MAX_FONT_SCALE}>
+                  {conv.unread > 99 ? '99+' : conv.unread}
+                </Text>
               </View>
             )}
           </View>

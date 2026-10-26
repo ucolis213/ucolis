@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { DEFAULT_COMMISSION, type CommissionSettings } from './commission';
 import { DEFAULT_PRICING, type PricingSettings } from './pricing';
+import { DEFAULT_PRIMARY_COLOR, isValidBrandColor } from './theme';
 
 export interface AppSettings {
   pricing: PricingSettings;
@@ -33,6 +34,8 @@ export interface AppSettings {
   termsVersion: string;
   /** Commission et portefeuille des transporteurs ; désactivée au lancement. */
   commission: CommissionSettings;
+  /** Couleur de marque de l'application et du back-office (les nuances en sont dérivées). */
+  branding: { primaryColor: string };
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -49,12 +52,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoConfirmHours: 72,
   parcelExpiryDays: 7,
   reviewWindowDays: 14,
-  requireCarrierVerification: true,
+  requireCarrierVerification: false,
   minAppVersion: '1.0.0',
   maintenance: { enabled: false, message: { fr: '', ar: '' } },
   support: { email: 'support@ucolis.com', whatsapp: '+213550000000' },
   termsVersion: '2026-10-01',
   commission: DEFAULT_COMMISSION,
+  branding: { primaryColor: DEFAULT_PRIMARY_COLOR },
 };
 
 export type AppSettingKey = keyof AppSettings;
@@ -70,6 +74,7 @@ export interface PublicAppConfig {
   requireCarrierVerification: boolean;
   support: AppSettings['support'];
   commission: CommissionSettings;
+  branding: AppSettings['branding'];
 }
 
 export function toPublicConfig(s: AppSettings): PublicAppConfig {
@@ -82,6 +87,7 @@ export function toPublicConfig(s: AppSettings): PublicAppConfig {
     requireCarrierVerification: s.requireCarrierVerification,
     support: s.support,
     commission: s.commission,
+    branding: s.branding,
   };
 }
 
@@ -156,5 +162,10 @@ export const APP_SETTING_SCHEMAS: Record<AppSettingKey, z.ZodType> = {
         maxAmount: positiveInt,
       })
       .refine((v) => v.minAmount <= v.maxAmount, 'minAmount ≤ maxAmount'),
+  }),
+  branding: z.object({
+    primaryColor: z
+      .string()
+      .refine(isValidBrandColor, 'Couleur #RRGGBB assez foncée pour du texte blanc (contraste ≥ 4,5)'),
   }),
 };

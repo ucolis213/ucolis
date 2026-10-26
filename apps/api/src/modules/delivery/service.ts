@@ -100,10 +100,15 @@ export function createDeliveryService(deps: Deps) {
       return updated;
     },
 
-    /** Code correct : livraison terminée sans validation. 5 erreurs : saisie bloquée. */
+    /**
+     * Code correct : livraison terminée sans validation, y compris après une déclaration (delivered_pending).
+     * 5 erreurs : saisie bloquée.
+     */
     async submitCode(carrierId: string, id: string, code: string) {
       const p = await asCarrier(carrierId, id);
-      if (p.status !== 'in_transit') throw new AppError(409, 'INVALID_TRANSITION', 'Livraison non démarrée');
+      if (p.status !== 'in_transit' && p.status !== 'delivered_pending') {
+        throw new AppError(409, 'INVALID_TRANSITION', 'Aucune livraison en cours');
+      }
       if (p.deliveryCode?.lockedAt) throw new AppError(409, 'DELIVERY_CODE_LOCKED', 'Saisie bloquée');
       const expected = p.deliveryCode?.cipher ? readDeliveryCode(deps.config.deliveryCodeKey, p.deliveryCode.cipher) : null;
       if (!expected || !safeEqual(expected, code)) {

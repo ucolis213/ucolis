@@ -4,13 +4,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TripDto } from '@ucolis/shared';
 import { formatDateTime, price, wilayaName } from '../format';
-import { colors, radii, shadow, space } from '../theme';
+import { colors, radii, routeArrow, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { RatingStars } from './RatingStars';
 
 export function TripCard({ trip, showStatus = false }: { trip: TripDto; showStatus?: boolean }) {
   const { t } = useTranslation(['trip', 'parcel']);
-  const route = [trip.from.wilayaCode, ...trip.stops, trip.to.wilayaCode].map(wilayaName).join(' → ');
+  const route = [trip.from.wilayaCode, ...trip.stops, trip.to.wilayaCode].map(wilayaName).join(` ${routeArrow()} `);
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/trip/[id]', params: { id: trip.id } })}

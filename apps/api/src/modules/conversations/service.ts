@@ -1,5 +1,6 @@
 // Messagerie (F13) : une conversation par paire d'utilisateurs et par colis, plus une conversation
-// générale par paire. Envoi optimiste dédoublonné par clientId.
+// générale par paire. Envoi optimiste dédoublonné par clientId. Aucun échange avant l'acceptation d'une
+// offre entre les deux : la négociation se fait uniquement sur le prix.
 
 import { Types } from 'mongoose';
 import type { ConversationDto, FileRef, MessageDto } from '@ucolis/shared';
@@ -7,6 +8,7 @@ import type { Deps } from '../../deps';
 import { AppError } from '../../lib/errors';
 import { LIMITS, consume } from '../../lib/rateLimit';
 import { isBlockedBetween } from '../me/service';
+import { OfferModel } from '../offers/model';
 import { ParcelModel } from '../parcels/model';
 import { UserModel, type UserLean } from '../users/model';
 import { toUserSummary } from '../users/serializers';
@@ -33,6 +35,51 @@ export function toMessageDto(m: MessageLean): MessageDto {
   };
 }
 
+/** Clé d'une livraison acceptée entre deux personnes, sur un colis précis ou sur n'importe quel colis. */
+const dealKey = (pairKey: string, parcelId: string | null) => (parcelId ? `${pairKey}|${parcelId}` : pairKey);
+
+/**
+ * Livraisons acceptées entre userId et chacun des autres : offre acceptée, ou acceptée puis abandonnée par le
+ * transporteur (la livraison a bien été acceptée). Renvoie les clés dealKey, avec et sans colis.
+ */
+async function dealsWith(userId: string, others: string[]): Promise<Set<string>> {
+  const offers = await OfferModel.find(
+    {
+      carrier: { $in: [userId, ...others] },
+      $or: [{ status: 'accepted' }, { withdrawnAfterAcceptAt: { $ne: null } }],
+    },
+    { parcel: 1, carrier: 1 },
+  ).lean();
+  const parcels = await ParcelModel.find(
+    { _id: { $in: offers.map((o) => o.parcel) } },
+    { sender: 1 },
+  ).lean();
+  const senderOf = new Map(parcels.map((p) => [p._id.toString(), p.sender.toString()]));
+  const wanted = new Set(others);
+  const keys = new Set<string>();
+  for (const o of offers) {
+    const parcelId = o.parcel.toString();
+    const sender = senderOf.get(parcelId);
+    const carrier = o.carrier.toString();
+    if (!sender) continue;
+    // Seulement les paires userId ↔ un des autres.
+    const other = sender === userId ? carrier : carrier === userId ? sender : null;
+    if (!other || !wanted.has(other)) continue;
+    const pairKey = pairKeyOf(sender, carrier);
+    keys.add(dealKey(pairKey, null));
+    keys.add(dealKey(pairKey, parcelId));
+  }
+  return keys;
+}
+
+/** Vrai si la messagerie est permise entre a et b (sur ce colis, ou en conversation générale). */
+export async function canMessage(a: string, b: string, parcelId: string | null): Promise<boolean> {
+  return (await dealsWith(a, [b])).has(dealKey(pairKeyOf(a, b), parcelId));
+}
+
+const lockedError = () =>
+  new AppError(403, 'MESSAGING_LOCKED', 'Messagerie ouverte après l’acceptation d’une offre');
+
 export interface SendInput {
   clientId: string;
   type: 'text' | 'image';
@@ -57,13 +104,14 @@ export function createConversationService(deps: Deps) {
 
   async function toDtos(convs: ConversationLean[], userId: string): Promise<ConversationDto[]> {
     const others = convs.map((c) => otherOf(c, userId));
-    const [users, parcels, me] = await Promise.all([
+    const [users, parcels, me, deals] = await Promise.all([
       UserModel.find({ _id: { $in: others } }).lean(),
       ParcelModel.find(
         { _id: { $in: convs.map((c) => c.parcel).filter(Boolean) } },
         { title: 1, status: 1, reference: 1 },
       ).lean(),
       UserModel.findById(userId, { blockedUsers: 1 }).lean(),
+      dealsWith(userId, others),
     ]);
     const u = new Map(users.map((x) => [x._id.toString(), x as UserLean]));
     const p = new Map(parcels.map((x) => [x._id.toString(), x]));
@@ -83,6 +131,7 @@ export function createConversationService(deps: Deps) {
       const other = u.get(otherOf(c, userId))!;
       const blockedByMe = iBlock.has(other._id.toString());
       const blocksMe = (other.blockedUsers ?? []).some((b) => b.toString() === userId);
+      const locked = !deals.has(dealKey(c.pairKey, c.parcel ? c.parcel.toString() : null));
       return {
         id: c._id.toString(),
         other: toUserSummary(other),
@@ -107,7 +156,8 @@ export function createConversationService(deps: Deps) {
         unread: unread?.[userId] ?? 0,
         muted: (c.mutedBy ?? []).some((m) => m.toString() === userId),
         blockedByMe,
-        canSend: !blockedByMe && !blocksMe,
+        locked,
+        canSend: !blockedByMe && !blocksMe && !locked,
         updatedAt: c.updatedAt.toISOString(),
       };
     });
@@ -200,14 +250,10 @@ export function createConversationService(deps: Deps) {
         throw new AppError(404, 'NOT_FOUND', 'Utilisateur introuvable');
       if (await isBlockedBetween(userId, otherId))
         throw new AppError(403, 'BLOCKED', 'Utilisateur bloqué');
-      if (parcelId) {
-        const parcel = await ParcelModel.findById(parcelId, { sender: 1 }).lean();
-        if (!parcel) throw new AppError(404, 'NOT_FOUND', 'Colis introuvable');
-        // « Poser une question » : l'un des deux est l'expéditeur du colis.
-        if (![userId, otherId].includes(parcel.sender.toString())) {
-          throw new AppError(403, 'FORBIDDEN', 'Conversation hors du colis');
-        }
-      }
+      if (parcelId && !(await ParcelModel.exists({ _id: parcelId })))
+        throw new AppError(404, 'NOT_FOUND', 'Colis introuvable');
+      // Conversation de colis : offre acceptée sur ce colis ; « Contacter » : une livraison acceptée ensemble.
+      if (!(await canMessage(userId, otherId, parcelId ?? null))) throw lockedError();
       const pairKey = pairKeyOf(userId, otherId);
       const exists = await ConversationModel.exists({ pairKey, parcel: parcelId ?? null });
       if (!exists && !parcelId) await consume(newConvLimiter, userId);
@@ -266,6 +312,9 @@ export function createConversationService(deps: Deps) {
       if (await isBlockedBetween(userId, otherOf(c, userId))) {
         throw new AppError(403, 'BLOCKED', 'Utilisateur bloqué');
       }
+      // Conversation ouverte avant cette règle (« Poser une question ») : lecture seule.
+      if (!(await canMessage(userId, otherOf(c, userId), c.parcel ? c.parcel.toString() : null)))
+        throw lockedError();
       try {
         return await store(c, userId, {
           type: input.type,

@@ -22,7 +22,7 @@ import { TripCard } from '@/components/TripCard';
 import { formatDate, price, wilayaName } from '@/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { activeFilterKeys, useFilters, type ParcelFilters } from '@/state/filters';
-import { colors, fontFamily, MIN_TOUCH, radii, shadow, space } from '@/theme';
+import { colors, fontFamily, MIN_TOUCH, radii, routeArrow, shadow, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Listings() {
@@ -266,7 +266,7 @@ function TripsPane() {
           <Ionicons name="options-outline" size={18} color={colors.textMuted} />
           <AppText color={active ? colors.navy : colors.textSubtle} numberOfLines={1} style={styles.flex}>
             {active
-              ? [filters.fromWilaya && wilayaName(filters.fromWilaya), filters.toWilaya && wilayaName(filters.toWilaya)].filter(Boolean).join(' → ') || t('common:filters')
+              ? [filters.fromWilaya && wilayaName(filters.fromWilaya), filters.toWilaya && wilayaName(filters.toWilaya)].filter(Boolean).join(` ${routeArrow()} `) || t('common:filters')
               : t('common:filters')}
           </AppText>
           {active && (

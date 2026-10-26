@@ -48,7 +48,7 @@ Un même compte peut expédier et transporter. Le choix fait à l'inscription (i
 | Rôle | Peut | Ne peut pas |
 |---|---|---|
 | Visiteur (non connecté) | Parcourir l'accueil, les annonces, les trajets, le détail d'un colis et un profil public | Faire une action : offre, publication, message, signalement. Une feuille « Connectez-vous » s'ouvre à la place |
-| Expéditeur | Publier, modifier, annuler ses colis ; poser et répondre aux questions ; négocier et accepter une offre ; suivre ; confirmer la remise ; ouvrir un litige ; noter | Modifier un colis après acceptation d'une offre ; annuler une fois la livraison démarrée (il passe par un litige) |
+| Expéditeur | Publier, modifier, annuler ses colis ; négocier le prix et accepter une offre ; échanger des messages une fois l'offre acceptée ; suivre ; confirmer la remise ; ouvrir un litige ; noter | Modifier un colis après acceptation d'une offre ; annuler une fois la livraison démarrée (il passe par un litige) |
 | Transporteur | Parcourir et filtrer ; faire des offres ; publier des trajets ; démarrer et terminer une livraison ; partager sa position ; se désister avant le départ ; ouvrir un litige ; noter | Faire une offre ou publier un trajet sans identité vérifiée ; faire une offre sur son propre colis ; avoir plus d'une offre active par colis |
 
 ### Particulier ou professionnel
@@ -198,7 +198,7 @@ Une flèche absente correspond à une transition refusée par l'API (409 INVALID
 | open, negotiating, assigned | cancelled | Expéditeur | Motif obligatoire depuis assigned ; offres actives cancelled |
 | open, negotiating | expired | Job horaire | desiredDate + parcelExpiryDays (7 jours) dépassée ; offres actives cancelled ; republication par duplication |
 | assigned | in_transit | Transporteur retenu | startedAt ; partage GPS démarré |
-| in_transit | delivered | Transporteur retenu, avec le code de remise correct | deliveredAt ; compteurs ; commission prélevée sur le portefeuille (F19) ; GPS arrêté ; invitation à noter |
+| in_transit, delivered_pending | delivered | Transporteur retenu, avec le code de remise correct | deliveredAt ; compteurs ; commission prélevée sur le portefeuille (F19) ; GPS arrêté ; invitation à noter |
 | in_transit | delivered_pending | Transporteur retenu | declaredDeliveredAt ; autoConfirmAt = +72 h ; GPS arrêté |
 | delivered_pending | delivered | Expéditeur, ou job à autoConfirmAt | Mêmes effets que la remise avec code |
 | in_transit, delivered_pending | disputed | Expéditeur ou transporteur retenu | Dispute créée ; previousStatus mémorisé ; validation automatique suspendue ; GPS arrêté |
@@ -352,14 +352,15 @@ Critères d'acceptation : un colis complet se publie en moins de 3 minutes sur u
 | Qui regarde | Statut | Actions proposées |
 |---|---|---|
 | Visiteur | open, negotiating | Se connecter pour faire une offre |
-| Transporteur (pas encore d'offre) | open, negotiating | Accepter le prix demandé ; Proposer un prix ; Poser une question ; Favori ; Signaler |
-| Transporteur (offre active) | open, negotiating | Voir mon offre ; Répondre à la contre-offre ; Retirer mon offre ; Message |
+| Transporteur (pas encore d'offre) | open, negotiating | Accepter le prix demandé ; Proposer un prix ; Favori ; Signaler |
+| Transporteur (offre active) | open, negotiating | Voir mon offre ; Répondre à la contre-offre ; Retirer mon offre |
 | Expéditeur | open, negotiating | Voir les offres ; Modifier ; Annuler l'annonce ; Partager |
 | Expéditeur | assigned | Message ; Appeler ; Voir le code de remise ; Annuler la livraison |
 | Transporteur retenu | assigned | Démarrer la livraison ; Message ; Appeler ; Se désister |
 | Expéditeur | in_transit | Suivre ; Message ; Appeler ; Voir le code de remise ; Ouvrir un litige |
 | Transporteur retenu | in_transit | Saisir le code de remise ; Déclarer la livraison ; Message ; Ouvrir un litige |
 | Expéditeur | delivered_pending | Confirmer la réception ; Ouvrir un litige |
+| Transporteur retenu | delivered_pending | Saisir le code de remise ; Message ; Ouvrir un litige |
 | Les deux | delivered | Noter (si non fait) ; Message |
 
 ### F8 — Offres et négociation
@@ -367,7 +368,7 @@ Critères d'acceptation : un colis complet se publie en moins de 3 minutes sur u
 Côté transporteur :
 
 - Accepter le prix demandé en un geste. Une offre est créée au prix de l'annonce (atAskingPrice = true), avec le libellé « Un transporteur accepte votre prix ».
-- Proposer un prix : montant (100 DA minimum), message (500 caractères), véhicule choisi parmi les siens, date d'enlèvement proposée.
+- Proposer un prix : montant (100 DA minimum), véhicule choisi parmi les siens, date d'enlèvement proposée. Pas de message : offres et contre-offres ne portent que le prix (voir F13).
 - Répondre à une contre-offre :
   - L'accepter : l'offre est acceptée au prix de la contre-offre et le colis passe en assigned.
   - La refuser : l'offre revient en pending au prix précédent.
@@ -429,7 +430,7 @@ Critères d'acceptation : un colis Sétif → Alger est proposé au trajet Const
   - Visible seulement par l'expéditeur, dans le détail du colis, avec un bouton « Envoyer au destinataire » (feuille de partage : SMS, WhatsApp).
   - Le destinataire le donne au transporteur à la remise.
 - Démarrer la livraison (assigned → in_transit) : par le transporteur retenu, après confirmation. L'application obtient d'abord les permissions de localisation au premier plan et en arrière-plan (voir F12). Le refus de la localisation en arrière-plan n'empêche pas de démarrer, mais l'expéditeur voit « Suivi indisponible ».
-- Remise avec code (in_transit → delivered) : le transporteur saisit le code. Un code correct termine la livraison sans validation de l'expéditeur. Après 5 erreurs, la saisie est bloquée et le transporteur doit déclarer la livraison.
+- Remise avec code (in_transit ou delivered_pending → delivered) : le transporteur saisit le code. Un code correct termine la livraison sans validation de l'expéditeur, y compris après une déclaration. Après 5 erreurs, la saisie est bloquée (l'action disparaît) et le transporteur doit déclarer la livraison.
 - Déclarer la livraison sans code (in_transit → delivered_pending) : photo de preuve et note facultatives. La validation automatique est programmée 72 h plus tard (réglage autoConfirmHours). L'expéditeur est relancé à +24 h et +60 h.
 - Confirmer la réception (delivered_pending → delivered) par l'expéditeur, ou automatiquement à l'échéance s'il n'a pas ouvert de litige.
 - À la livraison :
@@ -468,9 +469,10 @@ Critères d'acceptation : la position arrive chez l'expéditeur en moins de 15 s
 
 ### F13 — Messagerie
 
+- Aucun échange de messages entre l'expéditeur et le transporteur avant l'acceptation d'une offre (prix de la course validé) : la négociation porte uniquement sur le prix. L'API refuse l'ouverture d'une conversation et l'envoi d'un message avec MESSAGING_LOCKED ; une conversation encore verrouillée est en lecture seule.
 - Une conversation par paire d'utilisateurs et par colis : le contexte reste clair quand deux personnes partagent plusieurs colis.
-  - Elle est créée par « Poser une question » sur une annonce (transporteur vers expéditeur) ou à l'acceptation d'une offre.
-  - Une conversation générale sans colis peut s'ouvrir depuis un profil public avec « Contacter ». Elle est unique par paire, et limitée à 10 nouvelles conversations par jour et par compte.
+  - Elle est créée à l'acceptation d'une offre (ou un désistement après acceptation : la livraison a été acceptée).
+  - Une conversation générale sans colis peut s'ouvrir depuis un profil public avec « Contacter », seulement entre deux personnes qui ont déjà eu une livraison acceptée ensemble. Elle est unique par paire, et limitée à 10 nouvelles conversations par jour et par compte.
 - Liste : avatar, nom, titre du colis concerné, dernier message, heure, compteur de non-lus. Mise à jour en direct. Possibilité de mettre une conversation en sourdine.
 - Discussion :
   - Messages texte (2 000 caractères) et image (une par message, compressée).
@@ -500,8 +502,8 @@ Critères d'acceptation : la position arrive chez l'expéditeur en moins de 15 s
   - Une note globale de 1 à 5 étoiles.
   - Des critères facultatifs, notés de 1 à 5 : ponctualité, soin du colis et communication pour un transporteur ; exactitude de l'annonce, disponibilité et communication pour un expéditeur.
   - Un commentaire facultatif de 500 caractères.
-- Double aveugle : un avis n'est publié que lorsque les deux parties ont noté, ou à la fin des 14 jours. Personne ne note en réaction à l'autre.
-- Un avis par auteur et par colis ; il n'est pas modifiable. La personne notée peut répondre une fois, publiquement (300 caractères).
+- Double aveugle : un avis n'est publié que lorsque les deux personnes se sont notées (sur ce colis ou sur un autre), ou à la fin des 14 jours. Personne ne note en réaction à l'autre.
+- Une seule note par personne : un avis par auteur et par personne notée, tous colis confondus (409 ALREADY_REVIEWED) ; il n'est pas modifiable. La personne notée peut répondre une fois, publiquement (300 caractères).
 - La moyenne et le nombre d'avis sont recalculés à chaque publication ou masquage. Seuls les avis publiés et non masqués comptent.
 - Statistiques de confiance sur le profil :
   - Taux de réussite : livrés / (livrés + désistements + litiges perdus).
@@ -600,7 +602,7 @@ Les données tiennent dans 21 collections MongoDB, toutes avec createdAt et upda
 | accountType | enum | individual, professional ; calculé |
 | pro | objet | status (none, pending, approved, rejected, revoked), companyName, legalForm, rcNumber, nif, nis, address, wilayaCode, commune, logo, documents[] (kind, file), submittedAt, reviewedAt, reviewedBy, decisionReason |
 | carrierVerification | objet | status (not_submitted, pending, approved, rejected, expired), documents (idFront, idBack, driverLicense, vehicleRegistration, insurance), licenseExpiresAt, insuranceExpiresAt, submittedAt, reviewedAt, reviewedBy, decisionReason |
-| vehicles[] | sous-documents | type, brand, model, plate, capacityKg, volumeM3, photo, isDefault ; 5 au maximum |
+| vehicles[] | sous-documents | type, brand et plate obligatoires ; model, capacityKg, volumeM3 et photo facultatifs ; isDefault ; 5 au maximum |
 | rating | objet | average (1 décimale), count, distribution (de 1 à 5) |
 | stats | objet | parcelsPublished, parcelsSent, parcelsCarried, withdrawals, disputesLost, medianReplyMinutes |
 | status | enum | active, suspended, pending_deletion, deleted |
@@ -655,7 +657,7 @@ Index : pickup.location et dropoff.location (2dsphere) ; { status, createdAt } ;
 
 ### Offer
 
-parcel, carrier, vehicle (copie du sous-document véhicule), price (dernier prix proposé par le transporteur), atAskingPrice, message (500), proposedPickupDate, status (pending, countered, accepted, rejected, withdrawn, cancelled), rounds[] (by : carrier ou sender, price, message, at), counterCount (3 au maximum), finalPrice, rejectedBecauseAccepted (booléen, utile pour la réactivation après un désistement).
+parcel, carrier, vehicle (copie du sous-document véhicule), price (dernier prix proposé par le transporteur), atAskingPrice, proposedPickupDate, status (pending, countered, accepted, rejected, withdrawn, cancelled), rounds[] (by : carrier ou sender, price, at), counterCount (3 au maximum), finalPrice, rejectedBecauseAccepted (booléen, utile pour la réactivation après un désistement).
 
 Index : unique partiel { parcel, carrier } quand status ∈ {pending, countered} ; { carrier, status } ; { parcel, status }.
 
@@ -864,13 +866,13 @@ L'interface reste simple et lisible en plein soleil sur un téléphone d'entrée
 
 | Jeton | Valeur | Usage |
 |---|---|---|
-| primary | #FF6B35 (orange) | Boutons principaux, prix, onglet actif |
+| primary | #1A73E8 (bleu) par défaut, réglable par le super-administrateur (réglage branding) ; nuances foncée et claire dérivées | Boutons principaux, prix, onglet actif |
 | navy | #1C1C2E (bleu nuit) | Titres, en-têtes, texte principal |
 | accent | #4ECDC4 (turquoise) | Badges vérifiés, succès, suivi |
 | danger | #E5484D | Erreurs, annulation, litige |
 | warning | #F5A524 | Urgent, en attente |
 | surface | #FFFFFF ; fond #F6F7F9 | Cartes et fond d'écran |
-| Typographie | Inter (latin) et IBM Plex Sans Arabic (arabe) | Tailles 12, 14, 16, 20, 24, 32 |
+| Typographie | Inter (latin) et Cairo (arabe) | Tailles 12, 14, 16, 20, 24, 32 |
 | Rayons et espacements | Rayon 12 (cartes), 999 (puces) ; espacements par pas de 4 | — |
 
 Composants partagés à construire en premier : Button, TextField, Select (wilaya et commune), Chip, Badge (Pro, Identité, Urgent, Fragile, statut), ParcelCard, TripCard, OfferCard, UserRow (avatar, nom, note, badges), StatusTimeline, EmptyState, ErrorState, Skeleton, BottomSheet, ConfirmDialog, PhotoPicker, MapPicker, PriceInput, RatingStars. La couleur de chaque statut de colis est déclarée une seule fois.
@@ -970,7 +972,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 |---|---|
 | Type de compte | Tout compte est particulier. Le statut professionnel n'existe qu'après validation par le staff d'un dossier de justificatifs |
 | Administration | Un super-administrateur unique, créé par script. Il crée des modérateurs aux permissions choisies. Le back-office est une application web séparée, utilisable sur téléphone |
-| Vérification des transporteurs | Bloquante par défaut : pas d'offre ni de trajet sans identité vérifiée. Débrayable par le réglage requireCarrierVerification |
+| Vérification des transporteurs | Conseillée, non bloquante par défaut (décision du 25 octobre 2026) : un transporteur non vérifié peut faire une offre et publier un trajet ; il est invité à se faire vérifier et l'expéditeur voit une mention neutre. Le réglage requireCarrierVerification la rend obligatoire |
 | Formule de prix | Une seule : le barème dégressif à tranches marginales de F6, dans shared/pricing.ts, recalculé par l'API |
 | Commission | Gratuit au lancement. Une fois activée par le super-administrateur : 50 DA + taux par tranche du prix convenu, prélevés à la livraison sur un portefeuille prépayé du transporteur, rechargé par virement CCP ou BaridiMob validé par le staff (F19) |
 | Notifications push | Branchées dès le lot 4 : collection PushToken, envoi par expo-server-sdk, nettoyage des jetons invalides |

@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { StyleSheet, View, type ColorValue } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSocket } from '@/realtime/socket';
-import { colors, fontFamily, shadow } from '@/theme';
+import { badgeText, colors, fontFamily, shadow } from '@/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -47,7 +47,7 @@ export default function TabsLayout() {
           title: t('tabs.messages'),
           tabBarIcon: icon('chatbubbles-outline', 'chatbubbles'),
           tabBarBadge: counters.unreadMessages > 0 ? counters.unreadMessages : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.primary },
+          tabBarBadgeStyle: { backgroundColor: colors.primary, color: '#FFFFFF', fontFamily: badgeText.fontFamily },
         }}
       />
       <Tabs.Screen name="profile" options={{ title: t('tabs.profile'), tabBarIcon: icon('person-outline', 'person') }} />

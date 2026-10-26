@@ -97,10 +97,10 @@ function VehicleEditor({ vehicle }: { vehicle: VehicleDto | null }) {
         error={errors.type}
       />
       <TextField label={t('brand')} value={brand} onChangeText={setBrand} error={errors.brand} maxLength={50} />
-      <TextField label={t('model')} value={model} onChangeText={setModel} error={errors.model} maxLength={50} />
+      <TextField label={`${t('model')} (${t('common:optional')})`} value={model} onChangeText={setModel} error={errors.model} maxLength={50} />
       <TextField label={t('plate')} hint={t('plateHint')} value={plate} onChangeText={setPlate} error={errors.plate} autoCapitalize="characters" maxLength={20} />
-      <NumberInput label={t('capacityKg')} value={capacityKg} onChange={setCapacity} error={errors.capacityKg} />
-      <NumberInput label={t('volumeM3')} value={volumeM3} onChange={setVolume} error={errors.volumeM3} />
+      <NumberInput label={`${t('capacityKg')} (${t('common:optional')})`} value={capacityKg} onChange={setCapacity} error={errors.capacityKg} />
+      <NumberInput label={`${t('volumeM3')} (${t('common:optional')})`} value={volumeM3} onChange={setVolume} error={errors.volumeM3} />
       <FileField label={t('common:photo')} value={photo} onChange={setPhoto} purpose="vehicle_photo" />
       <SwitchRow label={t('defaultVehicle')} value={isDefault} onChange={setDefault} />
       {formError && <AppText color={colors.danger}>{formError}</AppText>}

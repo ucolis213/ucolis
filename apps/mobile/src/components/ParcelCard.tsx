@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ParcelCardDto } from '@ucolis/shared';
 import { distance, formatDate, placeLabel, price, weight } from '../format';
-import { colors, MIN_TOUCH, radii, shadow, space } from '../theme';
+import { colors, MIN_TOUCH, radii, routeArrow, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { cdn } from './Avatar';
 import { Badge, StatusBadge } from './Badge';
@@ -58,7 +58,7 @@ export function ParcelCard({
             )}
           </View>
           <AppText size="sm" color={colors.textMuted} numberOfLines={1}>
-            {placeLabel(parcel.pickup)} → {placeLabel(parcel.dropoff)}
+            {placeLabel(parcel.pickup)} {routeArrow()} {placeLabel(parcel.dropoff)}
           </AppText>
           <AppText size="xs" color={colors.textMuted}>
             {[

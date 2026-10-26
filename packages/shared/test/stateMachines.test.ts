@@ -30,6 +30,7 @@ const EXPECTED_PARCEL = new Set([
   'assigned>in_transit:carrier',
   'in_transit>delivered:carrier',
   'in_transit>delivered_pending:carrier',
+  'delivered_pending>delivered:carrier',
   'delivered_pending>delivered:sender',
   'delivered_pending>delivered:job',
   'in_transit>disputed:sender',
@@ -130,5 +131,15 @@ describe("barre d'actions du détail de colis", () => {
   it('donne au transporteur retenu les actions de livraison', () => {
     expect(parcelActionsFor('assigned_carrier', 'in_transit')).toContain('enter_delivery_code');
     expect(parcelActionsFor('other', 'open')).toEqual([]);
+  });
+
+  it('laisse au transporteur le code, la discussion et le litige après une déclaration', () => {
+    expect(parcelActionsFor('assigned_carrier', 'delivered_pending')).toEqual(['enter_delivery_code', 'message', 'open_dispute']);
+    expect(canTransitionParcel('delivered_pending', 'delivered', 'carrier')).toBe(true);
+  });
+
+  it('retire « Saisir le code » une fois la saisie bloquée', () => {
+    expect(parcelActionsFor('assigned_carrier', 'in_transit', { deliveryCodeLocked: true })).toEqual(['declare_delivery', 'message', 'open_dispute']);
+    expect(parcelActionsFor('assigned_carrier', 'delivered_pending', { deliveryCodeLocked: true })).toEqual(['message', 'open_dispute']);
   });
 });

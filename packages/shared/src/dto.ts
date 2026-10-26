@@ -51,10 +51,12 @@ export interface VehicleDto {
   id: string;
   type: VehicleType;
   brand: string;
+  /** Chaîne vide si non précisé. */
   model: string;
   plate: string;
-  capacityKg: number;
-  volumeM3: number;
+  /** null : non précisé. */
+  capacityKg: number | null;
+  volumeM3: number | null;
   photo: FileRef | null;
   isDefault?: boolean;
 }
@@ -78,6 +80,8 @@ export interface PublicUser extends UserSummary {
     medianReplyMinutes: number | null;
   };
   vehicles: VehicleDto[];
+  /** Vrai si le visiteur connecté a eu une livraison acceptée avec ce profil (« Contacter » proposé). */
+  canContact: boolean;
 }
 
 export interface Me {
@@ -189,7 +193,6 @@ export type ParcelViewerRole =
 export interface OfferRoundDto {
   by: 'carrier' | 'sender';
   price: number;
-  message: string | null;
   at: string;
 }
 
@@ -200,7 +203,6 @@ export interface OfferDto {
   vehicle: Omit<VehicleDto, 'id' | 'isDefault'>;
   price: number;
   atAskingPrice: boolean;
-  message: string | null;
   proposedPickupDate: string;
   status: OfferStatus;
   rounds: OfferRoundDto[];
@@ -308,7 +310,9 @@ export interface ConversationDto {
   muted: boolean;
   /** Vrai si je bloque l'autre participant (le déblocage est alors proposé). */
   blockedByMe: boolean;
-  /** Faux si l'un des deux bloque l'autre ; ne révèle pas qui a bloqué. */
+  /** Vrai tant qu'aucune offre n'a été acceptée entre les deux (sur ce colis, ou sur aucun pour une générale). */
+  locked: boolean;
+  /** Faux si la conversation est verrouillée ou si l'un des deux bloque l'autre (sans révéler qui). */
   canSend: boolean;
   updatedAt: string;
 }
@@ -330,6 +334,8 @@ export interface ReviewDto {
 export interface ReviewStatusDto {
   canReview: boolean;
   alreadyReviewed: boolean;
+  /** L'auteur a déjà noté cette personne sur un autre colis : une seule note par personne. */
+  alreadyRatedUser: boolean;
   deadline: string | null;
   direction: 'sender_to_carrier' | 'carrier_to_sender' | null;
   target: UserSummary | null;

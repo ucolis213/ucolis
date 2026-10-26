@@ -6,7 +6,6 @@ const roundSchema = new Schema(
   {
     by: { type: String, enum: ['carrier', 'sender'], required: true },
     price: { type: Number, required: true },
-    message: { type: String, default: null },
     at: { type: Date, required: true },
   },
   { _id: false },
@@ -30,7 +29,6 @@ const offerSchema = new Schema(
     /** Dernier prix proposé par le transporteur. */
     price: { type: Number, required: true, min: 100 },
     atAskingPrice: { type: Boolean, default: false },
-    message: { type: String, default: null, maxlength: 500 },
     proposedPickupDate: { type: Date, required: true },
     status: { type: String, enum: OFFER_STATUSES, default: 'pending' },
     rounds: { type: [roundSchema], default: [] },

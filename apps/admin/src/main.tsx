@@ -4,7 +4,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App';
 import { SessionProvider } from './auth/session';
+import { initBrand } from './brand';
 import './index.css';
+
+initBrand();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },

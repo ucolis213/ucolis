@@ -23,7 +23,7 @@ import { UserRow } from '@/components/UserRow';
 import { formatDate, formatDateTime, price, wilayaName } from '@/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useSession } from '@/session/SessionContext';
-import { colors, space } from '@/theme';
+import { colors, routeArrow, space } from '@/theme';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { AppModal } from '@/components/AppModal';
 
@@ -58,7 +58,7 @@ export default function TripDetail() {
           return (
             <View style={{ gap: space(4) }}>
               <AppText size="xl" weight="bold">
-                {[tr.from.wilayaCode, ...tr.stops, tr.to.wilayaCode].map(wilayaName).join(' → ')}
+                {[tr.from.wilayaCode, ...tr.stops, tr.to.wilayaCode].map(wilayaName).join(` ${routeArrow()} `)}
               </AppText>
               <RouteMap from={tr.from.location} to={tr.to.location} />
               <SectionCard>

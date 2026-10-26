@@ -18,8 +18,8 @@ async function offer(ctx: TestApp, carrier: { auth: Record<string, string>; vehi
 }
 
 describe('faire une offre', () => {
-  it('exige une identité vérifiée, sauf si le réglage est désactivé', async () => {
-    const ctx = makeTestApp();
+  it('exige une identité vérifiée quand le réglage est activé', async () => {
+    const ctx = makeTestApp({ settings: { requireCarrierVerification: true } });
     const amina = await verifiedUser(ctx);
     const p = await createParcel(ctx, amina);
     const karim = await verifiedCarrier(ctx);
@@ -30,7 +30,8 @@ describe('faire une offre', () => {
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe('CARRIER_NOT_VERIFIED');
 
-    const relaxed = makeTestApp({ settings: { requireCarrierVerification: false } });
+    // Réglage par défaut : la vérification est conseillée, pas exigée.
+    const relaxed = makeTestApp();
     const ok = await offer(relaxed, karim, p.id);
     expect(ok.status).toBe(201);
   });
@@ -44,6 +45,9 @@ describe('faire une offre', () => {
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ status: 'pending', price: 3000, rounds: [{ by: 'carrier', price: 3000 }] });
     expect(res.body.vehicle.plate).toBe('•••619');
+    // Aucun texte libre avant l'acceptation : le message est ignoré.
+    expect(res.body).not.toHaveProperty('message');
+    expect(res.body.rounds[0]).not.toHaveProperty('message');
     const parcel = await ParcelModel.findById(p.id).lean();
     expect(parcel).toMatchObject({ status: 'negotiating', offersCount: 1 });
     const detail = await ctx.http().get(`/api/v1/parcels/${p.id}`).set(karim.auth);
@@ -277,5 +281,19 @@ describe('vérification et véhicules', () => {
     res = await ctx.http().delete(`/api/v1/me/vehicles/${def.id}`).set(karim.auth);
     expect(res.body.items).toHaveLength(4);
     expect(res.body.items.filter((x: { isDefault: boolean }) => x.isDefault)).toHaveLength(1);
+  });
+
+  it("n'exige que le type, la marque et l'immatriculation d'un véhicule", async () => {
+    const ctx = makeTestApp();
+    const karim = await verifiedUser(ctx);
+    const minimal = { type: 'car', brand: 'Volkswagen', plate: '00123-116-16' };
+    const res = await ctx.http().post('/api/v1/me/vehicles').set(karim.auth).send(minimal);
+    expect(res.status).toBe(201);
+    expect(res.body.items[0]).toMatchObject({ ...minimal, model: '', capacityKg: null, volumeM3: null });
+    for (const missing of ['type', 'brand', 'plate'] as const) {
+      const rest: Record<string, string> = { ...minimal };
+      delete rest[missing];
+      expect((await ctx.http().post('/api/v1/me/vehicles').set(karim.auth).send(rest)).status).toBe(400);
+    }
   });
 });

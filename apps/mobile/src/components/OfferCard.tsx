@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, price } from '../format';
 import { colors, radii, shadow, space } from '../theme';
 import { AppText } from './AppText';
 import { UserRow } from './UserRow';
+import { UnverifiedCarrierNote } from './VerificationNotice';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: colors.warning,
@@ -31,7 +32,6 @@ export function OfferRounds({ offer, viewerIsSender }: { offer: OfferDto; viewer
               {mine ? t('you') : t('counterpart')} · {formatDateTime(r.at)}
             </AppText>
             <AppText weight="bold">{price(r.price)}</AppText>
-            {r.message && <AppText size="sm">{r.message}</AppText>}
           </View>
         );
       })}
@@ -76,7 +76,7 @@ export function OfferCard({
       <AppText size="sm" color={colors.textMuted}>
         {t('pickupDate')} : {formatDate(offer.proposedPickupDate)} · {t('deliveries', { count: offer.carrier.deliveredCount })}
       </AppText>
-      {offer.message && <AppText size="sm">« {offer.message} »</AppText>}
+      {viewerIsSender && !offer.carrier.badges.identity && <UnverifiedCarrierNote />}
       {showRounds && offer.rounds.length > 1 && <OfferRounds offer={offer} viewerIsSender={viewerIsSender} />}
       {actions && <View style={styles.actions}>{actions}</View>}
     </View>

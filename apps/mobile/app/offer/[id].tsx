@@ -6,8 +6,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { ConversationDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
-import { useOffer } from '@/api/queries';
+import { useOffer, useParcel, type OfferDetail as OfferDetailDto } from '@/api/queries';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { CommissionBreakdown, useWalletBlocked, WalletBlockedBanner } from '@/components/CommissionBreakdown';
@@ -35,6 +36,18 @@ export default function OfferDetail() {
   const [busy, setBusy] = useState<string | null>(null);
   const maxCounters = config.data?.limits.maxCounterOffers ?? 3;
   const blocked = useWalletBlocked();
+  // L'annonce donne la discussion existante et l'expéditeur, à qui le transporteur écrit.
+  const parcel = useParcel(query.data?.status === 'accepted' ? query.data.parcelId : undefined);
+
+  const openConversation = (o: OfferDetailDto) =>
+    run('m', async () => {
+      const p = parcel.data;
+      if (p?.viewer.conversationId) return router.push({ pathname: '/conversation/[id]', params: { id: p.viewer.conversationId } });
+      const userId = o.viewerIsSender ? o.carrier.id : p?.sender.id;
+      if (!userId) return;
+      const conv = await api.post<ConversationDto>('/conversations', { userId, parcelId: o.parcelId });
+      router.push({ pathname: '/conversation/[id]', params: { id: conv.id } });
+    });
 
   useSocketEvent<{ offerId: string }>('offer:updated', (e) => {
     if (e.offerId === id) void query.refetch();
@@ -117,7 +130,7 @@ export default function OfferDetail() {
               <Button
                 key="r"
                 label={t('reject')}
-                variant="ghost"
+                variant="dangerGhost"
                 {...btn('r')}
                 onPress={async () =>
                   (await confirm({ title: t('rejectConfirm'), message: t('rejectConfirmMessage'), destructive: true })) && run('r', () => api.post(`/offers/${o.id}/reject`))
@@ -153,7 +166,21 @@ export default function OfferDetail() {
               )}
               {actions}
               {o.status === 'accepted' && (
-                <Button label={t('parcel:actions.message')} variant="outline" icon="chatbubble-outline" onPress={() => router.push({ pathname: '/parcel/[id]', params: { id: o.parcelId } })} />
+                <View style={styles.links}>
+                  <Button
+                    label={t('parcel:actions.message')}
+                    icon="chatbubble-outline"
+                    {...btn('m')}
+                    disabled={!parcel.data || (busy !== null && busy !== 'm')}
+                    onPress={() => openConversation(o)}
+                  />
+                  <Button
+                    label={t('parcel:actions.view_listing')}
+                    variant="outline"
+                    icon="cube-outline"
+                    onPress={() => router.push({ pathname: '/parcel/[id]', params: { id: o.parcelId } })}
+                  />
+                </View>
               )}
               <PriceProposalModal
                 visible={prompt !== null}
@@ -186,4 +213,5 @@ export default function OfferDetail() {
 
 const styles = StyleSheet.create({
   callout: { backgroundColor: colors.primarySoft, borderRadius: radii.card, padding: space(4), gap: space(1) },
+  links: { gap: space(2) },
 });

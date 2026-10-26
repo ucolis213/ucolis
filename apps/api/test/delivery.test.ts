@@ -113,6 +113,26 @@ describe('livraison déclarée', () => {
     expect((await ParcelModel.findById(parcel.id).lean())!.status).toBe('disputed');
   });
 
+  it('laisse le transporteur finaliser avec le code après sa déclaration', async () => {
+    const ctx = makeTestApp();
+    const { amina, karim, parcel } = await deal(ctx);
+    await ctx.http().post(`/api/v1/parcels/${parcel.id}/start`).set(karim.auth);
+    const { code } = (await ctx.http().get(`/api/v1/parcels/${parcel.id}/delivery-code`).set(amina.auth)).body;
+    await ctx.http().post(`/api/v1/parcels/${parcel.id}/declare-delivered`).set(karim.auth).send({});
+
+    const wrong = code === '0000' ? '1111' : '0000';
+    const bad = await ctx.http().post(`/api/v1/parcels/${parcel.id}/delivery-code`).set(karim.auth).send({ code: wrong });
+    expect(bad.body.error).toMatchObject({ code: 'INVALID_CODE', details: { attemptsLeft: 4 } });
+    const ok = await ctx.http().post(`/api/v1/parcels/${parcel.id}/delivery-code`).set(karim.auth).send({ code });
+    expect(ok.body).toMatchObject({ status: 'delivered', autoConfirmAt: null });
+
+    expect((await UserModel.findById(karim.id).lean())!.stats!.parcelsCarried).toBe(1);
+    expect(await NotificationModel.countDocuments({ type: 'delivery_completed' })).toBe(2);
+    expect((await ctx.http().post(`/api/v1/parcels/${parcel.id}/confirm-delivery`).set(amina.auth)).body.error.code).toBe('INVALID_TRANSITION');
+    ctx.clock.advance(100 * HOUR);
+    expect(await autoConfirmDeliveries(ctx.deps, ctx.services)).toBe(0);
+  });
+
   it("confirme côté expéditeur", async () => {
     const ctx = makeTestApp();
     const { amina, karim, parcel } = await deal(ctx);
@@ -125,9 +145,9 @@ describe('livraison déclarée', () => {
 
 describe('désistement', () => {
   it('réactive les offres refusées à cause de l’acceptation et repasse en negotiating', async () => {
-    const ctx = makeTestApp();
+    const ctx = makeTestApp({ settings: { requireCarrierVerification: true } });
     const { amina, karim, parcel, others } = await deal(ctx, { others: 2 });
-    // L'un des deux n'est plus éligible : son identité a expiré.
+    // L'un des deux n'est plus éligible (vérification exigée) : son identité a expiré.
     await UserModel.updateOne({ _id: others[1]!.carrier.id }, { 'carrierVerification.status': 'expired' });
     expect((await ctx.http().post(`/api/v1/parcels/${parcel.id}/withdraw`).set(amina.auth)).status).toBe(403);
     const res = await ctx.http().post(`/api/v1/parcels/${parcel.id}/withdraw`).set(karim.auth);

@@ -1,5 +1,6 @@
 // Adresses de départ et d'arrivée choisies comme dans une application de VTC (recherche, position, récents ou
-// carte). En publication complète, wilaya, commune et précisions de chaque adresse sont aussi modifiables.
+// carte). RouteFields sert aussi aux trajets ; RoutePicker le relie au brouillon d'annonce et, en publication
+// complète, rend wilaya, commune et précisions de chaque adresse modifiables.
 
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
@@ -8,23 +9,36 @@ import { useTranslation } from 'react-i18next';
 import { placeLabel } from '../format';
 import { useParcelDraft, type DraftPlace } from '../state/parcelDraft';
 import { colors, MIN_TOUCH, radii, space } from '../theme';
-import { AddressSearch, type AddressField } from './AddressSearch';
+import { AddressSearch, type AddressField, type AddressPlaceholders } from './AddressSearch';
 import { AppText } from './AppText';
 import { TextField } from './TextField';
+import type { PickedPlace } from './MapPicker';
 import { WilayaCommuneSelect } from './WilayaCommuneSelect';
 
-const FIELDS: AddressField[] = ['pickup', 'dropoff'];
+type RouteField = Extract<AddressField, 'pickup' | 'dropoff'>;
 
-export function RoutePicker({ errors, showDetails = false }: { errors: Record<string, string>; showDetails?: boolean }) {
+const FIELDS: RouteField[] = ['pickup', 'dropoff'];
+
+/** Résumé départ / arrivée et recherche d'adresse. Erreurs indexées par champ (clé commençant par pickup ou dropoff). */
+export function RouteFields({
+  value,
+  onChange,
+  errors,
+  placeholders,
+}: {
+  value: Record<RouteField, PickedPlace | null>;
+  onChange: (field: RouteField, place: PickedPlace) => void;
+  errors: Record<string, string>;
+  placeholders?: AddressPlaceholders;
+}) {
   const { t } = useTranslation(['parcel', 'common', 'errors']);
-  const { draft, update } = useParcelDraft();
-  const [searching, setSearching] = useState<AddressField | null>(null);
+  const [searching, setSearching] = useState<RouteField | null>(null);
 
-  const errorOf = (key: AddressField) =>
+  const errorOf = (key: RouteField) =>
     Object.entries(errors).find(([k]) => k.startsWith(key))?.[1];
 
-  const summaryRow = (key: AddressField) => {
-    const p = draft[key];
+  const summaryRow = (key: RouteField) => {
+    const p = value[key];
     const missing = !!errorOf(key) && !p;
     return (
       <Pressable
@@ -42,7 +56,7 @@ export function RoutePicker({ errors, showDetails = false }: { errors: Record<st
             weight={p ? 'medium' : 'regular'}
             color={p ? colors.navy : colors.textSubtle}
           >
-            {p ? p.address : t(key === 'pickup' ? 'whereFrom' : 'whereTo')}
+            {p ? p.address : (placeholders?.[key] ?? t(key === 'pickup' ? 'whereFrom' : 'whereTo'))}
           </AppText>
         </View>
         <Ionicons name="search" size={18} color={colors.textMuted} />
@@ -50,7 +64,47 @@ export function RoutePicker({ errors, showDetails = false }: { errors: Record<st
     );
   };
 
-  const details = (key: AddressField) => {
+  const firstError = FIELDS.map(errorOf).find(Boolean);
+  const incomplete = !!firstError && !(value.pickup && value.dropoff);
+
+  return (
+    <>
+      <View style={[styles.summary, incomplete && { borderColor: colors.danger }]}>
+        {/* Repères reliés : rond pour le départ, carré pour l'arrivée. */}
+        <View style={styles.rail}>
+          <View style={styles.dot} />
+          <View style={styles.line} />
+          <View style={styles.square} />
+        </View>
+        <View style={styles.flex}>
+          {summaryRow('pickup')}
+          <View style={styles.divider} />
+          {summaryRow('dropoff')}
+        </View>
+      </View>
+      {incomplete && (
+        <AppText size="xs" color={colors.danger}>
+          {t(`errors:${firstError}`, { defaultValue: firstError })}
+        </AppText>
+      )}
+      <AddressSearch
+        visible={searching !== null}
+        field={searching ?? 'pickup'}
+        values={value}
+        placeholders={placeholders}
+        onFieldChange={(f) => setSearching(f as RouteField)}
+        onClose={() => setSearching(null)}
+        onSelect={(f, place) => onChange(f as RouteField, place)}
+      />
+    </>
+  );
+}
+
+export function RoutePicker({ errors, showDetails = false }: { errors: Record<string, string>; showDetails?: boolean }) {
+  const { t } = useTranslation(['parcel', 'common']);
+  const { draft, update } = useParcelDraft();
+
+  const details = (key: RouteField) => {
     const p = draft[key];
     if (!p) return null;
     return (
@@ -77,38 +131,14 @@ export function RoutePicker({ errors, showDetails = false }: { errors: Record<st
     );
   };
 
-  const firstError = FIELDS.map(errorOf).find(Boolean);
-  const incomplete = !!firstError && !(draft.pickup && draft.dropoff);
-
   return (
     <>
-      <View style={[styles.summary, incomplete && { borderColor: colors.danger }]}>
-        {/* Repères reliés : rond pour le départ, carré pour l'arrivée. */}
-        <View style={styles.rail}>
-          <View style={styles.dot} />
-          <View style={styles.line} />
-          <View style={styles.square} />
-        </View>
-        <View style={styles.flex}>
-          {summaryRow('pickup')}
-          <View style={styles.divider} />
-          {summaryRow('dropoff')}
-        </View>
-      </View>
-      {incomplete && (
-        <AppText size="xs" color={colors.danger}>
-          {t(`errors:${firstError}`, { defaultValue: firstError })}
-        </AppText>
-      )}
-      {showDetails && FIELDS.map(details)}
-      <AddressSearch
-        visible={searching !== null}
-        field={searching ?? 'pickup'}
-        values={{ pickup: draft.pickup, dropoff: draft.dropoff }}
-        onFieldChange={setSearching}
-        onClose={() => setSearching(null)}
-        onSelect={(key, place) => update({ [key]: { ...place, details: draft[key]?.details ?? '' } })}
+      <RouteFields
+        value={{ pickup: draft.pickup, dropoff: draft.dropoff }}
+        errors={errors}
+        onChange={(key, place) => update({ [key]: { ...place, details: draft[key]?.details ?? '' } })}
       />
+      {showDetails && FIELDS.map(details)}
     </>
   );
 }

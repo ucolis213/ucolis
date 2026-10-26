@@ -2,8 +2,9 @@
 // schéma que l'API avant envoi, et chaque modification est motivée et journalisée.
 
 import { useState } from 'react';
-import { APP_SETTING_KEYS, APP_SETTING_SCHEMAS, type AppSettingKey, type AppSettings } from '@ucolis/shared';
+import { APP_SETTING_KEYS, APP_SETTING_SCHEMAS, contrastWithWhite, HEX_COLOR, type AppSettingKey, type AppSettings } from '@ucolis/shared';
 import { api } from '../api/client';
+import { applyAdminBrand } from '../brand';
 import { useAction, useAdminQuery } from '../api/hooks';
 import { Button, Card, PageHeader, QueryState, ReasonDialog } from '../components/ui';
 
@@ -29,6 +30,10 @@ const LABELS: Record<AppSettingKey, { title: string; hint: string }> = {
   commission: {
     title: 'Commission et portefeuille',
     hint: 'enabled : false = service gratuit. Avant d’activer, prévenez les transporteurs (Diffusion) et fixez effectiveFrom (date ISO, ex. 2027-01-01T00:00:00+01:00) : les courses acceptées avant ne sont pas prélevées. fixedFee : frais de dossier (DA). tiers : taux par tranche du prix convenu, upTo = borne haute incluse, null pour la dernière. welcomeBonus : crédité une fois à l’ouverture du portefeuille. minBalance : sous ce solde, plus d’offre ni de course. topUp : coordonnées de virement affichées dans l’application (valeurs d’exemple à remplacer) et bornes d’une recharge.',
+  },
+  branding: {
+    title: 'Couleur de l’application',
+    hint: 'Couleur de marque de l’application mobile et du back-office (boutons, prix, onglet actif) ; nuances foncée et claire calculées automatiquement. Elle doit rester assez foncée pour du texte blanc (contraste ≥ 4,5). L’application l’applique au démarrage suivant la modification (un redémarrage automatique).',
   },
 };
 
@@ -86,6 +91,15 @@ function SettingEditor({ settingKey, value }: { settingKey: AppSettingKey; value
         rows={Math.min(14, text.split('\n').length + 1)}
         className="block w-full rounded-lg border border-border p-3 font-mono text-xs outline-none focus:border-primary"
       />
+      {settingKey === 'branding' && (
+        <ColorPicker
+          text={text}
+          onChange={(t) => {
+            setText(t);
+            setError(null);
+          }}
+        />
+      )}
       {error && <p className="mt-2 text-sm text-danger">{error}</p>}
       <div className="mt-3 flex gap-2">
         <Button onClick={check} disabled={!dirty}>
@@ -97,7 +111,46 @@ function SettingEditor({ settingKey, value }: { settingKey: AppSettingKey; value
           </Button>
         )}
       </div>
-      <ReasonDialog open={parsed !== null} title={`Modifier « ${LABELS[settingKey].title} »`} onClose={() => setParsed(null)} onConfirm={save.mutateAsync} />
+      <ReasonDialog
+        open={parsed !== null}
+        title={`Modifier « ${LABELS[settingKey].title} »`}
+        onClose={() => setParsed(null)}
+        onConfirm={async (reason: string) => {
+          await save.mutateAsync(reason);
+          if (settingKey === 'branding') applyAdminBrand((parsed as AppSettings['branding']).primaryColor);
+        }}
+      />
     </Card>
+  );
+}
+
+/** Sélecteur de couleur relié au JSON du réglage branding, avec aperçu d'un bouton et contraste. */
+function ColorPicker({ text, onChange }: { text: string; onChange: (text: string) => void }) {
+  let color = '';
+  try {
+    color = String((JSON.parse(text) as { primaryColor?: unknown }).primaryColor ?? '');
+  } catch {
+    // JSON en cours de saisie.
+  }
+  const valid = HEX_COLOR.test(color);
+  const contrast = valid ? contrastWithWhite(color) : 0;
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-3">
+      <input
+        type="color"
+        aria-label="Choisir la couleur"
+        value={valid ? color.toLowerCase() : '#1a73e8'}
+        onChange={(e) => onChange(JSON.stringify({ primaryColor: e.target.value.toUpperCase() }, null, 2))}
+        className="h-10 w-14 cursor-pointer rounded border border-border"
+      />
+      {valid && (
+        <>
+          <span className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: color }}>
+            Aperçu du bouton
+          </span>
+          <span className={`text-xs ${contrast >= 4.5 ? 'text-muted' : 'text-danger'}`}>Contraste {contrast.toFixed(1)} (minimum 4,5)</span>
+        </>
+      )}
+    </div>
   );
 }

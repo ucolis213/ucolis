@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ACTIVE_OFFER_STATUSES, type OfferDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
@@ -85,7 +85,9 @@ export default function ParcelOffers() {
           <View style={{ gap: space(3) }}>
             {data.items.map((o) => {
               const active = ACTIVE_OFFER_STATUSES.includes(o.status);
-              const rejectButton = <Button label={t('reject')} variant="ghost" fullWidth={false} {...btn(`r:${o.id}`)} onPress={() => reject(o)} />;
+              const rejectButton = (
+                <Button label={t('reject')} variant="dangerGhost" icon="close" fullWidth={false} {...btn(`r:${o.id}`)} onPress={() => reject(o)} />
+              );
               return (
                 <OfferCard
                   key={o.id}
@@ -94,27 +96,38 @@ export default function ParcelOffers() {
                   showRounds
                   actions={
                     o.status === 'pending' ? (
-                      <>
-                        <View style={{ flex: 1 }}>
-                          <Button label={t('accept')} {...btn(`a:${o.id}`)} onPress={() => accept(o)} />
-                        </View>
-                        {o.counterCount < maxCounters && (
-                          <View style={{ flex: 1 }}>
-                            <Button label={t('counter')} variant="outline" disabled={busy !== null} onPress={() => setCountering(o)} />
+                      // Ligne 1 : les deux choix principaux ; ligne 2 : compteur de contre-offres et refus discret.
+                      <View style={styles.actions}>
+                        <View style={styles.row}>
+                          {o.counterCount < maxCounters && (
+                            <View style={styles.flex}>
+                              <Button
+                                label={t('counter')}
+                                variant="outline"
+                                icon="swap-horizontal-outline"
+                                disabled={busy !== null}
+                                onPress={() => setCountering(o)}
+                              />
+                            </View>
+                          )}
+                          <View style={styles.flex}>
+                            <Button label={t('accept')} icon="checkmark" {...btn(`a:${o.id}`)} onPress={() => accept(o)} />
                           </View>
-                        )}
-                        {rejectButton}
-                        <AppText size="xs" color={colors.textMuted} style={{ width: '100%' }}>
-                          {o.counterCount >= maxCounters ? t('counterLimit') : t('counterLeft', { count: maxCounters - o.counterCount })}
-                        </AppText>
-                      </>
+                        </View>
+                        <View style={styles.footer}>
+                          <AppText size="xs" color={colors.textMuted} style={styles.flex}>
+                            {o.counterCount >= maxCounters ? t('counterLimit') : t('counterLeft', { count: maxCounters - o.counterCount })}
+                          </AppText>
+                          {rejectButton}
+                        </View>
+                      </View>
                     ) : active ? (
-                      <>
-                        <AppText size="sm" color={colors.textMuted} style={{ flex: 1 }}>
+                      <View style={styles.footer}>
+                        <AppText size="sm" color={colors.textMuted} style={styles.flex}>
                           {t('waitingCarrier')}
                         </AppText>
                         {rejectButton}
-                      </>
+                      </View>
                     ) : undefined
                   }
                 />
@@ -144,3 +157,10 @@ export default function ParcelOffers() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  actions: { width: '100%', gap: space(2) },
+  row: { flexDirection: 'row', gap: space(2) },
+  footer: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: space(2) },
+});

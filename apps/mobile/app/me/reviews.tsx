@@ -1,8 +1,10 @@
 // Mes avis (F15) : reçus (avec une réponse publique possible) et donnés.
 
+import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ReviewDto } from '@ucolis/shared';
 import { api, errorMessage } from '@/api/client';
@@ -42,9 +44,19 @@ export default function MyReviews() {
               <SectionCard key={r.id}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space(2) }}>
                   <RatingStars value={r.rating} size={14} />
-                  <AppText size="xs" color={colors.textMuted}>
+                  <AppText size="xs" color={colors.textMuted} style={{ flex: 1 }}>
                     {tab === 'received' ? r.author.displayName : ''} {r.publishedAt ? formatDate(r.publishedAt) : t('parcel:reviewBlind')}
                   </AppText>
+                  {tab === 'received' && (
+                    <Pressable
+                      hitSlop={12}
+                      onPress={() => router.push({ pathname: '/report', params: { type: 'review', id: r.id } })}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('parcel:reportReview')}
+                    >
+                      <Ionicons name="flag-outline" size={16} color={colors.textSubtle} />
+                    </Pressable>
+                  )}
                 </View>
                 {r.comment && <AppText size="sm">{r.comment}</AppText>}
                 {Object.entries(r.criteria).map(([k, v]) => (

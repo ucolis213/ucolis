@@ -1,10 +1,11 @@
-// Recherche d'adresses façon VTC : champs Départ et Arrivée reliés, chacun avec ses icônes « Ma position actuelle »
-// et « Choisir sur la carte » en fin de champ, adresses récentes, et suggestions pendant la frappe : communes du
-// référentiel tout de suite, lieux et rues de l'API (OpenStreetMap ou Google) dès qu'ils arrivent.
+// Recherche d'adresses façon VTC : champs Départ et Arrivée reliés (ou un seul champ, comme une étape de trajet),
+// chacun avec ses icônes « Ma position actuelle » et « Choisir sur la carte » en fin de champ, adresses récentes, et
+// suggestions pendant la frappe : communes du référentiel tout de suite, lieux et rues de l'API (OpenStreetMap ou
+// Google) dès qu'ils arrivent.
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +14,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -32,14 +34,18 @@ import { AppText } from './AppText';
 import { MapPicker, type PickedPlace } from './MapPicker';
 import { AppModal } from './AppModal';
 
-export type AddressField = 'pickup' | 'dropoff';
+export type AddressField = 'pickup' | 'dropoff' | 'stop';
+
+/** Textes d'invite des champs (par défaut ceux d'un colis). */
+export type AddressPlaceholders = Partial<Record<AddressField, string>>;
+
+const ROUTE: AddressField[] = ['pickup', 'dropoff'];
+const DEFAULT_PLACEHOLDER: Record<AddressField, string> = { pickup: 'whereFrom', dropoff: 'whereTo', stop: 'stop' };
 
 type Row =
   | { kind: 'header'; id: string; label: string; loading?: boolean }
   | { kind: 'place'; id: string; place: AddressSuggestion; icon: keyof typeof Ionicons.glyphMap }
   | { kind: 'note'; id: string; label: string };
-
-const otherField = (f: AddressField): AddressField => (f === 'pickup' ? 'dropoff' : 'pickup');
 
 async function reverse(point: LatLng): Promise<AddressSuggestion> {
   try {
@@ -65,14 +71,22 @@ export function AddressSearch({
   onSelect,
   onFieldChange,
   onClose,
+  placeholders,
+  fields = ROUTE,
+  title,
 }: {
   visible: boolean;
+  /** Champs affichés, dans l'ordre (par défaut départ puis arrivée). */
+  fields?: AddressField[];
+  /** Titre de la fenêtre (par défaut « Trajet »). */
+  title?: string;
   /** Champ en cours de saisie. */
   field: AddressField;
-  values: Record<AddressField, PickedPlace | null>;
+  values: Partial<Record<AddressField, PickedPlace | null>>;
   onSelect: (field: AddressField, place: PickedPlace) => void;
   onFieldChange: (field: AddressField) => void;
   onClose: () => void;
+  placeholders?: AddressPlaceholders;
 }) {
   const { t } = useTranslation(['parcel', 'common']);
   const [query, setQuery] = useState('');
@@ -125,13 +139,14 @@ export function AddressSearch({
     return () => clearTimeout(timer);
   }, [query]);
 
-  /** Adresse choisie pour un champ (par défaut celui en cours de saisie), puis passage à l'autre s'il est vide. */
+  /** Adresse choisie pour un champ (par défaut celui en cours de saisie), puis passage au prochain champ vide. */
   async function choose(place: PickedPlace, f: AddressField = field) {
     const picked = toPlace(place);
     onSelect(f, picked);
     setRecents(await addRecent(picked));
-    if (values[otherField(f)]) close();
-    else switchField(otherField(f));
+    const next = fields.find((x) => x !== f && !values[x]);
+    if (next) switchField(next);
+    else close();
   }
 
   async function myPosition(f: AddressField) {
@@ -210,7 +225,7 @@ export function AddressSearch({
 
   const fieldRow = (f: AddressField) => {
     const value = values[f];
-    const placeholder = t(f === 'pickup' ? 'whereFrom' : 'whereTo');
+    const placeholder = placeholders?.[f] ?? t(DEFAULT_PLACEHOLDER[f]);
     if (f === field) {
       return (
         <View style={styles.fieldRow}>
@@ -310,20 +325,26 @@ export function AddressSearch({
             <Ionicons name={backIcon()} size={24} color={colors.navy} />
           </Pressable>
           <AppText size="lg" weight="bold">
-            {t('steps.route')}
+            {title ?? t('steps.route')}
           </AppText>
         </View>
         <View style={styles.fields}>
-          {/* Repères reliés : rond pour le départ, carré pour l'arrivée. */}
+          {/* Repères reliés : rond pour le départ, anneau pour une étape, carré pour l'arrivée. */}
           <View style={styles.rail}>
-            <View style={styles.dot} />
-            <View style={styles.line} />
-            <View style={styles.square} />
+            {fields.map((f, i) => (
+              <Fragment key={f}>
+                {i > 0 && <View style={styles.line} />}
+                <View style={MARKERS[f]} />
+              </Fragment>
+            ))}
           </View>
           <View style={styles.flex}>
-            {fieldRow('pickup')}
-            <View style={styles.divider} />
-            {fieldRow('dropoff')}
+            {fields.map((f, i) => (
+              <Fragment key={f}>
+                {i > 0 && <View style={styles.divider} />}
+                {fieldRow(f)}
+              </Fragment>
+            ))}
           </View>
         </View>
         <FlatList
@@ -338,7 +359,9 @@ export function AddressSearch({
           title={t(mapField ?? field)}
           initial={
             mapField
-              ? (values[mapField]?.location ?? values[otherField(mapField)]?.location ?? null)
+              ? (values[mapField]?.location ??
+                fields.map((x) => values[x]?.location).find(Boolean) ??
+                null)
               : null
           }
           onClose={() => setMapField(null)}
@@ -374,8 +397,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.background,
   },
-  rail: { alignItems: 'center', paddingVertical: space(5) },
+  rail: { alignItems: 'center', justifyContent: 'center', paddingVertical: space(5) },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+  ring: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: colors.navy },
   line: { flex: 1, width: 2, marginVertical: space(1), backgroundColor: colors.border },
   square: { width: 10, height: 10, backgroundColor: colors.navy },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH + 4 },
@@ -402,3 +426,5 @@ const styles = StyleSheet.create({
   },
   note: { paddingTop: space(2) },
 });
+
+const MARKERS: Record<AddressField, ViewStyle> = { pickup: styles.dot, stop: styles.ring, dropoff: styles.square };

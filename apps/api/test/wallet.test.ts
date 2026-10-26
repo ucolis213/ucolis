@@ -279,7 +279,7 @@ describe('recharge et back-office', () => {
   });
 
   it('ouvre le portefeuille avec le bonus à la validation de l’identité', async () => {
-    const ctx = makeTestApp({ settings: enabled() });
+    const ctx = makeTestApp({ settings: { ...enabled(), requireCarrierVerification: true } });
     const karim = await verifiedUser(ctx, { intent: 'carrier' }, { 'carrierVerification.status': 'pending', 'carrierVerification.submittedAt': new Date() });
     expect((await wallet(ctx, karim)).body).toMatchObject({ eligible: false, balance: 0 });
     const admin = await createStaff(ctx, 'super_admin');

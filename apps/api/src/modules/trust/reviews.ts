@@ -1,5 +1,6 @@
 // Avis (F15) : double aveugle (publiés quand les deux parties ont noté, ou à la fin de la fenêtre),
-// un avis par auteur et par colis, non modifiable, une réponse publique de la personne notée.
+// une seule note par personne (un avis par auteur et par personne notée, tous colis confondus),
+// non modifiable, une réponse publique de la personne notée.
 
 import { Types } from 'mongoose';
 import { CARRIER_CRITERIA, SENDER_CRITERIA, type ReviewDto, type ReviewStatusDto } from '@ucolis/shared';
@@ -12,6 +13,11 @@ import { toUserSummary } from '../users/serializers';
 import { ReviewModel, type ReviewLean } from './model';
 
 const DAY = 86_400_000;
+
+/** L'auteur a-t-il déjà noté cette personne (sur n'importe quel colis, ou hors du colis indiqué) ? */
+export async function hasRated(authorId: string, targetId: string, exceptParcel?: string) {
+  return !!(await ReviewModel.exists({ author: authorId, target: targetId, ...(exceptParcel ? { parcel: { $ne: exceptParcel } } : {}) }));
+}
 
 /** Moyenne, nombre et répartition : seuls les avis publiés et non masqués comptent. */
 export async function recomputeRating(userId: Types.ObjectId | string) {
@@ -62,10 +68,12 @@ export function createReviewService(deps: Deps) {
     async status(parcelId: string, userId: string): Promise<ReviewStatusDto> {
       const ctx = await context(parcelId, userId);
       const already = !!(await ReviewModel.exists({ parcel: parcelId, author: userId }));
+      const ratedUser = !already && (await hasRated(userId, ctx.targetId, parcelId));
       const target = (await UserModel.findById(ctx.targetId).lean()) as UserLean | null;
       return {
-        canReview: ctx.open && !already,
+        canReview: ctx.open && !already && !ratedUser,
         alreadyReviewed: already,
+        alreadyRatedUser: ratedUser,
         deadline: ctx.deadline?.toISOString() ?? null,
         direction: ctx.direction,
         target: target ? toUserSummary(target) : null,
@@ -77,6 +85,9 @@ export function createReviewService(deps: Deps) {
       if (!ctx.open) throw new AppError(409, 'INVALID_TRANSITION', 'La fenêtre d’avis est fermée');
       const allowed: readonly string[] = ctx.direction === 'sender_to_carrier' ? CARRIER_CRITERIA : SENDER_CRITERIA;
       const criteria = Object.fromEntries(Object.entries(input.criteria).filter(([k]) => allowed.includes(k)));
+      if (await hasRated(userId, ctx.targetId, parcelId)) {
+        throw new AppError(409, 'ALREADY_REVIEWED', 'Personne déjà notée');
+      }
       let review;
       try {
         review = await ReviewModel.create({
@@ -92,10 +103,17 @@ export function createReviewService(deps: Deps) {
         if ((err as { code?: number }).code === 11000) throw new AppError(409, 'INVALID_TRANSITION', 'Avis déjà déposé');
         throw err;
       }
-      // Double aveugle : publication quand les deux parties ont noté.
-      const both = await ReviewModel.find({ parcel: parcelId }, { _id: 1 }).lean();
-      if (both.length === 2) await publish(both.map((r) => r._id));
-      return { id: review.id as string, published: both.length === 2 };
+      // Double aveugle : publication quand les deux personnes se sont notées, sur ce colis ou sur un autre
+      // (une seule note par personne : l'autre ne pourra plus répondre ici).
+      const published = await hasRated(ctx.targetId, userId);
+      if (published) {
+        const pair = await ReviewModel.find(
+          { publishedAt: null, $or: [{ author: userId, target: ctx.targetId }, { author: ctx.targetId, target: userId }] },
+          { _id: 1 },
+        ).lean();
+        await publish(pair.map((r) => r._id));
+      }
+      return { id: review.id as string, published };
     },
 
     async reply(reviewId: string, userId: string, text: string) {

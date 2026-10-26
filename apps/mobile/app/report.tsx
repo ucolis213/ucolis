@@ -10,6 +10,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Screen } from '@/components/Screen';
+import { Sheet } from '@/components/SheetContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { TextField } from '@/components/TextField';
 import { space } from '@/theme';
@@ -25,7 +26,12 @@ export default function Report() {
     if (!reason) return;
     setPending(true);
     try {
-      await api.post('/reports', { targetType: type, targetId: id, reason, description: description.trim() || undefined });
+      await api.post('/reports', {
+        targetType: type,
+        targetId: id,
+        reason,
+        description: description.trim() || undefined,
+      });
       Alert.alert(t('report.sent'));
       router.back();
     } catch (err) {
@@ -36,14 +42,33 @@ export default function Report() {
   }
 
   return (
-    <Screen scroll edges={['top', 'bottom']} header={<ScreenHeader title={t('report.title')} />} footer={<Button label={t('send')} onPress={submit} loading={pending} disabled={!reason} />}>
-      <AppText weight="semibold">{t('report.reason')}</AppText>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space(2) }}>
-        {REPORT_REASONS.map((r) => (
-          <Chip key={r} label={t(`report.reasons.${r}`)} selected={reason === r} onPress={() => setReason(r)} />
-        ))}
-      </View>
-      <TextField label={t('report.description')} value={description} onChangeText={setDescription} multiline maxLength={1000} style={{ minHeight: 100, textAlignVertical: 'top' }} />
-    </Screen>
+    <Sheet>
+      <Screen
+        scroll
+        edges={['top', 'bottom']}
+        header={<ScreenHeader title={t('report.title')} />}
+        footer={<Button label={t('send')} onPress={submit} loading={pending} disabled={!reason} />}
+      >
+        <AppText weight="semibold">{t('report.reason')}</AppText>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space(2) }}>
+          {REPORT_REASONS.map((r) => (
+            <Chip
+              key={r}
+              label={t(`report.reasons.${r}`)}
+              selected={reason === r}
+              onPress={() => setReason(r)}
+            />
+          ))}
+        </View>
+        <TextField
+          label={t('report.description')}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          maxLength={1000}
+          style={{ minHeight: 100, textAlignVertical: 'top' }}
+        />
+      </Screen>
+    </Sheet>
   );
 }

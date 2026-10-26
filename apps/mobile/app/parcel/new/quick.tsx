@@ -113,7 +113,8 @@ export default function QuickPublish() {
         hint={suggested ? t('suggested', { price: price(suggested) }) : undefined}
         error={errors.requestedPrice}
       />
-      {suggested && draft.requestedPrice && isPriceUnusuallyHigh(draft.requestedPrice, suggested) && (
+      {/* Comparaison booléenne : un prix à 0 ne doit pas être rendu comme texte. */}
+      {!!suggested && !!draft.requestedPrice && isPriceUnusuallyHigh(draft.requestedPrice, suggested) && (
         <AppText size="sm" color="#B7791F">
           {t('priceWarning')}
         </AppText>

@@ -214,7 +214,7 @@ function GpsTrace({ points }: { points: GpsPoint[] }) {
   return (
     <div className="space-y-3">
       <svg viewBox="0 0 300 300" className="mx-auto h-64 w-64 rounded bg-background" role="img" aria-label="Tracé GPS">
-        <polyline points={points.map((p) => xy(p).join(',')).join(' ')} fill="none" stroke="#FF6B35" strokeWidth="2" />
+        <polyline points={points.map((p) => xy(p).join(',')).join(' ')} fill="none" style={{ stroke: 'var(--color-primary)' }} strokeWidth="2" />
         <circle cx={xy(first)[0]} cy={xy(first)[1]} r="5" fill="#4ECDC4" />
         <circle cx={xy(last)[0]} cy={xy(last)[1]} r="5" fill="#1C1C2E" />
       </svg>

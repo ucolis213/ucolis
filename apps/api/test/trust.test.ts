@@ -89,6 +89,35 @@ describe('avis en double aveugle', () => {
     expect(late.status).toBe(409);
   });
 
+  it('ne laisse noter une personne qu’une seule fois, tous colis confondus', async () => {
+    const ctx = makeTestApp();
+    const { amina, karim, parcel } = await delivered(ctx);
+    await ctx.http().post(`/api/v1/parcels/${parcel.id}/reviews`).set(amina.auth).send({ rating: 5 });
+
+    // Deuxième colis entre les mêmes personnes.
+    const p2 = await createParcel(ctx, amina);
+    const o2 = (await ctx.http().post(`/api/v1/parcels/${p2.id}/offers`).set(karim.auth).send({ price: 3250, vehicleId: karim.vehicleId, proposedPickupDate: pickup() })).body;
+    await ctx.http().post(`/api/v1/offers/${o2.id}/accept`).set(amina.auth);
+    await ctx.http().post(`/api/v1/parcels/${p2.id}/start`).set(karim.auth);
+    const { code } = (await ctx.http().get(`/api/v1/parcels/${p2.id}/delivery-code`).set(amina.auth)).body;
+    await ctx.http().post(`/api/v1/parcels/${p2.id}/delivery-code`).set(karim.auth).send({ code });
+
+    const status = await ctx.http().get(`/api/v1/parcels/${p2.id}/review-status`).set(amina.auth);
+    expect(status.body).toMatchObject({ canReview: false, alreadyReviewed: false, alreadyRatedUser: true });
+    expect((await ctx.http().get(`/api/v1/parcels/${p2.id}`).set(amina.auth)).body.viewer.hasReviewed).toBe(true);
+    const again = await ctx.http().post(`/api/v1/parcels/${p2.id}/reviews`).set(amina.auth).send({ rating: 1 });
+    expect(again.body.error.code).toBe('ALREADY_REVIEWED');
+
+    // Karim note Amina sur le 2e colis : Amina ne pouvant plus noter, l'avis est publié tout de suite.
+    expect((await ctx.http().get(`/api/v1/parcels/${p2.id}`).set(karim.auth)).body.viewer.hasReviewed).toBe(false);
+    const k = await ctx.http().post(`/api/v1/parcels/${p2.id}/reviews`).set(karim.auth).send({ rating: 4 });
+    expect(k.body.published).toBe(true);
+    expect((await ctx.http().get(`/api/v1/parcels/${p2.id}/review-status`).set(karim.auth)).body.alreadyReviewed).toBe(true);
+    // Les deux se sont notés (sur deux colis différents) : l'avis d'Amina du 1er colis est publié aussi.
+    expect((await ctx.http().get(`/api/v1/users/${karim.id}/reviews`)).body.total).toBe(1);
+    expect((await ctx.http().get(`/api/v1/users/${amina.id}/reviews`)).body.total).toBe(1);
+  });
+
   it("refuse un avis d'un tiers ou avant la livraison", async () => {
     const ctx = makeTestApp();
     const { amina, parcel } = await deal(ctx);

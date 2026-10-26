@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import i18n from '../i18n';
 import { getSocket } from '../realtime/socket';
+import { colors } from '../theme';
 
 export const TRACKING_TASK = 'ucolis-delivery-tracking';
 const ACTIVE_KEY = 'ucolis.tracking.parcelId';
@@ -97,7 +98,7 @@ export async function startTracking(parcelId: string): Promise<'background' | 'f
           foregroundService: {
             notificationTitle: 'UCOLIS',
             notificationBody: i18n.t('parcel:tracking.title'),
-            notificationColor: '#FF6B35',
+            notificationColor: colors.primary,
           },
         });
       }

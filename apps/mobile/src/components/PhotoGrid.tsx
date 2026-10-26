@@ -4,7 +4,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { I18nManager, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { FileRef, UploadPurpose } from '@ucolis/shared';
 import { compressImage, uploadFile } from '../api/upload';
@@ -66,8 +66,8 @@ export function PhotoGrid({
           )}
           <View style={styles.tools}>
             {i > 0 && (
-              <Pressable onPress={() => move(i, -1)} style={styles.tool} accessibilityRole="button" accessibilityLabel="←">
-                <Ionicons name="arrow-back" size={14} color="#FFFFFF" />
+              <Pressable onPress={() => move(i, -1)} style={styles.tool} accessibilityRole="button" accessibilityLabel={I18nManager.isRTL ? '→' : '←'}>
+                <Ionicons name={I18nManager.isRTL ? 'arrow-forward' : 'arrow-back'} size={14} color="#FFFFFF" />
               </Pressable>
             )}
             <Pressable onPress={() => onChange(photos.filter((_, k) => k !== i))} style={styles.tool} accessibilityRole="button" accessibilityLabel={t('common:delete')}>

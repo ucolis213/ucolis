@@ -12,18 +12,19 @@ import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { DateSelect, NumberInput, PriceInput, SwitchRow } from '@/components/FormBits';
 import { Screen } from '@/components/Screen';
+import { Sheet } from '@/components/SheetContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Select } from '@/components/Select';
 import { useWilayaOptions } from '@/components/WilayaCommuneSelect';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useFilters, type ParcelFilters, type TripFilters } from '@/state/filters';
-import { space } from '@/theme';
+import { colors, routeArrow, space } from '@/theme';
 
 export default function Filters() {
   const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
   const store = useFilters();
   const scope = scopeParam === 'trips' ? 'trips' : 'parcels';
-  return scope === 'trips' ? <TripFiltersForm initial={store.trips} /> : <ParcelFiltersForm initial={store.parcels} />;
+  return <Sheet>{scope === 'trips' ? <TripFiltersForm initial={store.trips} /> : <ParcelFiltersForm initial={store.parcels} />}</Sheet>;
 }
 
 function ChipGroup<T extends string>({ value, options, onChange }: { value?: T; options: { value: T; label: string }[]; onChange: (v: T | undefined) => void }) {
@@ -64,7 +65,7 @@ function ParcelFiltersForm({ initial }: { initial: ParcelFilters }) {
         await saveSearch(name.trim());
       });
       // Android n'a pas Alert.prompt : nom automatique à partir du trajet.
-      if (!Alert.prompt) void saveSearch([f.fromWilaya, f.toWilaya].filter(Boolean).join(' → ') || t('filters.title'));
+      if (!Alert.prompt) void saveSearch([f.fromWilaya, f.toWilaya].filter(Boolean).join(` ${routeArrow()} `) || t('filters.title'));
     });
   }
 
@@ -82,7 +83,7 @@ function ParcelFiltersForm({ initial }: { initial: ParcelFilters }) {
     <Screen
       scroll
       edges={['top', 'bottom']}
-      header={<ScreenHeader title={t('filters.title')} right={<AppText weight="semibold" color="#E5531F" onPress={() => setF({ sort: 'recent' })}>{t('common:reset')}</AppText>} />}
+      header={<ScreenHeader title={t('filters.title')} right={<AppText weight="semibold" color={colors.primaryDark} onPress={() => setF({ sort: 'recent' })}>{t('common:reset')}</AppText>} />}
       footer={
         <>
           <Button label={t('common:apply')} onPress={apply} />
@@ -145,7 +146,7 @@ function TripFiltersForm({ initial }: { initial: TripFilters }) {
             icon="notifications-outline"
             onPress={() =>
               requireAuth(async () => {
-                const name = [f.fromWilaya, f.toWilaya].filter(Boolean).join(' → ') || t('trip:trips');
+                const name = [f.fromWilaya, f.toWilaya].filter(Boolean).join(` ${routeArrow()} `) || t('trip:trips');
                 await api.post('/me/saved-searches', { name, scope: 'trips', filters: f, notify: true });
                 Alert.alert(t('filters.saved'));
               })

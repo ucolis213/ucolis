@@ -10,11 +10,12 @@ import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { useAppConfig } from '@/hooks/useAppConfig';
 import i18n, { initI18n } from '@/i18n';
 import { listenToNotificationTaps, registerForPush } from '@/notifications/push';
 import { SocketProvider, useSocket } from '@/realtime/socket';
 import { SessionProvider, isCarrierIntent, useSession } from '@/session/SessionContext';
-import { colors, fontAssets } from '@/theme';
+import { colors, fontAssets, storeBrandColor } from '@/theme';
 import { flushPendingPosition } from '@/tracking/location';
 import { useNearbyPosition } from '@/tracking/nearbyPosition';
 
@@ -43,6 +44,21 @@ function SessionEffects() {
   useEffect(() => {
     if (connected) flushPendingPosition().catch(() => undefined);
   }, [connected]);
+  return null;
+}
+
+/**
+ * Couleur de marque changée dans le back-office : enregistrée, puis appliquée au prochain lancement. Pas de
+ * redémarrage automatique : relancer le runtime pendant le démarrage fait planter Expo Go (« Cannot find native
+ * module 'ExpoAsset' », puis « "main" has not been registered »).
+ */
+function BrandSync() {
+  const config = useAppConfig();
+  // Seulement après une lecture réseau : le cache persisté peut porter une ancienne couleur.
+  const color = config.isFetchedAfterMount ? config.data?.branding?.primaryColor : undefined;
+  useEffect(() => {
+    if (color) storeBrandColor(color);
+  }, [color]);
   return null;
 }
 
@@ -80,6 +96,7 @@ export default function RootLayout() {
           <SessionProvider>
             <SocketProvider>
               <SessionEffects />
+              <BrandSync />
               <StatusBar style="dark" />
               <OfflineBanner />
               <Stack

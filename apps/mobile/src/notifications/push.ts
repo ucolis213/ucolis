@@ -7,6 +7,7 @@ import { router, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 import { api } from '../api/client';
 import { getDeviceId } from '../device';
+import { colors } from '../theme';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -34,7 +35,7 @@ export async function registerForPush(): Promise<string | null> {
       // Faux positif d'import/namespace sur la build SDK 58 d'expo-notifications (l'enum est bien exporté).
       // eslint-disable-next-line import/namespace
       importance: Notifications.AndroidImportance.HIGH,
-      lightColor: '#FF6B35',
+      lightColor: colors.primary,
     });
   }
   const existing = await Notifications.getPermissionsAsync();

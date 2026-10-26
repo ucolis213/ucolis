@@ -28,10 +28,10 @@ export const fileSchema = new Schema(
 const vehicleSchema = new Schema({
   type: { type: String, enum: VEHICLE_TYPES, required: true },
   brand: { type: String, required: true, trim: true, maxlength: 50 },
-  model: { type: String, required: true, trim: true, maxlength: 50 },
+  model: { type: String, trim: true, maxlength: 50, default: '' },
   plate: { type: String, required: true, trim: true, maxlength: 20 },
-  capacityKg: { type: Number, required: true, min: 1 },
-  volumeM3: { type: Number, required: true, min: 0.01 },
+  capacityKg: { type: Number, min: 1, default: null },
+  volumeM3: { type: Number, min: 0.01, default: null },
   photo: { type: fileSchema, default: null },
   isDefault: { type: Boolean, default: false },
 });

@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSocket } from '../realtime/socket';
-import { colors, MIN_TOUCH, shadow } from '../theme';
-import { AppText } from './AppText';
+import { badgeText, colors, MAX_FONT_SCALE, MIN_TOUCH, shadow } from '../theme';
 
 /** Cloche de l'en-tête (Accueil, Annonces), avec le nombre de notifications non lues. */
 export function HeaderBell() {
@@ -21,9 +20,9 @@ export function HeaderBell() {
       <Ionicons name="notifications-outline" size={22} color={colors.navy} />
       {unread > 0 && (
         <View style={styles.badge}>
-          <AppText size="xs" weight="bold" color="#FFFFFF">
+          <Text style={badgeText} maxFontSizeMultiplier={MAX_FONT_SCALE}>
             {unread > 99 ? '99+' : unread}
-          </AppText>
+          </Text>
         </View>
       )}
     </Pressable>

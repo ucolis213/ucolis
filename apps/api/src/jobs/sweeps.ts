@@ -9,6 +9,7 @@ import { ParcelModel, type ParcelLean } from '../modules/parcels/model';
 import { transitionParcel } from '../modules/parcels/transitions';
 import { TripModel } from '../modules/trips/model';
 import { DisputeModel, ReportModel, ReviewModel } from '../modules/trust/model';
+import { hasRated } from '../modules/trust/reviews';
 import { anonymizeUser } from '../modules/users/anonymize';
 import { UserModel } from '../modules/users/model';
 import type { Services } from '../services';
@@ -159,6 +160,9 @@ export const reviewReminders: Sweep = async (deps) => {
       const marker = `review:${party!.toString()}`;
       if ((p.remindersSent ?? []).includes(marker)) continue;
       if (await ReviewModel.exists({ parcel: p._id, author: party })) continue;
+      // Une seule note par personne : pas de relance si l'autre partie est déjà notée.
+      const other = party!.equals(p.sender) ? p.assignedCarrier : p.sender;
+      if (other && (await hasRated(party!.toString(), other.toString()))) continue;
       const res = await ParcelModel.updateOne({ _id: p._id, remindersSent: { $ne: marker } }, { $push: { remindersSent: marker } });
       if (!res.modifiedCount) continue;
       await deps.bus.emit('review.reminder', { parcelId: p._id.toString(), userId: party!.toString() });

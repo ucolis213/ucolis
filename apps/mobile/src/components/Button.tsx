@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } f
 import { colors, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
 
-type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dangerGhost' | 'danger';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -18,6 +18,7 @@ const VARIANTS: Record<Variant, { bg: string; fg: string; border: string }> = {
   secondary: { bg: colors.navy, fg: '#FFFFFF', border: colors.navy },
   outline: { bg: colors.surface, fg: colors.navy, border: colors.border },
   ghost: { bg: 'transparent', fg: colors.primaryDark, border: 'transparent' },
+  dangerGhost: { bg: 'transparent', fg: colors.danger, border: 'transparent' },
   danger: { bg: colors.danger, fg: '#FFFFFF', border: colors.danger },
 };
 
@@ -54,7 +55,8 @@ export function Button({
       ) : (
         <View style={styles.row}>
           {icon && <Ionicons name={icon} size={20} color={v.fg} />}
-          <AppText weight="semibold" color={v.fg}>
+          {/* Une seule ligne : le libellé rétrécit un peu plutôt que de se couper au milieu d'un mot. */}
+          <AppText weight="semibold" color={v.fg} align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={styles.label}>
             {label}
           </AppText>
         </View>
@@ -68,10 +70,11 @@ const styles = StyleSheet.create({
     minHeight: Math.max(MIN_TOUCH, 50),
     borderRadius: radii.card,
     borderWidth: 1,
-    paddingHorizontal: space(5),
+    paddingHorizontal: space(4),
     alignItems: 'center',
     justifyContent: 'center',
   },
   full: { alignSelf: 'stretch' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space(2), maxWidth: '100%' },
+  label: { flexShrink: 1 },
 });

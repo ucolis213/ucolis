@@ -67,8 +67,8 @@ describe('trajets', () => {
     expect((await TripRequestModel.findById(req.body.id).lean())!.status).toBe('offered');
   });
 
-  it("exige une identité vérifiée, limite les trajets actifs et compte une série récurrente pour un seul", async () => {
-    const ctx = makeTestApp();
+  it("exige une identité vérifiée (réglage activé), limite les trajets actifs et compte une série récurrente pour un seul", async () => {
+    const ctx = makeTestApp({ settings: { requireCarrierVerification: true } });
     const amina = await verifiedUser(ctx);
     expect((await publishTrip(ctx, { auth: amina.auth, vehicleId: '0'.repeat(24) })).body.error.code).toBe('CARRIER_NOT_VERIFIED');
     const karim = await verifiedCarrier(ctx);

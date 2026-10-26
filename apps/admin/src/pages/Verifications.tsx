@@ -66,7 +66,7 @@ interface IdentityDetailDto {
   insuranceExpiresAt: string | null;
   decisionReason: string | null;
   documents: Record<string, SignedFile>;
-  vehicles: { type: string; brand: string; model: string; plate: string; capacityKg: number }[];
+  vehicles: { type: string; brand: string; model: string | null; plate: string; capacityKg: number | null }[];
   claim: ClaimInfo | null;
 }
 
@@ -95,7 +95,7 @@ export function IdentityDetail() {
                 ['Permis valable jusqu’au', date(d.licenseExpiresAt)],
                 ['Assurance valable jusqu’au', date(d.insuranceExpiresAt)],
                 ['Wilaya', `${commune(d.user.commune)}, ${wilaya(d.user.wilayaCode)}`],
-                ['Véhicules', d.vehicles.map((v) => `${label('parcel.vehicleTypes', v.type)} ${v.brand} ${v.model} · ${v.plate} · ${v.capacityKg} kg`).join(' ; ') || '-'],
+                ['Véhicules', d.vehicles.map((v) => [`${label('parcel.vehicleTypes', v.type)} ${v.brand} ${v.model ?? ''}`.trim(), v.plate, v.capacityKg ? `${v.capacityKg} kg` : null].filter(Boolean).join(' · ')).join(' ; ') || '-'],
                 ...(d.decisionReason ? ([['Dernier refus', d.decisionReason]] as [string, string][]) : []),
               ]}
             />

@@ -60,7 +60,7 @@ const config: ExpoConfig = {
         isAndroidForegroundServiceEnabled: true,
       },
     ],
-    ['expo-notifications', { color: '#FF6B35' }],
+    ['expo-notifications', { color: '#1A73E8' }],
     [
       'expo-image-picker',
       {

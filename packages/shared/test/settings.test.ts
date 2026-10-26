@@ -16,7 +16,7 @@ describe('réglages', () => {
       activeTripsPro: 10,
       maxCounterOffers: 3,
     });
-    expect(DEFAULT_SETTINGS.requireCarrierVerification).toBe(true);
+    expect(DEFAULT_SETTINGS.requireCarrierVerification).toBe(false);
     expect(APP_SETTING_KEYS).toContain('pricing');
   });
 

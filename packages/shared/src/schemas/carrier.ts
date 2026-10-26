@@ -4,13 +4,14 @@ import { fileRefSchema } from './common';
 
 export const MAX_VEHICLES = 5;
 
+// Obligatoires : type, marque et immatriculation. Modèle, capacité et volume sont facultatifs.
 export const vehicleInputSchema = z.object({
   type: z.enum(VEHICLE_TYPES),
   brand: z.string().trim().min(1, 'validation.required').max(50),
-  model: z.string().trim().min(1, 'validation.required').max(50),
+  model: z.string().trim().max(50).optional(),
   plate: z.string().trim().min(4, 'validation.plate').max(20, 'validation.plate'),
-  capacityKg: z.number().positive('validation.positive').max(50_000),
-  volumeM3: z.number().positive('validation.positive').max(200),
+  capacityKg: z.number().positive('validation.positive').max(50_000).nullable().optional(),
+  volumeM3: z.number().positive('validation.positive').max(200).nullable().optional(),
   photo: fileRefSchema.nullable().optional(),
   isDefault: z.boolean().optional(),
 });

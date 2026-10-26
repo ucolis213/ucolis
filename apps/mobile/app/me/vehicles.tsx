@@ -30,7 +30,14 @@ export default function Vehicles() {
               <Pressable key={v.id} onPress={() => router.push({ pathname: '/me/vehicle/[id]', params: { id: v.id } })} accessibilityRole="button">
                 <SectionCard title={`${v.brand} ${v.model}`} right={v.isDefault ? <Pill label={t('defaultVehicle')} tone="primary" /> : undefined}>
                   <AppText size="sm" color={colors.textMuted}>
-                    {t(`parcel:vehicleTypes.${v.type}`)} · {v.plate} · {v.capacityKg} kg · {v.volumeM3} m³
+                    {[
+                      t(`parcel:vehicleTypes.${v.type}`),
+                      v.plate,
+                      v.capacityKg && `${v.capacityKg} kg`,
+                      v.volumeM3 && `${v.volumeM3} m³`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </AppText>
                 </SectionCard>
               </Pressable>
