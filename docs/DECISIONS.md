@@ -518,3 +518,6 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   `activeTrackingParcel`, `GEO_VERSION`, `TRIP_STATUS_VALUES`, `OFFER_INITIAL_STATUS`, et de 29 clés de
   traduction jamais affichées (fr et ar). `MESSAGE_MAX_LENGTH` est désormais utilisé par le schéma d'envoi de
   message au lieu de répéter 2000.
+- Recherche d'adresse : une commune choisie n'est plus transmise avant l'ouverture de la carte. Un seul lieu
+  part par champ (le point placé, ou la commune si la carte est fermée sans point) : une étape de trajet
+  n'apparaît plus en double (commune puis adresse exacte).

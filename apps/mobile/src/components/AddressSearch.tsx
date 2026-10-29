@@ -157,15 +157,13 @@ export function AddressSearch({
   }
 
   /**
-   * Commune choisie : elle est retenue, puis la carte s'ouvre sur son centre pour placer l'endroit exact,
-   * pour le départ comme pour l'arrivée. Fermer la carte garde la commune.
+   * Commune choisie : la carte s'ouvre sur son centre pour placer l'endroit exact, pour le départ comme pour
+   * l'arrivée. Un seul lieu est transmis : le point placé, ou la commune si la carte est fermée sans point
+   * (sinon une liste d'étapes recevrait la commune puis l'adresse exacte).
    */
-  async function chooseCommune(place: PickedPlace, f: AddressField = field) {
-    const picked = toPlace(place);
-    onSelect(f, picked);
-    setRefining(picked);
+  function chooseCommune(place: PickedPlace, f: AddressField = field) {
+    setRefining(toPlace(place));
     setMapField(f);
-    setRecents(await addRecent(picked));
   }
 
   async function myPosition(f: AddressField) {
@@ -387,10 +385,10 @@ export function AddressSearch({
           onClose={() => {
             const f = mapField ?? field;
             setMapField(null);
-            // Carte fermée sans point : la commune déjà retenue suffit, on passe à la suite.
+            // Carte fermée sans point : la commune suffit, on passe à la suite.
             if (refining) {
               setRefining(null);
-              advance(f);
+              void choose(refining, f);
             }
           }}
           onPick={(p) => {
