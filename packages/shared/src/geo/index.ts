@@ -28,7 +28,6 @@ interface GeoFile {
 
 const geo = data as GeoFile;
 
-export const GEO_VERSION = geo.version;
 export const WILAYAS: readonly Wilaya[] = geo.wilayas;
 
 const wilayaByCode = new Map(WILAYAS.map((w) => [w.code, w]));

@@ -514,3 +514,7 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   hauteur de ligne égale à celle d'une ligne de la roue, dans les deux langues (Cairo décentrait les chiffres) ;
   deux-points de même hauteur ; recalage au pixel à l'arrêt ; lignes inclinées, réduites et estompées en
   s'éloignant du centre (animation sur le fil natif) ; retour haptique à chaque cran (expo-haptics).
+- Nettoyage du code mort : retrait des `.gitkeep` de dossiers remplis, de `resized()` (Cloudinary), `asHref`,
+  `activeTrackingParcel`, `GEO_VERSION`, `TRIP_STATUS_VALUES`, `OFFER_INITIAL_STATUS`, et de 29 clés de
+  traduction jamais affichées (fr et ar). `MESSAGE_MAX_LENGTH` est désormais utilisé par le schéma d'envoi de
+  message au lieu de répéter 2000.

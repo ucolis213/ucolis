@@ -123,5 +123,3 @@ export async function stopTracking(parcelId?: string) {
     await Location.stopLocationUpdatesAsync(TRACKING_TASK);
   }
 }
-
-export const activeTrackingParcel = () => AsyncStorage.getItem(ACTIVE_KEY);

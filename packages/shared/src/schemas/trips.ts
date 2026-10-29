@@ -1,7 +1,7 @@
 // Trajets des transporteurs (F9), alertes (F10).
 
 import { z } from 'zod';
-import { TRIP_STATUSES, VEHICLE_TYPES, type VehicleType } from '../enums';
+import { VEHICLE_TYPES, type VehicleType } from '../enums';
 import { latLngSchema, objectIdSchema, paginationSchema, placeSchema, wilayaCodeSchema } from './common';
 import { isRoundPrice } from './parcel';
 
@@ -62,8 +62,6 @@ export const savedSearchSchema = z.object({
   notify: z.boolean().default(true),
 });
 export const savedSearchUpdateSchema = savedSearchSchema.partial();
-
-export const TRIP_STATUS_VALUES = TRIP_STATUSES;
 
 /** Itinéraire ordonné d'un trajet : départ, étapes, arrivée. */
 export const tripRoute = (t: { from: { wilayaCode: string }; to: { wilayaCode: string }; stops?: readonly string[] }) => [

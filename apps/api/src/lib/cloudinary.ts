@@ -59,8 +59,3 @@ export function privateDownloadUrl(
   });
   return `https://api.cloudinary.com/v1_1/${creds.cloudName}/${opts.resourceType}/download?${query}`;
 }
-
-/** URL d'image redimensionnée (w_, q_auto, f_auto) à partir d'une URL Cloudinary publique. */
-export function resized(url: string, width: number): string {
-  return url.replace('/upload/', `/upload/w_${width},c_limit,q_auto,f_auto/`);
-}

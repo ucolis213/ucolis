@@ -1,7 +1,7 @@
 // Garde des actions protégées : un invité est envoyé vers la feuille de connexion, et l'action reprend
 // après connexion grâce au paramètre returnTo.
 
-import { router, usePathname, type Href } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useCallback } from 'react';
 import { useSession } from '../session/SessionContext';
 
@@ -24,5 +24,3 @@ export function useRequireAuth() {
     [isGuest, user, pathname],
   );
 }
-
-export const asHref = (path: string) => path as Href;

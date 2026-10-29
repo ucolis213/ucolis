@@ -58,9 +58,6 @@ export const OFFER_TRANSITIONS: readonly Transition<OfferStatus, OfferActor>[] =
   { from: ['pending', 'countered'], to: 'cancelled', by: ['system'], trigger: 'parcel_closed' },
 ];
 
-/** Statut initial d'une offre créée par un transporteur vérifié. */
-export const OFFER_INITIAL_STATUS: OfferStatus = 'pending';
-
 export function canTransitionParcel(
   from: ParcelStatus,
   to: ParcelStatus,
