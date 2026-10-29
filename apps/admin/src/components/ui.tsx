@@ -59,7 +59,7 @@ export function PageHeader({ title, back, actions, children }: { title: ReactNod
 const TONES = {
   neutral: 'bg-background text-navy',
   primary: 'bg-primary-soft text-primary-dark',
-  success: 'bg-[#E6F8F7] text-[#1F8F88]',
+  success: 'bg-[#E0F2FE] text-[#0369A1]',
   warning: 'bg-[#FEF5E6] text-[#B7791F]',
   danger: 'bg-[#FDECEC] text-danger',
 } as const;

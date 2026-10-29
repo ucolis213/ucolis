@@ -1,8 +1,17 @@
 // Petits éléments de formulaire : section, ligne clé/valeur, case à cocher, interrupteur, champ prix, date, heure.
 
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View, type ScrollViewInstance } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import * as Haptics from 'expo-haptics';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+  type ScrollViewInstance,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { DESIRED_DATE_MAX_DAYS } from '@ucolis/shared';
@@ -35,7 +44,7 @@ export function SectionCard({ title, children, right }: { title?: string; childr
 export function KeyValue({ label, value }: { label: string; value: ReactNode }) {
   return (
     <View style={styles.kv}>
-      <AppText size="sm" color={colors.textMuted} style={styles.flex}>
+      <AppText size="sm" color={colors.textMuted} style={styles.kvLabel}>
         {label}
       </AppText>
       {typeof value === 'string' || typeof value === 'number' ? (
@@ -43,7 +52,7 @@ export function KeyValue({ label, value }: { label: string; value: ReactNode }) 
           {value}
         </AppText>
       ) : (
-        value
+        <View style={styles.kvNode}>{value}</View>
       )}
     </View>
   );
@@ -424,9 +433,12 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
           <View style={styles.wheels}>
             <View style={styles.wheelBand} pointerEvents="none" />
             <Wheel items={HOURS} index={hour} onChange={setHour} label={t('hour')} />
-            <AppText size="xl" weight="bold">
-              :
-            </AppText>
+            {/* Même police, même hauteur de ligne que les chiffres : les deux-points tombent au centre du bandeau. */}
+            <View style={styles.wheelColon}>
+              <Text style={styles.wheelText} maxFontSizeMultiplier={1}>
+                :
+              </Text>
+            </View>
             <Wheel items={MINUTES} index={minute} onChange={setMinute} label={t('minutes')} />
           </View>
           <Button label={t('confirm')} onPress={() => onPick(`${HOURS[hour]}:${MINUTES[minute]}`)} />
@@ -436,18 +448,44 @@ function TimeSheet({ label, value, onClose, onPick }: { label: string; value: st
   );
 }
 
-/** Roue verticale : la valeur au centre est la valeur choisie ; le défilement se cale sur un élément. */
+/**
+ * Roue verticale façon iOS : la valeur au centre est la valeur choisie. Les lignes s'inclinent, rapetissent et
+ * s'estompent en s'éloignant du centre (cylindre), animées sur le fil natif ; un léger retour haptique marque
+ * chaque cran ; à l'arrêt, la roue se recale exactement sur une ligne.
+ */
 function Wheel({ items, index, onChange, label }: { items: string[]; index: number; onChange: (i: number) => void; label: string }) {
   const ref = useRef<ScrollViewInstance>(null);
+  // Valeur animée créée une fois (useState plutôt qu'une référence : elle est lue au rendu).
+  const [scrollY] = useState(() => new Animated.Value(index * WHEEL_ITEM));
   const [current, setCurrent] = useState(index);
   const at = (y: number) => Math.max(0, Math.min(items.length - 1, Math.round(y / WHEEL_ITEM)));
+  // Retour haptique à chaque ligne qui passe au centre, comme sur iOS.
+  const count = items.length;
+  useEffect(() => {
+    let passing = index;
+    const id = scrollY.addListener(({ value }) => {
+      const i = Math.max(0, Math.min(count - 1, Math.round(value / WHEEL_ITEM)));
+      if (i === passing) return;
+      passing = i;
+      void Haptics.selectionAsync().catch(() => undefined);
+    });
+    return () => scrollY.removeListener(id);
+    // Posé une fois : la position de départ ne sert qu'à ne pas vibrer à l'ouverture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollY, count]);
   const select = (i: number, scroll: boolean) => {
     if (scroll) ref.current?.scrollTo({ y: i * WHEEL_ITEM, animated: true });
     setCurrent(i);
     onChange(i);
   };
+  // Fin du défilement : recalage au pixel si la roue s'est arrêtée entre deux lignes.
+  const settle = (y: number) => {
+    const i = at(y);
+    select(i, Math.abs(y - i * WHEEL_ITEM) > 0.5);
+  };
+  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true });
   return (
-    <ScrollView
+    <Animated.ScrollView
       ref={ref}
       style={styles.wheel}
       contentContainerStyle={{ paddingVertical: WHEEL_ITEM * Math.floor(WHEEL_ROWS / 2) }}
@@ -457,11 +495,11 @@ function Wheel({ items, index, onChange, label }: { items: string[]; index: numb
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
-      onScroll={(e) => setCurrent(at(e.nativeEvent.contentOffset.y))}
-      onMomentumScrollEnd={(e) => select(at(e.nativeEvent.contentOffset.y), false)}
+      onScroll={onScroll}
+      onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.y)}
       onScrollEndDrag={(e) => {
         // Relâchée sans élan : aucune fin d'inertie ne suivra.
-        if (!e.nativeEvent.velocity?.y) select(at(e.nativeEvent.contentOffset.y), false);
+        if (!e.nativeEvent.velocity?.y) settle(e.nativeEvent.contentOffset.y);
       }}
       accessibilityRole="adjustable"
       accessibilityLabel={label}
@@ -472,21 +510,25 @@ function Wheel({ items, index, onChange, label }: { items: string[]; index: numb
       }
     >
       {items.map((item, i) => {
-        const distance = Math.abs(i - current);
+        // Position de la ligne par rapport au centre, de -2 (deux lignes plus bas) à +2 (deux lignes plus haut).
+        const range = [-2, -1, 0, 1, 2].map((k) => (i + k) * WHEEL_ITEM);
+        const curve = (values: number[]) => scrollY.interpolate({ inputRange: range, outputRange: values, extrapolate: 'clamp' });
+        const rotateX = scrollY.interpolate({ inputRange: range, outputRange: ['-50deg', '-25deg', '0deg', '25deg', '50deg'], extrapolate: 'clamp' });
         return (
           <Pressable key={item} style={styles.wheelItem} onPress={() => select(i, true)} accessible={false}>
-            <AppText
-              size={distance === 0 ? 'xl' : 'lg'}
-              weight={distance === 0 ? 'bold' : 'regular'}
-              color={distance === 0 ? colors.navy : colors.textSubtle}
-              style={{ opacity: distance > 1 ? 0.5 : 1 }}
+            <Animated.Text
+              maxFontSizeMultiplier={1}
+              style={[
+                styles.wheelText,
+                { opacity: curve([0.25, 0.55, 1, 0.55, 0.25]), transform: [{ perspective: 600 }, { rotateX }, { scale: curve([0.82, 0.92, 1, 0.92, 0.82]) }] },
+              ]}
             >
               {item}
-            </AppText>
+            </Animated.Text>
           </Pressable>
         );
       })}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 
@@ -495,7 +537,11 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.card, backgroundColor: colors.surface, padding: space(4), gap: space(3), ...shadow },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   kv: { flexDirection: 'row', alignItems: 'center', gap: space(3), minHeight: 28 },
-  kvValue: { flexShrink: 1, textAlign: 'right' },
+  // Le titre garde sa largeur (jamais coupé au milieu d'un mot) ; c'est la valeur qui passe à la ligne.
+  kvLabel: { flexShrink: 0, maxWidth: '50%' },
+  // Toute la place restante, texte calé au bord : les valeurs s'alignent en colonne, au bord de la carte.
+  kvValue: { flex: 1, textAlign: 'right' },
+  kvNode: { flex: 1, alignItems: 'flex-end' },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), minHeight: MIN_TOUCH },
   box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
@@ -526,11 +572,25 @@ const styles = StyleSheet.create({
   dayToday: { borderWidth: 1, borderColor: colors.primary },
   cellSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   yearGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), paddingVertical: space(2) },
-  wheels: { flexDirection: 'row', direction: 'ltr', alignItems: 'center', justifyContent: 'center', gap: space(4), marginBottom: space(4) },
-  wheel: { height: WHEEL_ITEM * WHEEL_ROWS, width: 72, flexGrow: 0 },
+  wheels: { flexDirection: 'row', direction: 'ltr', alignItems: 'center', justifyContent: 'center', gap: space(2), marginBottom: space(4) },
+  wheel: { height: WHEEL_ITEM * WHEEL_ROWS, width: 84, flexGrow: 0 },
   wheelItem: { height: WHEEL_ITEM, alignItems: 'center', justifyContent: 'center' },
+  // Chiffres de largeur fixe, police latine dans les deux langues (Cairo décentre les chiffres), hauteur de ligne
+  // égale à celle d'une ligne de la roue : chaque valeur tombe exactement au milieu du bandeau.
+  wheelText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 24,
+    lineHeight: WHEEL_ITEM,
+    height: WHEEL_ITEM,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+    color: colors.navy,
+  },
+  wheelColon: { height: WHEEL_ITEM, justifyContent: 'center' },
   // Bandeau derrière la ligne choisie, au centre des roues.
-  wheelBand: { position: 'absolute', start: 0, end: 0, top: WHEEL_ITEM * Math.floor(WHEEL_ROWS / 2), height: WHEEL_ITEM, borderRadius: radii.input, backgroundColor: colors.background },
+  wheelBand: { position: 'absolute', start: 0, end: 0, top: WHEEL_ITEM * Math.floor(WHEEL_ROWS / 2), height: WHEEL_ITEM, borderRadius: radii.input, backgroundColor: colors.neutralSoft },
   timeField: { flexDirection: 'row', alignItems: 'center', gap: space(2), minHeight: MIN_TOUCH },
   yearCell: { width: '23%', minHeight: MIN_TOUCH, borderRadius: radii.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });

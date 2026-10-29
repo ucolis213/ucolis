@@ -107,7 +107,7 @@ export function Broadcasts() {
             <Button type="submit" loading={send.isPending}>
               Envoyer
             </Button>
-            {sent && <span className="text-sm text-[#1F8F88]">{sent}</span>}
+            {sent && <span className="text-sm text-[#0369A1]">{sent}</span>}
           </div>
           {(send.error || preview.error) && (
             <div className="md:col-span-2">

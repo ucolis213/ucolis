@@ -313,13 +313,20 @@ Un récapitulatif précède la publication. Chaque étape est validée avant la 
 **Prix suggéré.** Un seul barème fait foi : la fonction `suggestPrice` de `shared/pricing.ts`. Le mobile l'utilise pour l'affichage, et l'API recalcule suggestedPrice et distanceKm à l'enregistrement, en ignorant les valeurs du client. Les coefficients sont des réglages.
 
 ```
-Prix suggéré = 50 × ⌈ (600 + C(d) + 50 × max(P, 200 × V)) / 50 ⌉
+W = max(P, 200 × V)                       poids taxé
+T = min(8, 1 + W / 50)                    facteur de taille
+Prix suggéré = max(300, 50 × ⌈ (300 + C(d) × T + H(W)) × (1 + 0,1 si fragile) / 50 ⌉)
 ```
 
 - P est le poids réel en kg et V le volume en m³ ; 200 kg/m³ est le facteur de poids volumétrique.
 - d est la distance à vol d'oiseau en km (formule de Haversine) entre les points de départ et d'arrivée.
-- C(d) est le coût kilométrique par tranches marginales : 8 DA/km sur les 100 premiers km, 6 DA/km de 100 à 300 km, 5 DA/km de 300 à 600 km, 4 DA/km au-delà.
-- Exemple : Alger → Oran, 352 km, 5 kg, 40 × 30 × 30 cm (0,036 m³). C = 800 + 1 200 + 260 = 2 260 DA. Le poids taxé est max(5 ; 7,2) = 7,2 kg, soit 360 DA. Le total de 3 220 DA est arrondi à 3 250 DA.
+- C(d) est le coût kilométrique d'un petit colis, par tranches marginales : 3 DA/km sur les 100 premiers km, 2,5 DA/km de 100 à 300 km, 2 DA/km de 300 à 600 km, 1,5 DA/km au-delà.
+- T traduit la taille du véhicule nécessaire : 1 pour un colis sans poids, 2 pour 50 kg taxés, plafonné à 8 (camionnette pleine). Le poids pèse donc surtout par la distance, et non plus au kilo quel que soit le trajet.
+- H(W) est la manutention, par tranches marginales de poids taxé : 20 DA/kg jusqu'à 30 kg, 8 DA/kg de 30 à 200 kg, 3 DA/kg au-delà.
+- Un colis fragile est majoré de 10 %. En publication rapide (poids et volume nuls), le prix ne dépend que de la distance : 300 + C(d).
+- Calibrage sur le pouvoir d'achat algérien (salaire minimum de 20 000 DA) et les tarifs pratiqués : un petit colis dans la ville autour de 350 à 500 DA, entre wilayas proches autour de 600 DA, Alger → Oran autour de 1 500 DA (au-dessus des sociétés de livraison, pour un transport de particulier à particulier), un réfrigérateur dans la ville autour de 2 000 à 2 500 DA, une camionnette pleine dans la ville autour de 3 500 à 4 000 DA.
+- Exemple : Alger → Oran, 352 km, 5 kg, 40 × 30 × 30 cm (0,036 m³). C = 300 + 500 + 104 = 904 DA. Le poids taxé est max(5 ; 7,2) = 7,2 kg, d'où T = 1,144 et H = 144 DA. Le total de 300 + 1 034 + 144 = 1 478 DA est arrondi à 1 500 DA.
+- Exemple : réfrigérateur de 60 kg, 70 × 70 × 180 cm (0,882 m³, soit 176,4 kg taxés), fragile, 2 km dans la même ville. T = 4,528, C = 6 DA, H = 600 + 1 171 = 1 771 DA. (300 + 27 + 1 771) × 1,1 = 2 308 DA, arrondi à 2 350 DA.
 
 Règles :
 
@@ -867,13 +874,13 @@ L'interface reste simple et lisible en plein soleil sur un téléphone d'entrée
 | Jeton | Valeur | Usage |
 |---|---|---|
 | primary | #1A73E8 (bleu) par défaut, réglable par le super-administrateur (réglage branding) ; nuances foncée et claire dérivées | Boutons principaux, prix, onglet actif |
-| navy | #1C1C2E (bleu nuit) | Titres, en-têtes, texte principal |
-| accent | #4ECDC4 (turquoise) | Badges vérifiés, succès, suivi |
+| navy | #0E1B3D (bleu nuit) | Titres, en-têtes, texte principal, carte d'appel de l'accueil |
+| accent | #0EA5E9 (bleu ciel), foncé #0369A1, doux #E0F2FE | Badges vérifiés, succès, suivi, point de départ d'un trajet |
 | danger | #E5484D | Erreurs, annulation, litige |
 | warning | #F5A524 | Urgent, en attente |
-| surface | #FFFFFF ; fond #F6F7F9 | Cartes et fond d'écran |
+| surface | #FFFFFF ; fond #F4F7FC ; gris doux #EEF2F8 (champs, puces, boutons secondaires) | Cartes et fond d'écran |
 | Typographie | Inter (latin) et Cairo (arabe) | Tailles 12, 14, 16, 20, 24, 32 |
-| Rayons et espacements | Rayon 12 (cartes), 999 (puces) ; espacements par pas de 4 | — |
+| Rayons et espacements | Rayons 20 (cartes), 16 (boutons), 14 (champs), 18 (tuiles), 28 (bandeaux et feuilles), 999 (puces) ; espacements par pas de 4 | - |
 
 Composants partagés à construire en premier : Button, TextField, Select (wilaya et commune), Chip, Badge (Pro, Identité, Urgent, Fragile, statut), ParcelCard, TripCard, OfferCard, UserRow (avatar, nom, note, badges), StatusTimeline, EmptyState, ErrorState, Skeleton, BottomSheet, ConfirmDialog, PhotoPicker, MapPicker, PriceInput, RatingStars. La couleur de chaque statut de colis est déclarée une seule fois.
 
@@ -973,7 +980,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 | Type de compte | Tout compte est particulier. Le statut professionnel n'existe qu'après validation par le staff d'un dossier de justificatifs |
 | Administration | Un super-administrateur unique, créé par script. Il crée des modérateurs aux permissions choisies. Le back-office est une application web séparée, utilisable sur téléphone |
 | Vérification des transporteurs | Conseillée, non bloquante par défaut (décision du 25 octobre 2026) : un transporteur non vérifié peut faire une offre et publier un trajet ; il est invité à se faire vérifier et l'expéditeur voit une mention neutre. Le réglage requireCarrierVerification la rend obligatoire |
-| Formule de prix | Une seule : le barème dégressif à tranches marginales de F6, dans shared/pricing.ts, recalculé par l'API |
+| Formule de prix | Une seule : le barème de F6 (coût kilométrique par tranches multiplié par un facteur de taille, manutention dégressive par tranches de poids, majoration fragile), dans shared/pricing.ts, recalculé par l'API. Révisée le 29 octobre 2026 pour le pouvoir d'achat algérien |
 | Commission | Gratuit au lancement. Une fois activée par le super-administrateur : 50 DA + taux par tranche du prix convenu, prélevés à la livraison sur un portefeuille prépayé du transporteur, rechargé par virement CCP ou BaridiMob validé par le staff (F19) |
 | Notifications push | Branchées dès le lot 4 : collection PushToken, envoi par expo-server-sdk, nettoyage des jetons invalides |
 | Réinitialisation du mot de passe | Par code à 6 chiffres saisi dans l'application, sans lien web |

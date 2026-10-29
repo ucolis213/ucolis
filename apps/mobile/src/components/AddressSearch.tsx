@@ -1,7 +1,7 @@
 // Recherche d'adresses façon VTC : champs Départ et Arrivée reliés (ou un seul champ, comme une étape de trajet),
 // chacun avec ses icônes « Ma position actuelle » et « Choisir sur la carte » en fin de champ, adresses récentes, et
 // suggestions pendant la frappe : communes du référentiel tout de suite, lieux et rues de l'API (OpenStreetMap ou
-// Google) dès qu'ils arrivent.
+// Google) dès qu'ils arrivent. Une commune choisie ouvre la carte sur son centre pour placer l'endroit exact.
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -96,6 +96,8 @@ export function AddressSearch({
   /** Champ dont la position est en cours de localisation, ou dont la carte est ouverte. */
   const [locating, setLocating] = useState<AddressField | null>(null);
   const [mapField, setMapField] = useState<AddressField | null>(null);
+  /** Commune à préciser sur la carte (point de départ de la carte). */
+  const [refining, setRefining] = useState<PickedPlace | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -139,14 +141,31 @@ export function AddressSearch({
     return () => clearTimeout(timer);
   }, [query]);
 
+  /** Passage au prochain champ vide, ou fermeture quand tout est rempli. */
+  function advance(f: AddressField) {
+    const next = fields.find((x) => x !== f && !values[x]);
+    if (next) switchField(next);
+    else close();
+  }
+
   /** Adresse choisie pour un champ (par défaut celui en cours de saisie), puis passage au prochain champ vide. */
   async function choose(place: PickedPlace, f: AddressField = field) {
     const picked = toPlace(place);
     onSelect(f, picked);
     setRecents(await addRecent(picked));
-    const next = fields.find((x) => x !== f && !values[x]);
-    if (next) switchField(next);
-    else close();
+    advance(f);
+  }
+
+  /**
+   * Commune choisie : elle est retenue, puis la carte s'ouvre sur son centre pour placer l'endroit exact,
+   * pour le départ comme pour l'arrivée. Fermer la carte garde la commune.
+   */
+  async function chooseCommune(place: PickedPlace, f: AddressField = field) {
+    const picked = toPlace(place);
+    onSelect(f, picked);
+    setRefining(picked);
+    setMapField(f);
+    setRecents(await addRecent(picked));
   }
 
   async function myPosition(f: AddressField) {
@@ -291,7 +310,7 @@ export function AddressSearch({
         return (
           <Pressable
             style={styles.row}
-            onPress={() => choose(item.place)}
+            onPress={() => (item.id.startsWith('c-') ? chooseCommune(item.place) : choose(item.place))}
             accessibilityRole="button"
             accessibilityLabel={item.place.address}
           >
@@ -359,15 +378,25 @@ export function AddressSearch({
           title={t(mapField ?? field)}
           initial={
             mapField
-              ? (values[mapField]?.location ??
+              ? (refining?.location ??
+                values[mapField]?.location ??
                 fields.map((x) => values[x]?.location).find(Boolean) ??
                 null)
               : null
           }
-          onClose={() => setMapField(null)}
+          onClose={() => {
+            const f = mapField ?? field;
+            setMapField(null);
+            // Carte fermée sans point : la commune déjà retenue suffit, on passe à la suite.
+            if (refining) {
+              setRefining(null);
+              advance(f);
+            }
+          }}
           onPick={(p) => {
             const f = mapField ?? field;
             setMapField(null);
+            setRefining(null);
             void choose(p, f);
           }}
         />

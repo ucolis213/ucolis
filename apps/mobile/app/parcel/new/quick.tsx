@@ -17,7 +17,7 @@ import { TextField } from '@/components/TextField';
 import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { usePublishParcel } from '@/hooks/usePublishParcel';
-import { stepErrors } from '@/state/draftPayload';
+import { priceToApply, stepErrors } from '@/state/draftPayload';
 import { draftEntryRoute, useParcelDraft } from '@/state/parcelDraft';
 import { colors, space } from '@/theme';
 
@@ -55,9 +55,10 @@ export default function QuickPublish() {
     );
   }, [draft.pickup, draft.dropoff, config.data]);
 
-  // Pré-remplissage du prix, seulement si l'utilisateur n'en a pas encore saisi.
+  // Pré-remplissage du prix tant que l'utilisateur ne l'a pas retouché (il suit un changement d'adresse).
   useEffect(() => {
-    if (draft.requestedPrice === null && suggested) update({ requestedPrice: suggested });
+    const nextPrice = priceToApply(draft, suggested, suggested);
+    if (nextPrice !== null) update({ requestedPrice: nextPrice, priceIsSuggested: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggested]);
 
@@ -109,13 +110,13 @@ export default function QuickPublish() {
       <PriceInput
         label={`${t('requestedPrice')}${suggested && draft.requestedPrice === suggested ? ` (${t('estimated')})` : ''}`}
         value={draft.requestedPrice}
-        onChange={(requestedPrice) => update({ requestedPrice })}
+        onChange={(requestedPrice) => update({ requestedPrice, priceIsSuggested: false })}
         hint={suggested ? t('suggested', { price: price(suggested) }) : undefined}
         error={errors.requestedPrice}
       />
       {/* Comparaison booléenne : un prix à 0 ne doit pas être rendu comme texte. */}
       {!!suggested && !!draft.requestedPrice && isPriceUnusuallyHigh(draft.requestedPrice, suggested) && (
-        <AppText size="sm" color="#B7791F">
+        <AppText size="sm" color={colors.warningDark}>
           {t('priceWarning')}
         </AppText>
       )}

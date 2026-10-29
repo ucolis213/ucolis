@@ -97,7 +97,7 @@ export const badgeText = {
 } as const;
 
 export const shadow = {
-  shadowColor: '#1C1C2E',
+  shadowColor: '#0E1B3D',
   shadowOpacity: 0.06,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 4 },

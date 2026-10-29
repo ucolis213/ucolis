@@ -3,21 +3,22 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSocket } from '../realtime/socket';
-import { badgeText, colors, MAX_FONT_SCALE, MIN_TOUCH, shadow } from '../theme';
+import { badgeText, colors, MAX_FONT_SCALE, MIN_TOUCH } from '../theme';
 
 /** Cloche de l'en-tête (Accueil, Annonces), avec le nombre de notifications non lues. */
-export function HeaderBell() {
+/** light : sur un en-tête de couleur (accueil). */
+export function HeaderBell({ light = false }: { light?: boolean }) {
   const { t } = useTranslation();
   const { counters } = useSocket();
   const unread = counters.unreadNotifications;
   return (
     <Pressable
       onPress={() => router.push('/notifications')}
-      style={styles.bell}
+      style={[styles.bell, light && styles.bellLight]}
       accessibilityRole="button"
       accessibilityLabel={unread ? `${t('notif:title')} (${unread})` : t('notif:title')}
     >
-      <Ionicons name="notifications-outline" size={22} color={colors.navy} />
+      <Ionicons name="notifications-outline" size={22} color={light ? '#FFFFFF' : colors.navy} />
       {unread > 0 && (
         <View style={styles.badge}>
           <Text style={badgeText} maxFontSizeMultiplier={MAX_FONT_SCALE}>
@@ -37,8 +38,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
+  bellLight: { backgroundColor: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.24)' },
   badge: {
     position: 'absolute',
     top: -2,

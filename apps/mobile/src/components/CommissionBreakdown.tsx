@@ -22,7 +22,7 @@ import { AppText } from './AppText';
 import { Button } from './Button';
 import { AppModal } from '@/components/AppModal';
 
-const SUCCESS = '#1F8F88';
+const SUCCESS = colors.accentDark;
 
 /** Réglage de la commission s'il est activé, sinon null (service gratuit). */
 export function useCommission(): CommissionSettings | null {

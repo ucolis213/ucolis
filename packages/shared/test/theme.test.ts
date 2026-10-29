@@ -15,8 +15,8 @@ import {
 describe('jetons de design', () => {
   it('reprend les couleurs du PRD, avec le bleu comme couleur de marque par défaut', () => {
     expect(colors.primary).toBe('#1A73E8');
-    expect(colors.navy).toBe('#1C1C2E');
-    expect(colors.accent).toBe('#4ECDC4');
+    expect(colors.navy).toBe('#0E1B3D');
+    expect(colors.accent).toBe('#0EA5E9');
   });
 
   it('déclare une couleur pour chaque statut de colis', () => {

@@ -23,7 +23,7 @@ import { TextField } from '@/components/TextField';
 import { WizardFrame } from '@/components/WizardFrame';
 import { price } from '@/format';
 import { useAppConfig } from '@/hooks/useAppConfig';
-import { draftVolume, stepErrors } from '@/state/draftPayload';
+import { draftVolume, priceToApply, stepErrors } from '@/state/draftPayload';
 import { useParcelDraft } from '@/state/parcelDraft';
 import { colors, space } from '@/theme';
 
@@ -33,19 +33,25 @@ export default function OptionsStep() {
   const config = useAppConfig();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const suggested = useMemo(() => {
-    if (!draft.pickup || !draft.dropoff || !draft.weightKg) return null;
-    return suggestPrice(
-      { distanceKm: haversineKm(draft.pickup.location, draft.dropoff.location), weightKg: draft.weightKg, volumeM3: draftVolume(draft) },
-      config.data?.pricing ?? DEFAULT_PRICING,
-    );
+  // Prix suggéré avec les détails (poids, volume), et celui du mode rapide (distance seule) pour reconnaître
+  // un prix pré-rempli par la publication rapide.
+  const { suggested, distanceOnly } = useMemo(() => {
+    if (!draft.pickup || !draft.dropoff) return { suggested: null, distanceOnly: null };
+    const distanceKm = haversineKm(draft.pickup.location, draft.dropoff.location);
+    const pricing = config.data?.pricing ?? DEFAULT_PRICING;
+    return {
+      suggested: draft.weightKg ? suggestPrice({ distanceKm, weightKg: draft.weightKg, volumeM3: draftVolume(draft), fragile: draft.fragile }, pricing) : null,
+      distanceOnly: suggestPrice({ distanceKm, weightKg: 0, volumeM3: 0 }, pricing),
+    };
   }, [draft, config.data]);
 
-  // Pré-remplissages, seulement si l'utilisateur n'a encore rien choisi.
+  // Pré-remplissages : véhicules si rien n'est choisi ; prix tant que l'expéditeur ne l'a pas retouché
+  // (il se recalcule donc avec les détails ajoutés après une publication rapide).
   useEffect(() => {
     const patch: Partial<typeof draft> = {};
     if (!draft.vehicleTypes.length && draft.weightKg) patch.vehicleTypes = [...suggestedVehicleTypes(draft.weightKg, draftVolume(draft))];
-    if (draft.requestedPrice === null && suggested) patch.requestedPrice = suggested;
+    const nextPrice = priceToApply(draft, suggested, distanceOnly);
+    if (nextPrice !== null) Object.assign(patch, { requestedPrice: nextPrice, priceIsSuggested: true });
     if (Object.keys(patch).length) update(patch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggested]);
@@ -123,13 +129,13 @@ export default function OptionsStep() {
       <PriceInput
         label={`${t('requestedPrice')}${suggested && draft.requestedPrice === suggested ? ` (${t('estimated')})` : ''}`}
         value={draft.requestedPrice}
-        onChange={(requestedPrice) => update({ requestedPrice })}
+        onChange={(requestedPrice) => update({ requestedPrice, priceIsSuggested: false })}
         hint={suggested ? t('suggested', { price: price(suggested) }) : undefined}
         error={errors.requestedPrice}
       />
       {/* Comparaison booléenne : un prix à 0 ne doit pas être rendu comme texte. */}
       {!!suggested && !!draft.requestedPrice && isPriceUnusuallyHigh(draft.requestedPrice, suggested) && (
-        <AppText size="sm" color="#B7791F">
+        <AppText size="sm" color={colors.warningDark}>
           {t('priceWarning')}
         </AppText>
       )}

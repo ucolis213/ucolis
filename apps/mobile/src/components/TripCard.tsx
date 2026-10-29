@@ -23,7 +23,7 @@ export function TripCard({ trip, showStatus = false }: { trip: TripDto; showStat
           <Ionicons name="car" size={22} color={colors.primary} />
         </View>
         <View style={styles.flex}>
-          <AppText weight="semibold" numberOfLines={2}>
+          <AppText weight="bold" numberOfLines={2}>
             {route}
           </AppText>
           <AppText size="sm" color={colors.textMuted}>
@@ -52,7 +52,7 @@ export function TripCard({ trip, showStatus = false }: { trip: TripDto; showStat
           {trip.carrier.displayName}
         </AppText>
         {trip.carrier.rating.count > 0 && <RatingStars value={trip.carrier.rating.average} size={11} />}
-        {trip.carrier.badges.identity && <Ionicons name="shield-checkmark" size={12} color="#1F8F88" />}
+        {trip.carrier.badges.identity && <Ionicons name="shield-checkmark" size={12} color={colors.accentDark} />}
         {trip.carrier.badges.pro && <Ionicons name="briefcase" size={12} color={colors.navy} />}
       </View>
     </Pressable>
@@ -61,9 +61,9 @@ export function TripCard({ trip, showStatus = false }: { trip: TripDto; showStat
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  card: { borderRadius: radii.card, backgroundColor: colors.surface, padding: space(3), gap: space(2), ...shadow },
+  card: { borderRadius: radii.card, backgroundColor: colors.surface, padding: space(4), gap: space(2.5), ...shadow },
   row: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
-  icon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 48, height: 48, borderRadius: radii.input, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   footer: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   carrier: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
 });

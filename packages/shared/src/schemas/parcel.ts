@@ -132,6 +132,7 @@ export const pricingSuggestSchema = z.object({
   dropoff: latLngSchema,
   weightKg: parcelDetailsSchema.shape.weightKg,
   dimensionsCm: parcelDetailsSchema.shape.dimensionsCm,
+  fragile: z.boolean().optional(),
 });
 
 /** Pré-cochage des types de véhicule selon le poids et le volume (étape Détails). */

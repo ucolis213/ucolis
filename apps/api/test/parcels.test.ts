@@ -32,7 +32,7 @@ describe('publication', () => {
     expect(res.body.status).toBe('open');
     expect(res.body.volumeM3).toBe(0.036);
     expect(res.body.distanceKm).toBeGreaterThan(340);
-    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(3150);
+    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(1400);
     expect(res.body.suggestedPrice % 50).toBe(0);
     expect(res.body.viewer.role).toBe('sender');
     const user = await UserModel.findById(amina.id).lean();

@@ -1,19 +1,18 @@
 // Adresses de départ et d'arrivée choisies comme dans une application de VTC (recherche, position, récents ou
 // carte). RouteFields sert aussi aux trajets ; RoutePicker le relie au brouillon d'annonce et, en publication
-// complète, rend wilaya, commune et précisions de chaque adresse modifiables.
+// complète, ajoute les précisions libres de chaque adresse. Wilaya et commune viennent de l'adresse choisie :
+// elles ne se ressaisissent pas.
 
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { placeLabel } from '../format';
 import { useParcelDraft, type DraftPlace } from '../state/parcelDraft';
 import { colors, MIN_TOUCH, radii, space } from '../theme';
 import { AddressSearch, type AddressField, type AddressPlaceholders } from './AddressSearch';
 import { AppText } from './AppText';
 import { TextField } from './TextField';
 import type { PickedPlace } from './MapPicker';
-import { WilayaCommuneSelect } from './WilayaCommuneSelect';
 
 type RouteField = Extract<AddressField, 'pickup' | 'dropoff'>;
 
@@ -113,14 +112,6 @@ export function RoutePicker({ errors, showDetails = false }: { errors: Record<st
           <View style={key === 'pickup' ? styles.dot : styles.square} />
           <AppText weight="bold">{t(key)}</AppText>
         </View>
-        <AppText size="xs" color={colors.textMuted}>
-          {placeLabel(p)}
-        </AppText>
-        <WilayaCommuneSelect
-          value={{ wilayaCode: p.wilayaCode, commune: p.commune }}
-          onChange={(v) => update({ [key]: { ...p, ...v } as DraftPlace })}
-          errors={{ commune: errors[`${key}.commune`] }}
-        />
         <TextField
           label={t('addressDetails')}
           value={p.details ?? ''}

@@ -8,9 +8,9 @@ import { AppText } from './AppText';
 type Kind = 'pro' | 'identity' | 'urgent' | 'fragile';
 
 const KINDS: Record<Kind, { fg: string; bg: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  pro: { fg: colors.navy, bg: '#ECECF4', icon: 'briefcase' },
-  identity: { fg: '#1F8F88', bg: colors.accentSoft, icon: 'shield-checkmark' },
-  urgent: { fg: '#B7791F', bg: colors.warningSoft, icon: 'flash' },
+  pro: { fg: colors.navy, bg: colors.neutralSoft, icon: 'briefcase' },
+  identity: { fg: colors.accentDark, bg: colors.accentSoft, icon: 'shield-checkmark' },
+  urgent: { fg: colors.warningDark, bg: colors.warningSoft, icon: 'flash' },
   fragile: { fg: colors.danger, bg: colors.dangerSoft, icon: 'wine' },
 };
 
@@ -40,9 +40,9 @@ export function StatusBadge({ status }: { status: ParcelStatus }) {
 }
 
 const TONES = {
-  neutral: { fg: colors.navy, bg: '#ECECF4' },
+  neutral: { fg: colors.navy, bg: colors.neutralSoft },
   primary: { fg: colors.primaryDark, bg: colors.primarySoft },
-  success: { fg: '#1F8F88', bg: colors.accentSoft },
+  success: { fg: colors.accentDark, bg: colors.accentSoft },
   danger: { fg: colors.danger, bg: colors.dangerSoft },
 } as const;
 export type PillTone = keyof typeof TONES;

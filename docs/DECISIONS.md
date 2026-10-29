@@ -441,3 +441,76 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   titre de la rubrique avant sa première question, recherche comprise. Une FAQ sans rubrique reste valide.
 - À propos : présentation, mission, fonctionnement en 4 étapes, engagements, contact, liens vers les CGU et la
   confidentialité, puis les informations de version (PRD F17). Nombre de wilayas lu dans `shared/geo`.
+
+## 29 octobre 2026 : refonte visuelle du mobile, inspirée de Yassir
+
+- Langage visuel proche des super-applications algériennes (Yassir) : bandeau de couleur aux coins arrondis
+  en haut de l'accueil et du profil, barre de recherche blanche dans le bandeau, grille de tuiles de services,
+  carte d'appel bleu nuit, formes très arrondies (cartes 20, boutons 16, bandeaux 28), ombres douces.
+- Palette : le bleu de marque (#1A73E8, toujours réglable) et ses variantes. Bleu nuit #0E1B3D pour le texte,
+  bleu ciel #0EA5E9 en accent (succès, vérifié, suivi), fonds et gris légèrement bleutés.
+- Nouveaux jetons dans `shared/theme.ts` : `accentDark`, `warningDark`, `neutralSoft` et les rayons `button`,
+  `tile`, `sheet`. Les couleurs en dur du mobile passent par ces jetons.
+- Champs de saisie remplis (gris doux, contour bleu au focus) ; variante de bouton `soft` ; « outline » devient
+  un bouton gris doux sans contour ; onglet actif sur une pastille bleue douce ; bouton Publier en carré arrondi surélevé,
+  détouré de la couleur de la barre et remonté pour que son libellé reste visible.
+- Trajet d'une annonce affiché en deux lignes reliées (point au départ, carré à l'arrivée) : `RouteStops`.
+- Barre d'état claire sur les écrans à bandeau (`useLightStatusBar`).
+
+## 29 octobre 2026 : adresses sans doublon
+
+- Détail d'une annonce : une seule ligne par adresse. L'expéditeur et le transporteur retenu voient l'adresse
+  complète (qui contient déjà commune et wilaya) et les précisions ; les autres, commune et wilaya.
+- Étape « Trajet » de la publication complète et de la modification : plus de sélecteurs wilaya et commune sous
+  les adresses. Elles viennent de l'adresse choisie ; seules les précisions (rue, repère, étage) restent à saisir.
+- Recherche d'adresse : choisir une commune ouvre la carte sur son centre pour placer l'endroit exact, au départ
+  comme à l'arrivée. Fermer la carte garde la commune et passe au champ suivant.
+- Carte des annonces : les départs ne sont plus regroupés par wilaya (bulle fixe au centre de la wilaya) mais
+  selon le zoom (`src/mapClusters.ts`) : deux annonces se rejoignent quand elles sont plus proches que 8 % de la
+  zone affichée, et se séparent en zoomant jusqu'à leurs adresses réelles. Toucher une bulle ouvre toutes ses
+  annonces dans un carrousel horizontal (position « 2 / 3 », carte suivante visible au bord) ; le titre donne la
+  commune partagée par tout le groupe, sinon la wilaya.
+- Détail d'une annonce et récapitulatif de publication : départ et arrivée affichés par `RouteAddresses`
+  (rail point / carré, titre « Départ » ou « Arrivée » au-dessus, adresse complète dessous, sur toute la
+  largeur) au lieu de deux lignes titre / valeur. `KeyValue` : le titre garde sa largeur (jusqu'à la moitié de
+  la ligne) et c'est la valeur qui passe à la ligne ; une valeur longue n'écrase plus le titre. La valeur prend
+  toute la place restante, calée au bord : les valeurs restent alignées en colonne au bord de la carte.
+- Détail d'une annonce : la description de l'expéditeur s'affiche sous un titre « Description », séparée des
+  lignes titre / valeur par un trait.
+- Accueil : services en grille 2 × 2 de cartes blanches (pastille d'icône colorée, titre, une ligne
+  d'explication, flèche) au lieu d'une rangée de 4 petites tuiles. « Mes livraisons » prend l'icône `bag-check`.
+- Accueil : les quatre services partagent la même pastille (bleu de marque sur bleu doux).
+- Barre d'onglets redessinée (`src/components/TabBar.tsx`, passée à `Tabs` par `tabBar`) : pilule blanche
+  flottante à ombre douce et fin contour gris clair (couleur du fond), décollée des bords et du bas. Elle est
+  superposée au contenu, sans bande de fond : le contenu défile dessous. Les écrans à onglets réservent la place
+  en bas (`TabBarSpaceContext`, fourni par le layout des onglets) : `Screen` l'ajoute seul quand il défile ou a
+  des marges ; les listes d'Annonces et de Messages l'ajoutent à la fin de leur contenu ; le carrousel de la
+  carte se pose au-dessus de la barre. Onglet actif : icône
+  pleine bleue sur une pastille bleu doux et libellé bleu en gras ; onglets au repos en gris. Bouton Publier
+  surélevé, détouré de blanc ; il garde ses couleurs une fois sélectionné. Toutes les icônes occupent un
+  emplacement de même hauteur (le bouton Publier en déborde vers le haut) : les libellés sont sur une même
+  ligne. Pastille rouge des messages non lus
+  sur l'icône. Sous Android, la barre se cache pendant la saisie.
+- Profil : ligne « Notifications » en tête de la section Activité, vers l'écran des notifications, avec le
+  nombre de non lues en pastille rouge (compteur temps réel de la cloche). `MenuRow` accepte `badge`.
+- Prix suggéré d'une annonce rapide complétée : le prix suit la suggestion tant que l'expéditeur ne l'a pas
+  retouché (`priceToApply`, drapeau `priceIsSuggested` du brouillon). En passant aux détails, il est recalculé
+  avec le poids et le volume. Une annonce rapide déjà publiée que l'on complète est reconnue à son prix égal à
+  la suggestion sur la seule distance. Un prix saisi à la main n'est jamais écrasé.
+
+## 29 octobre 2026 : barème du prix suggéré revu pour le pouvoir d'achat algérien
+
+- L'ancien barème facturait 50 DA par kilo taxé quelle que soit la distance : 15 kg mais 3 m³ (600 kg taxés)
+  sur 1 km donnaient 30 650 DA. Nouveau barème (PRD F6) : prise en charge 300 DA, coût kilométrique par
+  tranches (3 ; 2,5 ; 2 ; 1,5 DA/km) multiplié par un facteur de taille 1 + poids taxé / 50, plafonné à 8,
+  manutention dégressive (20 DA/kg jusqu'à 30 kg, 8 jusqu'à 200, 3 au-delà), +10 % si fragile, minimum
+  300 DA. Le même cas donne 3 850 DA ; Alger → Oran, 5 kg : 1 500 DA (contre 3 250).
+- `fragile` entre dans le calcul (mobile, API, `POST /pricing/suggest`). Réglage `pricing` : `perKg` est
+  remplacé par `weightTiers`, `sizeStepKg`, `maxSizeFactor` et `fragileSurcharge`.
+- Un barème déjà enregistré depuis le back-office est fusionné avec les valeurs par défaut : ses anciennes
+  clés (`baseFee`, `tiers`, `minPrice`) l'emporteraient. Le réenregistrer avec les nouvelles valeurs.
+- FAQ : nouvelle version des sources ; une FAQ déjà publiée se met à jour depuis la page Contenus.
+- Choix de l'heure (`TimeSelect`) : roues refaites façon iOS. Chiffres en Inter à chasse fixe, taille fixe et
+  hauteur de ligne égale à celle d'une ligne de la roue, dans les deux langues (Cairo décentrait les chiffres) ;
+  deux-points de même hauteur ; recalage au pixel à l'arrêt ; lignes inclinées, réduites et estompées en
+  s'éloignant du centre (animation sur le fil natif) ; retour haptique à chaque cran (expo-haptics).

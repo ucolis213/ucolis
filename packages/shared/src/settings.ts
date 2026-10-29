@@ -112,8 +112,14 @@ export const APP_SETTING_SCHEMAS: Record<AppSettingKey, z.ZodType> = {
       .array(z.object({ upToKm: z.number().positive().nullable(), ratePerKm: z.number().min(0) }))
       .min(1)
       .refine((t) => t[t.length - 1]?.upToKm === null, 'La dernière tranche doit être ouverte'),
-    perKg: z.number().min(0),
+    weightTiers: z
+      .array(z.object({ upToKg: z.number().positive().nullable(), ratePerKg: z.number().min(0) }))
+      .min(1)
+      .refine((t) => t[t.length - 1]?.upToKg === null, 'La dernière tranche doit être ouverte'),
+    sizeStepKg: z.number().positive(),
+    maxSizeFactor: z.number().min(1),
     volumetricFactor: z.number().positive(),
+    fragileSurcharge: z.number().min(0).max(1),
     // Le prix suggéré doit rester rond (multiple de 10 DA), comme tout prix saisi.
     roundTo: positiveInt.refine((n) => n % 10 === 0, 'validation.roundPrice'),
     minPrice: z.number().int().min(0).refine((n) => n % 10 === 0, 'validation.roundPrice'),

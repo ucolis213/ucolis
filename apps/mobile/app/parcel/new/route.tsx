@@ -1,5 +1,5 @@
-// Étape 1 de la publication complète : adresses de départ et d'arrivée ; wilaya et commune déduites du point,
-// corrigeables ; précisions libres. Retour possible à la publication rapide.
+// Étape 1 de la publication complète : adresses de départ et d'arrivée ; wilaya et commune déduites de
+// l'adresse choisie ; précisions libres. Retour possible à la publication rapide.
 
 import { router } from 'expo-router';
 import { useState } from 'react';

@@ -9,7 +9,10 @@ import { useAction, useAdminQuery } from '../api/hooks';
 import { Button, Card, PageHeader, QueryState, ReasonDialog } from '../components/ui';
 
 const LABELS: Record<AppSettingKey, { title: string; hint: string }> = {
-  pricing: { title: 'Barème du prix conseillé', hint: 'Tarifs par km et par kg, minimum, majorations (urgent, fragile).' },
+  pricing: {
+    title: 'Barème du prix conseillé',
+    hint: 'Prix = (baseFee + coût km × facteur de taille + manutention) × (1 + fragileSurcharge si fragile), arrondi à roundTo, au moins minPrice. tiers : DA/km par tranche (upToKm, null pour la dernière). Poids taxé = max(poids, volumetricFactor × volume en m³). Facteur de taille = 1 + poids taxé / sizeStepKg, plafonné à maxSizeFactor. weightTiers : manutention en DA/kg par tranche de poids taxé (upToKg, null pour la dernière). fragileSurcharge : 0.1 = +10 %.',
+  },
   limits: { title: 'Plafonds', hint: 'Annonces et trajets actifs par type de compte, contre-offres par offre.' },
   nearbyParcels: {
     title: 'Colis proches des transporteurs',

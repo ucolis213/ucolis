@@ -50,7 +50,7 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-secure-store',
     'expo-font',
-    ['expo-splash-screen', { backgroundColor: '#1C1C2E' }],
+    ['expo-splash-screen', { backgroundColor: '#1A73E8' }],
     [
       'expo-location',
       {

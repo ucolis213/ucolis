@@ -11,7 +11,7 @@ import { UnverifiedCarrierNote } from './VerificationNotice';
 const STATUS_COLORS: Record<string, string> = {
   pending: colors.warning,
   countered: colors.primary,
-  accepted: '#1F8F88',
+  accepted: colors.accentDark,
   rejected: colors.textMuted,
   withdrawn: colors.textMuted,
   cancelled: colors.textMuted,
@@ -69,7 +69,7 @@ export function OfferCard({
         }
       />
       {offer.atAskingPrice && (
-        <AppText size="sm" weight="semibold" color="#1F8F88">
+        <AppText size="sm" weight="semibold" color={colors.accentDark}>
           {t('atAskingPrice')}
         </AppText>
       )}

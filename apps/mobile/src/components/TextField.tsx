@@ -25,13 +25,13 @@ export const TextField = forwardRef<TextInputInstance, TextFieldProps>(function 
 
   return (
     <View style={styles.wrap}>
-      <AppText size="sm" weight="medium">
+      <AppText size="sm" weight="semibold">
         {label}
       </AppText>
       <View
         style={[
           styles.box,
-          focused && { borderColor: colors.primary },
+          focused && styles.focused,
           !!message && { borderColor: colors.danger },
         ]}
       >
@@ -83,16 +83,17 @@ export const TextField = forwardRef<TextInputInstance, TextFieldProps>(function 
 const styles = StyleSheet.create({
   wrap: { gap: space(1.5) },
   box: {
-    minHeight: MIN_TOUCH + 6,
+    minHeight: MIN_TOUCH + 10,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: colors.neutralSoft,
     borderRadius: radii.input,
-    backgroundColor: colors.surface,
-    paddingHorizontal: space(3),
+    backgroundColor: colors.neutralSoft,
+    paddingHorizontal: space(4),
     gap: space(2),
   },
+  focused: { borderColor: colors.primary, backgroundColor: colors.surface },
   input: {
     flex: 1,
     fontSize: fontSizes.md,

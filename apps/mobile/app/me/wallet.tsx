@@ -18,7 +18,7 @@ import { formatDate, formatDateTime, price } from '@/format';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { colors, radii, shadow, space } from '@/theme';
 
-const SUCCESS = '#1F8F88';
+const SUCCESS = colors.accentDark;
 
 export default function Wallet() {
   const { t } = useTranslation(['wallet', 'common']);

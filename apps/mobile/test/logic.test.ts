@@ -14,9 +14,10 @@ import {
   withoutDuplicates,
 } from '../src/state/addressBook';
 import { startupRoute } from '../src/hooks/useAppConfig';
+import { clusterByProximity } from '../src/mapClusters';
 import { pickLocale } from '../src/i18n';
 import { draftFromParcel } from '../src/state/draftFromParcel';
-import { quickPayload, stepErrors } from '../src/state/draftPayload';
+import { priceToApply, quickPayload, stepErrors } from '../src/state/draftPayload';
 import { draftEntryRoute, EMPTY_DRAFT, newParcelRoute, useParcelDraft } from '../src/state/parcelDraft';
 
 describe('pickLocale', () => {
@@ -251,5 +252,51 @@ describe('nouvelle annonce après une modification abandonnée', () => {
     useParcelDraft.getState().update({ title: 'Carton de livres' });
     newParcelRoute();
     expect(useParcelDraft.getState().draft.title).toBe('Carton de livres');
+  });
+});
+
+describe('clusterByProximity', () => {
+  const at = (id: string, lat: number, lng: number) => ({ id, location: { lat, lng } });
+  const run = (items: ReturnType<typeof at>[], delta: number) =>
+    clusterByProximity(items, { latitudeDelta: delta, longitudeDelta: delta }, (p) => p.location, (p) => p.id);
+  // Trois adresses d'une même commune, à quelques centaines de mètres, et une autre ville.
+  const items = [at('a', 36.77, 3.06), at('b', 36.772, 3.058), at('c', 36.768, 3.062), at('d', 34.67, 3.25)];
+
+  it('regroupe les adresses proches quand la carte montre tout le pays', () => {
+    const clusters = run(items, 10);
+    expect(clusters.map((c) => c.items.map((p) => p.id))).toEqual([['a', 'b', 'c'], ['d']]);
+    expect(clusters[0]!.key).toBe('a');
+  });
+
+  it('sépare les adresses en zoomant', () => {
+    expect(run(items, 0.02)).toHaveLength(4);
+  });
+
+  it('garde groupées les annonces au même point, à tout zoom', () => {
+    expect(run([at('a', 36.77, 3.06), at('b', 36.77, 3.06)], 0.0001)).toHaveLength(1);
+  });
+});
+
+describe('priceToApply', () => {
+  // Distance seule : 700 DA ; avec le poids et le volume ajoutés ensuite : 1 200 DA.
+  it("recalcule un prix pré-rempli en mode rapide quand on ajoute les détails", () => {
+    expect(priceToApply({ requestedPrice: 700, priceIsSuggested: true }, 1200, 700)).toBe(1200);
+  });
+
+  it('reconnaît le prix rapide d’une annonce publiée que l’on complète', () => {
+    expect(priceToApply({ requestedPrice: 700, priceIsSuggested: false }, 1200, 700)).toBe(1200);
+  });
+
+  it('remplit un prix vide', () => {
+    expect(priceToApply({ requestedPrice: null, priceIsSuggested: false }, 1200, 700)).toBe(1200);
+  });
+
+  it('ne touche jamais un prix saisi à la main', () => {
+    expect(priceToApply({ requestedPrice: 900, priceIsSuggested: false }, 1200, 700)).toBeNull();
+  });
+
+  it('ne fait rien sans suggestion ou quand le prix est déjà le bon', () => {
+    expect(priceToApply({ requestedPrice: 700, priceIsSuggested: true }, null, 700)).toBeNull();
+    expect(priceToApply({ requestedPrice: 1200, priceIsSuggested: true }, 1200, 700)).toBeNull();
   });
 });

@@ -10,6 +10,22 @@ import {
 } from '@ucolis/shared';
 import type { ParcelDraft } from './parcelDraft';
 
+/**
+ * Prix à appliquer quand la suggestion change, ou null pour garder celui du brouillon.
+ * Le prix suit la suggestion tant que l'expéditeur ne l'a pas retouché : vide, pré-rempli par la suggestion,
+ * ou égal à la suggestion sur la seule distance (annonce rapide, même publiée, que l'on complète). Un prix
+ * saisi à la main n'est jamais écrasé.
+ */
+export function priceToApply(
+  d: Pick<ParcelDraft, 'requestedPrice' | 'priceIsSuggested'>,
+  suggested: number | null,
+  distanceOnly: number | null,
+): number | null {
+  if (suggested === null || d.requestedPrice === suggested) return null;
+  const followsSuggestion = d.requestedPrice === null || d.priceIsSuggested || d.requestedPrice === distanceOnly;
+  return followsSuggestion ? suggested : null;
+}
+
 export const routePayload = (d: ParcelDraft) => ({
   pickup: d.pickup ? { ...d.pickup, details: d.pickup.details || undefined } : undefined,
   dropoff: d.dropoff ? { ...d.dropoff, details: d.dropoff.details || undefined } : undefined,

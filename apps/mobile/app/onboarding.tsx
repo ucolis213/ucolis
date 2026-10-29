@@ -55,7 +55,7 @@ export default function Onboarding() {
       </View>
 
       <View style={styles.body}>
-        <View style={[styles.illustration, { width: art, height: art, borderRadius: art / 2 }]}>
+        <View style={[styles.illustration, { width: art, height: art, borderRadius: art * 0.3 }]}>
           <Ionicons name={slide.icon} size={art * 0.48} color={colors.primary} />
         </View>
         <AppText size="xl" weight="bold" align="center">

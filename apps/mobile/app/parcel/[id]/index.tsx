@@ -25,6 +25,7 @@ import { Button } from '@/components/Button';
 import { CommissionBreakdown } from '@/components/CommissionBreakdown';
 import { confirm } from '@/components/ConfirmDialog';
 import { KeyValue, SectionCard } from '@/components/FormBits';
+import { RouteAddresses } from '@/components/RouteStops';
 import { PhotoViewer } from '@/components/PhotoViewer';
 import { PromptModal } from '@/components/PromptModal';
 import { LoadingSkeleton } from '@/components/QueryView';
@@ -127,6 +128,11 @@ export default function ParcelDetail() {
   }
 
   const viewer = p.viewer.role as ParcelViewer;
+  // Adresse complète pour l'expéditeur et le transporteur retenu (elle contient déjà commune et wilaya) ;
+  // commune et wilaya seulement pour les autres.
+  const seesAddress = viewer === 'sender' || viewer === 'assigned_carrier';
+  const placeText = (place: typeof p.pickup) =>
+    seesAddress ? place.address + (place.details ? ` · ${place.details}` : '') : placeLabel(place);
   // Sans poids : annonce publiée en mode rapide.
   const quick = p.weightKg === null;
   const actions = parcelActionsFor(viewer, p.status, {
@@ -323,7 +329,7 @@ export default function ParcelDetail() {
           <Button label={t('disputeTitle')} variant="outline" icon="alert-circle-outline" onPress={() => router.push({ pathname: '/dispute/[id]', params: { id: p.viewer.openDisputeId! } })} />
         )}
         {p.status === 'delivered_pending' && p.autoConfirmAt && (
-          <AppText size="sm" color="#B7791F">
+          <AppText size="sm" color={colors.warningDark}>
             {t('autoConfirmAt', { date: formatDateTime(p.autoConfirmAt) })}
           </AppText>
         )}
@@ -334,10 +340,12 @@ export default function ParcelDetail() {
 
         <RouteMap from={p.pickup.location} to={p.dropoff.location} />
         <SectionCard>
-          <KeyValue label={t('common:from')} value={placeLabel(p.pickup)} />
-          {(viewer === 'sender' || viewer === 'assigned_carrier') && <KeyValue label="" value={p.pickup.address + (p.pickup.details ? ` · ${p.pickup.details}` : '')} />}
-          <KeyValue label={t('common:to')} value={placeLabel(p.dropoff)} />
-          {(viewer === 'sender' || viewer === 'assigned_carrier') && <KeyValue label="" value={p.dropoff.address + (p.dropoff.details ? ` · ${p.dropoff.details}` : '')} />}
+          <RouteAddresses
+            stops={[
+              { title: t('common:from'), address: placeText(p.pickup) },
+              { title: t('common:to'), address: placeText(p.dropoff) },
+            ]}
+          />
           <KeyValue label={t('common:distance')} value={distance(p.distanceKm)} />
           <KeyValue
             label={t('desiredDate')}
@@ -363,7 +371,17 @@ export default function ParcelDetail() {
             }
           />
           {!quick && <KeyValue label={t('vehicleTypesLabel')} value={p.vehicleTypes.map((v) => t(`vehicleTypes.${v}`)).join(', ')} />}
-          {p.description ? <AppText size="sm">{p.description}</AppText> : null}
+          {/* Texte libre de l'expéditeur : sous son titre, sur toute la largeur, séparé des lignes titre / valeur. */}
+          {p.description ? (
+            <View style={styles.description}>
+              <AppText size="sm" color={colors.textMuted}>
+                {t('description')}
+              </AppText>
+              <AppText size="sm" weight="medium">
+                {p.description}
+              </AppText>
+            </View>
+          ) : null}
         </SectionCard>
 
         {p.recipient && (
@@ -452,6 +470,7 @@ export default function ParcelDetail() {
 }
 
 const styles = StyleSheet.create({
+  description: { gap: space(1), paddingTop: space(2), borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   body: { padding: space(5), gap: space(4) },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2) },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },

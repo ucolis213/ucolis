@@ -55,8 +55,8 @@ describe('POST /api/v1/pricing/suggest', () => {
     expect(res.body.volumeM3).toBe(0.036);
     expect(res.body.distanceKm).toBeGreaterThan(340);
     expect(res.body.suggestedPrice % 50).toBe(0);
-    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(3150);
-    expect(res.body.suggestedPrice).toBeLessThanOrEqual(3350);
+    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(1400);
+    expect(res.body.suggestedPrice).toBeLessThanOrEqual(1650);
   });
 
   it('ignore une distance envoyée par le client', async () => {
@@ -73,7 +73,7 @@ describe('POST /api/v1/pricing/suggest', () => {
       settings: { pricing: { ...DEFAULT_SETTINGS.pricing, baseFee: 10_000 } },
     });
     const res = await http().post('/api/v1/pricing/suggest').send(body);
-    expect(res.body.suggestedPrice).toBeGreaterThan(12_000);
+    expect(res.body.suggestedPrice).toBeGreaterThan(11_000);
   });
 
   it('renvoie 400 VALIDATION_ERROR avec le détail des champs', async () => {
@@ -155,5 +155,21 @@ describe('documentation OpenAPI', () => {
     expect(res.body.paths['/api/v1/parcels'].post.requestBody).toBeTruthy();
     expect(res.body.paths['/api/v1/parcels/{id}/offers'].post).toBeTruthy();
     expect(res.body.paths['/api/v1/admin/users'].get.parameters.map((p: { name: string }) => p.name)).toContain('q');
+  });
+});
+
+describe('POST /api/v1/pricing/suggest (colis fragile)', () => {
+  it('majore le prix d’un colis fragile', async () => {
+    const body = {
+      pickup: { lat: 36.77123, lng: 3.06122 },
+      dropoff: { lat: 35.69874, lng: -0.63493 },
+      weightKg: 5,
+      dimensionsCm: { length: 40, width: 30, height: 30 },
+    };
+    const { http } = makeTestApp();
+    const plain = await http().post('/api/v1/pricing/suggest').send(body);
+    const fragile = await http().post('/api/v1/pricing/suggest').send({ ...body, fragile: true });
+    expect(fragile.status).toBe(200);
+    expect(fragile.body.suggestedPrice).toBeGreaterThan(plain.body.suggestedPrice);
   });
 });

@@ -38,18 +38,21 @@ export const isValidBrandColor = (hex: string) => HEX_COLOR.test(hex) && contras
 // Objet modifiable : applyBrandColor le met à jour au démarrage, avant le calcul des styles.
 export const colors = {
   ...brandPalette(DEFAULT_PRIMARY_COLOR),
-  navy: '#1C1C2E',
-  accent: '#4ECDC4',
-  accentSoft: '#E6F8F7',
+  navy: '#0E1B3D',
+  accent: '#0EA5E9',
+  accentDark: '#0369A1',
+  accentSoft: '#E0F2FE',
   danger: '#E5484D',
   dangerSoft: '#FDECEC',
   warning: '#F5A524',
+  warningDark: '#B7791F',
   warningSoft: '#FEF5E6',
+  neutralSoft: '#EEF2F8',
   surface: '#FFFFFF',
-  background: '#F6F7F9',
-  border: '#E4E6EB',
-  textMuted: '#6B6F80',
-  textSubtle: '#9A9DAB',
+  background: '#F4F7FC',
+  border: '#E3E9F3',
+  textMuted: '#5F6B85',
+  textSubtle: '#9AA4B8',
 };
 
 export const fontSizes = { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, xxl: 32 } as const;
@@ -57,7 +60,8 @@ export const fontSizes = { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, xxl: 32 } as 
 /** Espacements par pas de 4. */
 export const space = (n: number) => n * 4;
 
-export const radii = { card: 12, input: 10, chip: 999 } as const;
+/** Formes généreuses : cartes et feuilles très arrondies, boutons et champs arrondis, puces en pilule. */
+export const radii = { card: 20, button: 16, input: 14, tile: 18, sheet: 28, chip: 999 } as const;
 
 /** Cible tactile minimale (accessibilité). */
 export const MIN_TOUCH = 44;
@@ -65,13 +69,13 @@ export const MIN_TOUCH = 44;
 /** Couleur de chaque statut de colis, déclarée une seule fois. */
 export const parcelStatusColors: Record<ParcelStatus, { fg: string; bg: string }> = {
   open: { fg: colors.primaryDark, bg: colors.primarySoft },
-  negotiating: { fg: '#B7791F', bg: colors.warningSoft },
-  assigned: { fg: colors.navy, bg: '#ECECF4' },
-  in_transit: { fg: '#1F8F88', bg: colors.accentSoft },
-  delivered_pending: { fg: '#B7791F', bg: colors.warningSoft },
-  delivered: { fg: '#1F8F88', bg: colors.accentSoft },
-  cancelled: { fg: colors.textMuted, bg: '#EFF0F3' },
-  expired: { fg: colors.textMuted, bg: '#EFF0F3' },
+  negotiating: { fg: colors.warningDark, bg: colors.warningSoft },
+  assigned: { fg: colors.navy, bg: colors.neutralSoft },
+  in_transit: { fg: colors.accentDark, bg: colors.accentSoft },
+  delivered_pending: { fg: colors.warningDark, bg: colors.warningSoft },
+  delivered: { fg: colors.accentDark, bg: colors.accentSoft },
+  cancelled: { fg: colors.textMuted, bg: colors.neutralSoft },
+  expired: { fg: colors.textMuted, bg: colors.neutralSoft },
   disputed: { fg: colors.danger, bg: colors.dangerSoft },
 };
 

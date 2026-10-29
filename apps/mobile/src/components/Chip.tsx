@@ -18,7 +18,7 @@ export function Chip({
       accessibilityState={{ selected }}
       style={[styles.base, selected ? styles.on : styles.off]}
     >
-      <AppText size="sm" weight="medium" color={selected ? '#FFFFFF' : colors.navy}>
+      <AppText size="sm" weight="semibold" color={selected ? '#FFFFFF' : colors.navy}>
         {label}
       </AppText>
     </Pressable>
@@ -35,5 +35,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   on: { backgroundColor: colors.primary, borderColor: colors.primary },
-  off: { backgroundColor: colors.surface, borderColor: colors.border },
+  off: { backgroundColor: colors.neutralSoft, borderColor: colors.neutralSoft },
 });

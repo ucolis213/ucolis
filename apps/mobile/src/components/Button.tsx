@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } f
 import { colors, MIN_TOUCH, radii, space } from '../theme';
 import { AppText } from './AppText';
 
-type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dangerGhost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'soft' | 'outline' | 'ghost' | 'dangerGhost' | 'danger';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -16,7 +16,8 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
 const VARIANTS: Record<Variant, { bg: string; fg: string; border: string }> = {
   primary: { bg: colors.primary, fg: '#FFFFFF', border: colors.primary },
   secondary: { bg: colors.navy, fg: '#FFFFFF', border: colors.navy },
-  outline: { bg: colors.surface, fg: colors.navy, border: colors.border },
+  soft: { bg: colors.primarySoft, fg: colors.primaryDark, border: colors.primarySoft },
+  outline: { bg: colors.neutralSoft, fg: colors.navy, border: colors.neutralSoft },
   ghost: { bg: 'transparent', fg: colors.primaryDark, border: 'transparent' },
   dangerGhost: { bg: 'transparent', fg: colors.danger, border: 'transparent' },
   danger: { bg: colors.danger, fg: '#FFFFFF', border: colors.danger },
@@ -44,7 +45,8 @@ export function Button({
         {
           backgroundColor: v.bg,
           borderColor: v.border,
-          opacity: inactive ? 0.55 : pressed ? 0.85 : 1,
+          opacity: inactive ? 0.5 : 1,
+          transform: [{ scale: pressed && !inactive ? 0.98 : 1 }],
         },
         fullWidth && styles.full,
       ]}
@@ -56,7 +58,7 @@ export function Button({
         <View style={styles.row}>
           {icon && <Ionicons name={icon} size={20} color={v.fg} />}
           {/* Une seule ligne : le libellé rétrécit un peu plutôt que de se couper au milieu d'un mot. */}
-          <AppText weight="semibold" color={v.fg} align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={styles.label}>
+          <AppText weight="bold" color={v.fg} align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={styles.label}>
             {label}
           </AppText>
         </View>
@@ -67,10 +69,10 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: Math.max(MIN_TOUCH, 50),
-    borderRadius: radii.card,
+    minHeight: Math.max(MIN_TOUCH, 54),
+    borderRadius: radii.button,
     borderWidth: 1,
-    paddingHorizontal: space(4),
+    paddingHorizontal: space(5),
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -25,7 +25,7 @@ export function AuthHeader({
             accessibilityRole="button"
             accessibilityLabel={t('back')}
           >
-            <Ionicons name={backIcon()} size={24} color={colors.navy} />
+            <Ionicons name={backIcon()} size={22} color={colors.navy} />
           </Pressable>
         )}
         {step && (
@@ -34,7 +34,7 @@ export function AuthHeader({
           </AppText>
         )}
       </View>
-      <AppText size="xl" weight="bold">
+      <AppText size="xxl" weight="bold">
         {title}
       </AppText>
       {subtitle && <AppText color={colors.textMuted}>{subtitle}</AppText>}
@@ -43,8 +43,15 @@ export function AuthHeader({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space(1), marginBottom: space(2) },
+  wrap: { gap: space(2), marginBottom: space(3) },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH },
-  back: { width: MIN_TOUCH, height: MIN_TOUCH, justifyContent: 'center', marginStart: -space(2) },
+  back: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.neutralSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   step: { marginStart: 'auto' },
 });

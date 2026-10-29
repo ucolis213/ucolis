@@ -27,7 +27,9 @@ export function ScreenHeader({
         accessibilityRole="button"
         accessibilityLabel={t('back')}
       >
-        <Ionicons name={backIcon()} size={24} color={colors.navy} />
+        <View style={styles.backCircle}>
+          <Ionicons name={backIcon()} size={22} color={colors.navy} />
+        </View>
       </Pressable>
       {titleContent ? (
         <View style={styles.title}>{titleContent}</View>
@@ -45,12 +47,22 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: space(2),
-    paddingVertical: space(1),
-    gap: space(1),
+    paddingHorizontal: space(3),
+    paddingVertical: space(2),
+    gap: space(2),
     backgroundColor: colors.background,
   },
   back: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   title: { flex: 1 },
   right: { minWidth: MIN_TOUCH, alignItems: 'flex-end', paddingEnd: space(2) },
 });

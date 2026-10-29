@@ -20,10 +20,12 @@ import { formatRelative } from '@/format';
 import { currentLocale } from '@/i18n';
 import { useSession } from '@/session/SessionContext';
 import { badgeText, colors, MAX_FONT_SCALE, radii, space } from '@/theme';
+import { useTabBarSpace } from '@/components/TabBar';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Messages() {
   const { t } = useTranslation(['chat', 'common']);
+  const tabSpace = useTabBarSpace();
   const { isGuest } = useSession();
   const query = useConversations(!isGuest);
   const pull = usePullToRefresh(query.refetch);
@@ -51,6 +53,7 @@ export default function Messages() {
               data={data.items}
               keyExtractor={(c) => c.id}
               renderItem={({ item }) => <ConversationRow conv={item} />}
+              contentContainerStyle={{ paddingBottom: tabSpace + space(2) }}
               {...pull}
             />
           )}

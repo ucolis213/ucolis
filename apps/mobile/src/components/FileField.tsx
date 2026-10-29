@@ -79,7 +79,7 @@ export function FileField({
         <Ionicons
           name={value ? 'checkmark-circle' : value === null && progress !== null ? 'hourglass-outline' : 'document-attach-outline'}
           size={22}
-          color={value ? '#1F8F88' : colors.textMuted}
+          color={value ? colors.accentDark : colors.textMuted}
         />
         <View style={styles.flex}>
           <AppText size="sm" weight="medium">
@@ -119,5 +119,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  done: { borderColor: '#1F8F88' },
+  done: { borderColor: colors.accentDark },
 });

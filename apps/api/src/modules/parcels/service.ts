@@ -63,11 +63,15 @@ type Dimensions = { length: number; width: number; height: number };
 
 /**
  * Champs calculés par l'API : les valeurs envoyées par le client sont ignorées. Sans poids ni dimensions
- * (publication rapide), le prix suggéré ne tient compte que de la distance.
+ * (publication rapide), le prix suggéré ne tient compte que de la distance. Un colis fragile est majoré.
  */
 async function derived(
   deps: Deps,
-  input: Pick<CreateParcelInput, 'pickup' | 'dropoff'> & { weightKg?: number | null; dimensionsCm?: Dimensions | null },
+  input: Pick<CreateParcelInput, 'pickup' | 'dropoff'> & {
+    weightKg?: number | null;
+    dimensionsCm?: Dimensions | null;
+    fragile?: boolean | null;
+  },
 ) {
   const { pricing } = await deps.settings.getAll();
   const distanceKm = haversineKm(input.pickup.location, input.dropoff.location);
@@ -76,7 +80,10 @@ async function derived(
   return {
     distanceKm,
     volumeM3,
-    suggestedPrice: suggestPrice({ distanceKm, weightKg: input.weightKg ?? 0, volumeM3: volumeM3 ?? 0 }, pricing),
+    suggestedPrice: suggestPrice(
+      { distanceKm, weightKg: input.weightKg ?? 0, volumeM3: volumeM3 ?? 0, fragile: !!input.fragile },
+      pricing,
+    ),
   };
 }
 
@@ -256,7 +263,7 @@ export function createParcelService(deps: Deps) {
       const now = deps.now();
       const settings = await deps.settings.getAll();
       const detail = detailFields(input);
-      const calc = await derived(deps, { ...input, weightKg: detail.weightKg, dimensionsCm: detail.dimensionsCm });
+      const calc = await derived(deps, { ...input, weightKg: detail.weightKg, dimensionsCm: detail.dimensionsCm, fragile: detail.fragile });
       const parcel = await ParcelModel.create({
         reference: await nextReference(now),
         sender: user._id,
@@ -290,6 +297,7 @@ export function createParcelService(deps: Deps) {
         dropoff: input.dropoff ?? { ...p.dropoff, location: { lat: p.dropoff.location.coordinates[1]!, lng: p.dropoff.location.coordinates[0]! } },
         weightKg: input.weightKg ?? p.weightKg ?? null,
         dimensionsCm: (input.dimensionsCm ?? p.dimensionsCm ?? null) as Dimensions | null,
+        fragile: input.fragile ?? p.fragile,
       } as Parameters<typeof derived>[1] & Parameters<typeof buildSearchText>[0];
       const set: Record<string, unknown> = {};
       for (const key of [

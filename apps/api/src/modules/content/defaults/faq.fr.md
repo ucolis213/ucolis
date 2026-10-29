@@ -59,7 +59,7 @@ Votre brouillon est gardé sur le téléphone : si vous fermez l'application, il
 ## Comment est calculé le prix suggéré ?
 Le prix suggéré est une estimation calculée par UCOLIS à partir de la distance à vol d'oiseau entre le départ et l'arrivée, et du poids du colis quand il est indiqué. Le poids pris en compte est le plus élevé entre le poids réel et le poids volumétrique (volume en m³ × 200).
 
-Le coût au kilomètre baisse avec la distance. Le résultat est arrondi aux 50 DA supérieurs. Exemple : Alger vers Oran, 352 km, un colis de 5 kg de 40 × 30 × 30 cm, prix suggéré de 3 250 DA.
+Le coût au kilomètre baisse avec la distance et augmente avec la taille du colis, car un objet volumineux demande un plus grand véhicule. S'y ajoutent une prise en charge de 300 DA et une manutention qui baisse par kilo pour les objets lourds. Un colis fragile est majoré de 10 %. Le résultat est arrondi aux 50 DA supérieurs. Exemples : Alger vers Oran, 352 km, un colis de 5 kg de 40 × 30 × 30 cm, prix suggéré de 1 500 DA ; un réfrigérateur fragile dans la même ville, environ 2 350 DA.
 
 Ce prix n'est qu'une indication : vous fixez librement votre prix demandé (100 DA au minimum, par multiples de 10 DA). Un avertissement s'affiche si votre prix dépasse trois fois le prix suggéré.
 

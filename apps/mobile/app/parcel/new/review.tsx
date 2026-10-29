@@ -9,12 +9,16 @@ import { haversineKm } from '@ucolis/shared';
 import { AppText } from '@/components/AppText';
 import { cdn } from '@/components/Avatar';
 import { KeyValue, SectionCard } from '@/components/FormBits';
+import { RouteAddresses } from '@/components/RouteStops';
 import { WizardFrame } from '@/components/WizardFrame';
-import { distance, formatDate, placeLabel, price, weight } from '@/format';
+import { distance, formatDate, price, weight } from '@/format';
 import { usePublishParcel } from '@/hooks/usePublishParcel';
 import { draftVolume, stepOfField } from '@/state/draftPayload';
 import { useParcelDraft } from '@/state/parcelDraft';
 import { colors, radii, space } from '@/theme';
+
+/** Adresse saisie, suivie des précisions éventuelles. */
+const fullAddress = (p: { address: string; details?: string }) => p.address + (p.details ? ` · ${p.details}` : '');
 
 const STEP_ROUTES = {
   route: '/parcel/new/route',
@@ -43,8 +47,12 @@ export default function ReviewStep() {
         {draft.title}
       </AppText>
       <SectionCard title={t('steps.route')}>
-        <KeyValue label={t('common:from')} value={draft.pickup ? placeLabel(draft.pickup) : '-'} />
-        <KeyValue label={t('common:to')} value={draft.dropoff ? placeLabel(draft.dropoff) : '-'} />
+        <RouteAddresses
+          stops={[
+            { title: t('common:from'), address: draft.pickup ? fullAddress(draft.pickup) : '-' },
+            { title: t('common:to'), address: draft.dropoff ? fullAddress(draft.dropoff) : '-' },
+          ]}
+        />
         <KeyValue label={t('common:distance')} value={distance(km)} />
       </SectionCard>
       <SectionCard title={t('characteristics')}>

@@ -6,17 +6,17 @@
   --color-primary: #1a73e8;
   --color-primary-dark: #155ebe;
   --color-primary-soft: #e8f1fd;
-  --color-navy: #1c1c2e;
-  --color-accent: #4ecdc4;
+  --color-navy: #0e1b3d;
+  --color-accent: #0ea5e9;
   --color-danger: #e5484d;
   --color-warning: #f5a524;
   --color-surface: #ffffff;
-  --color-background: #f6f7f9;
-  --color-border: #e4e6eb;
-  --color-muted: #6b6f80;
+  --color-background: #f4f7fc;
+  --color-border: #e3e9f3;
+  --color-muted: #5f6b85;
   /* Cairo prend le relais pour les caractères arabes (Inter n'en a pas). */
   --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
-  --radius-card: 12px;
+  --radius-card: 20px;
 }
 
 body {

@@ -83,7 +83,7 @@ export function RouteMap({
 
 const styles = StyleSheet.create({
   wrap: { borderRadius: radii.card, overflow: 'hidden', backgroundColor: colors.border },
-  carrier: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#1F8F88', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
+  carrier: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.accentDark, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
   open: {
     position: 'absolute',
     end: space(2),

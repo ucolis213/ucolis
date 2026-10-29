@@ -3,7 +3,9 @@ import {
   DEFAULT_PRICING,
   chargeableWeightKg,
   distanceCost,
+  handlingCost,
   isPriceUnusuallyHigh,
+  sizeFactor,
   suggestPrice,
   volumeM3FromCm,
 } from '../src/pricing';
@@ -11,11 +13,29 @@ import {
 describe('distanceCost', () => {
   it('applique les tranches marginales', () => {
     expect(distanceCost(0)).toBe(0);
-    expect(distanceCost(50)).toBe(400);
-    expect(distanceCost(100)).toBe(800);
-    expect(distanceCost(300)).toBe(800 + 1200);
-    expect(distanceCost(352)).toBe(2260);
-    expect(distanceCost(700)).toBe(800 + 1200 + 1500 + 400);
+    expect(distanceCost(50)).toBe(150);
+    expect(distanceCost(100)).toBe(300);
+    expect(distanceCost(300)).toBe(300 + 500);
+    expect(distanceCost(352)).toBe(904);
+    expect(distanceCost(700)).toBe(300 + 500 + 600 + 150);
+  });
+});
+
+describe('handlingCost', () => {
+  it('rend la manutention dégressive par tranches de poids', () => {
+    expect(handlingCost(0)).toBe(0);
+    expect(handlingCost(10)).toBe(200);
+    expect(handlingCost(30)).toBe(600);
+    expect(handlingCost(200)).toBe(600 + 1360);
+    expect(handlingCost(600)).toBe(600 + 1360 + 1200);
+  });
+});
+
+describe('sizeFactor', () => {
+  it('vaut 1 sans poids, grandit avec le poids taxé et plafonne pour un véhicule plein', () => {
+    expect(sizeFactor(0)).toBe(1);
+    expect(sizeFactor(50)).toBe(2);
+    expect(sizeFactor(10_000)).toBe(DEFAULT_PRICING.maxSizeFactor);
   });
 });
 
@@ -24,23 +44,33 @@ describe('suggestPrice', () => {
     const volumeM3 = volumeM3FromCm(40, 30, 30);
     expect(volumeM3).toBe(0.036);
     expect(chargeableWeightKg(5, volumeM3)).toBe(7.2);
-    expect(suggestPrice({ distanceKm: 352, weightKg: 5, volumeM3 })).toBe(3250);
+    // 300 + 904 × 1,144 + 7,2 × 20 = 1 478,18 → 1 500
+    expect(suggestPrice({ distanceKm: 352, weightKg: 5, volumeM3 })).toBe(1500);
   });
 
-  it('arrondit au multiple de 50 supérieur et retient le poids réel quand il domine', () => {
-    // 600 + 80 + 50 × 20 = 1 680 → 1 700
-    expect(suggestPrice({ distanceKm: 10, weightKg: 20, volumeM3: 0.01 })).toBe(1700);
-    // valeur déjà ronde : 600 + 0 + 50 × 1 = 650
-    expect(suggestPrice({ distanceKm: 0, weightKg: 1, volumeM3: 0 })).toBe(650);
+  it('garde un prix abordable pour un objet volumineux sur un trajet court', () => {
+    // 15 kg mais 3 m³ (600 kg taxés), 1 km, fragile : (300 + 3 × 8 + 3 160) × 1,1 = 3 832,4 → 3 850
+    expect(suggestPrice({ distanceKm: 1, weightKg: 15, volumeM3: 3, fragile: true })).toBe(3850);
+  });
+
+  it('majore un colis fragile', () => {
+    const input = { distanceKm: 352, weightKg: 60, volumeM3: volumeM3FromCm(70, 70, 180) };
+    expect(suggestPrice({ ...input, fragile: true })).toBeGreaterThan(suggestPrice(input));
+  });
+
+  it('ne dépend que de la distance sans poids ni volume (publication rapide)', () => {
+    // 300 + 904 = 1 204 → 1 250
+    expect(suggestPrice({ distanceKm: 352, weightKg: 0, volumeM3: 0 })).toBe(1250);
   });
 
   it('ignore une distance négative et respecte le prix minimum', () => {
-    const settings = { ...DEFAULT_PRICING, baseFee: 0, perKg: 0, minPrice: 100 };
-    expect(suggestPrice({ distanceKm: -5, weightKg: 1, volumeM3: 0 }, settings)).toBe(100);
+    expect(suggestPrice({ distanceKm: -5, weightKg: 0, volumeM3: 0 })).toBe(DEFAULT_PRICING.minPrice);
+    const settings = { ...DEFAULT_PRICING, baseFee: 0, minPrice: 100 };
+    expect(suggestPrice({ distanceKm: 0, weightKg: 0, volumeM3: 0 }, settings)).toBe(100);
   });
 
   it('signale un prix demandé supérieur à 3 fois le prix suggéré', () => {
-    expect(isPriceUnusuallyHigh(9751, 3250)).toBe(true);
-    expect(isPriceUnusuallyHigh(9750, 3250)).toBe(false);
+    expect(isPriceUnusuallyHigh(4501, 1500)).toBe(true);
+    expect(isPriceUnusuallyHigh(4500, 1500)).toBe(false);
   });
 });

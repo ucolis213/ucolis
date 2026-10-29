@@ -24,7 +24,7 @@ export function EmptyState({
   return (
     <View style={styles.center}>
       <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={36} color={colors.primary} />
+        <Ionicons name={icon} size={42} color={colors.primary} />
       </View>
       <AppText size="lg" weight="bold" align="center">
         {title}
@@ -85,9 +85,9 @@ export function Skeleton({
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', padding: space(8), gap: space(3) },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 96,
+    height: 96,
+    borderRadius: 32,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',

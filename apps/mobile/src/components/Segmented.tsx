@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { colors, MIN_TOUCH, radii, space } from '../theme';
+import { colors, MIN_TOUCH, radii, shadow, space } from '../theme';
 import { AppText } from './AppText';
 
 export function Segmented<T extends string>({
@@ -23,7 +23,7 @@ export function Segmented<T extends string>({
             accessibilityState={{ selected: on }}
             style={[styles.item, on && styles.on]}
           >
-            <AppText size="sm" weight="semibold" color={on ? colors.navy : colors.textMuted}>
+            <AppText size="sm" weight="semibold" color={on ? colors.primary : colors.textMuted}>
               {o.label}
               {o.badge ? ` (${o.badge})` : ''}
             </AppText>
@@ -35,7 +35,7 @@ export function Segmented<T extends string>({
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', padding: space(1), borderRadius: radii.card, backgroundColor: colors.border },
-  item: { flex: 1, minHeight: MIN_TOUCH - 4, alignItems: 'center', justifyContent: 'center', borderRadius: radii.card - 2 },
-  on: { backgroundColor: colors.surface },
+  wrap: { flexDirection: 'row', padding: space(1), borderRadius: radii.chip, backgroundColor: colors.neutralSoft },
+  item: { flex: 1, minHeight: MIN_TOUCH - 4, alignItems: 'center', justifyContent: 'center', borderRadius: radii.chip },
+  on: { backgroundColor: colors.surface, ...shadow },
 });

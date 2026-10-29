@@ -10,8 +10,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
-import { colors, space } from '../theme';
+import { colors, radii, space } from '../theme';
 import { SheetContext } from './SheetContext';
+import { useTabBarSpace } from './TabBar';
 
 export function Screen({
   children,
@@ -38,7 +39,11 @@ export function Screen({
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
-  const inner = [padded && styles.padded, contentStyle];
+  // Écran à onglets : la barre flotte au-dessus, le bas du contenu doit rester accessible au-dessus d'elle.
+  // Un écran sans marges ni défilement (liste, carte) gère lui-même cette place pour défiler sous la barre.
+  const tabSpace = useTabBarSpace();
+  const reserve = tabSpace > 0 && (scroll || padded) ? { paddingBottom: tabSpace + space(2) } : null;
+  const inner = [padded && styles.padded, reserve, contentStyle];
   // KeyboardAvoidingView compare le clavier (coordonnées de l'écran) à sa propre position relative à son parent.
   // Une feuille iOS (connexion, inscription, signalement, filtres) commence plus bas que le haut de l'écran mais
   // descend jusqu'en bas : le décalage est la hauteur de l'écran moins celle de la feuille. Sans lui, le bas du
@@ -93,10 +98,16 @@ const styles = StyleSheet.create({
   padded: { padding: space(5), gap: space(4), width: '100%', maxWidth: 720, alignSelf: 'center' },
   footer: {
     paddingHorizontal: space(5),
-    paddingVertical: space(3),
+    paddingTop: space(4),
+    paddingBottom: space(3),
     gap: space(2),
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopStartRadius: radii.sheet,
+    borderTopEndRadius: radii.sheet,
+    shadowColor: '#0E1B3D',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
   },
 });

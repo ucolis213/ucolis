@@ -42,6 +42,8 @@ export interface ParcelDraft {
   recipientPhone: string;
   paymentArrangement: PaymentArrangement | null;
   requestedPrice: number | null;
+  /** Prix pré-rempli par la suggestion et jamais retouché : il suit la suggestion quand elle change. */
+  priceIsSuggested: boolean;
   photos: FileRef[];
 }
 
@@ -68,6 +70,7 @@ export const EMPTY_DRAFT: ParcelDraft = {
   recipientPhone: '',
   paymentArrangement: null,
   requestedPrice: null,
+  priceIsSuggested: false,
   photos: [],
 };
 

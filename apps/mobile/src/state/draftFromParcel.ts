@@ -28,6 +28,8 @@ export function draftFromParcel(p: Partial<ParcelDto>, keepDate = true): Partial
     recipientPhone: p.recipient?.phone ?? '',
     paymentArrangement: quick ? null : (p.paymentArrangement ?? null),
     requestedPrice: p.requestedPrice ?? null,
+    // Prix déjà publié : choisi par l'expéditeur (voir priceToApply pour une annonce rapide complétée).
+    priceIsSuggested: false,
     photos: p.photos ?? [],
   };
 }
