@@ -1,0 +1,248 @@
+{
+  "meta": {
+    "title": "UCOLIS - Envoyez et transportez des colis partout en Algérie",
+    "description": "UCOLIS relie les expéditeurs et les transporteurs de toute l'Algérie : prix négocié, transporteurs vérifiés, suivi GPS en direct et remise confirmée par code."
+  },
+  "nav": {
+    "how": "Comment ça marche",
+    "features": "Fonctionnalités",
+    "pricing": "Prix",
+    "carriers": "Transporteurs",
+    "faq": "FAQ",
+    "download": "Télécharger l'app",
+    "menu": "Menu",
+    "close": "Fermer",
+    "language": "العربية"
+  },
+  "hero": {
+    "badge": "Disponible dans les 58 wilayas",
+    "titleStart": "Vos colis voyagent",
+    "titleHighlight": "avec ceux qui roulent déjà",
+    "titleEnd": "dans votre direction.",
+    "subtitle": "Publiez votre colis en moins de 3 minutes, recevez les offres de transporteurs, choisissez le bon prix et suivez la livraison en direct jusqu'à la remise.",
+    "ctaPrimary": "Télécharger l'application",
+    "ctaSecondary": "Estimer mon prix",
+    "trust": ["Gratuit pour les expéditeurs", "Français et arabe", "Remise confirmée par code"],
+    "cards": {
+      "offerTitle": "Nouvelle offre",
+      "offerBody": "Karim propose 1 500 DA",
+      "trackTitle": "En route",
+      "trackBody": "Sétif → Alger, mis à jour il y a 4 s",
+      "doneTitle": "Colis livré",
+      "doneBody": "Code de remise validé",
+      "ratingTitle": "Nouvel avis",
+      "ratingBody": "5 étoiles pour la ponctualité"
+    }
+  },
+  "stats": {
+    "wilayas": "wilayas couvertes",
+    "communes": "communes référencées",
+    "minutes": "minutes pour publier",
+    "code": "chiffres pour confirmer la remise"
+  },
+  "how": {
+    "kicker": "Comment ça marche",
+    "title": "Deux façons d'utiliser UCOLIS, une seule application",
+    "subtitle": "Le même compte permet d'expédier et de transporter. Votre rôle se décide colis par colis.",
+    "tabSender": "J'envoie un colis",
+    "tabCarrier": "Je transporte",
+    "sender": [
+      { "title": "Publiez votre annonce", "body": "Départ, arrivée, un titre et votre prix : c'est en ligne. Un prix suggéré, calculé sur la distance et le poids, vous guide." },
+      { "title": "Recevez des offres", "body": "Les transporteurs acceptent votre prix ou proposent le leur. Comparez leurs notes, leurs badges et leurs véhicules, puis négociez." },
+      { "title": "Suivez en direct", "body": "Dès le départ, la position du transporteur s'affiche sur la carte. Messagerie et appel sont ouverts entre vous deux." },
+      { "title": "Confirmez la remise", "body": "Le destinataire donne le code à 4 chiffres au transporteur. La livraison est terminée, vous pouvez vous noter mutuellement." }
+    ],
+    "carrier": [
+      { "title": "Créez votre profil", "body": "Ajoutez vos véhicules et faites vérifier votre identité : le badge « Identité vérifiée » rassure les expéditeurs." },
+      { "title": "Publiez vos trajets", "body": "Sétif → Alger chaque jeudi ? Publiez le trajet et ses étapes : les colis compatibles vous sont proposés automatiquement." },
+      { "title": "Faites vos offres", "body": "Acceptez le prix demandé en un geste ou proposez le vôtre. Jusqu'à 3 tours de négociation, sans surprise." },
+      { "title": "Livrez et soyez noté", "body": "Démarrez la livraison, saisissez le code du destinataire, et faites grimper votre note et votre taux de réussite." }
+    ]
+  },
+  "features": {
+    "kicker": "Fonctionnalités",
+    "title": "Tout ce qu'il faut pour un envoi serein",
+    "subtitle": "Pensée pour l'Algérie, en français et en arabe, lisible même en plein soleil.",
+    "items": [
+      { "title": "Publication rapide", "body": "Un seul écran suffit. Ajoutez plus tard poids, dimensions, date et destinataire si vous le souhaitez." },
+      { "title": "Prix suggéré juste", "body": "Un barème unique, calibré sur les tarifs algériens, calcule un prix de départ selon la distance, la taille et la fragilité." },
+      { "title": "Négociation claire", "body": "Offres, contre-offres et acceptation en un geste. Le prix final est figé dès que vous choisissez." },
+      { "title": "Suivi GPS en direct", "body": "Le marqueur du transporteur avance sur la carte, avec l'heure de la dernière position reçue." },
+      { "title": "Messagerie intégrée", "body": "Texte et photos dès que l'offre est acceptée. Le téléphone n'est partagé qu'entre les deux parties." },
+      { "title": "Code de remise", "body": "4 chiffres chiffrés, connus de l'expéditeur seul : le colis est remis à la bonne personne." },
+      { "title": "Alertes et favoris", "body": "Enregistrez une recherche Sétif → Alger et soyez prévenu dès qu'une annonce correspond." },
+      { "title": "Bilingue FR / AR", "body": "Toute l'application passe en arabe, de droite à gauche, avec les noms de wilayas et de communes traduits." }
+    ]
+  },
+  "simulator": {
+    "kicker": "Simulateur de prix",
+    "title": "Combien coûte votre envoi ?",
+    "subtitle": "Le même barème que l'application, appliqué à vol d'oiseau entre les centres des wilayas. Le prix final se négocie avec le transporteur.",
+    "from": "Départ",
+    "to": "Arrivée",
+    "size": "Taille du colis",
+    "sizes": {
+      "envelope": "Enveloppe",
+      "small": "Petit carton",
+      "medium": "Carton moyen",
+      "large": "Gros carton",
+      "appliance": "Électroménager"
+    },
+    "sizeHints": {
+      "envelope": "0,5 kg, documents",
+      "small": "3 kg, 30 × 20 × 15 cm",
+      "medium": "10 kg, 50 × 40 × 30 cm",
+      "large": "25 kg, 80 × 60 × 50 cm",
+      "appliance": "60 kg, 70 × 70 × 180 cm"
+    },
+    "fragile": "Colis fragile (+10 %)",
+    "distance": "Distance",
+    "chargeable": "Poids taxé",
+    "result": "Prix suggéré",
+    "sameCity": "Dans la même wilaya",
+    "disclaimer": "Estimation indicative. Dans l'application, la distance est calculée entre vos adresses exactes.",
+    "cta": "Publier ce colis dans l'app",
+    "swap": "Inverser départ et arrivée"
+  },
+  "tracking": {
+    "kicker": "Suivi en temps réel",
+    "title": "Votre colis, en direct sur la carte",
+    "body": "Dès que le transporteur démarre, sa position est partagée avec vous, et seulement pendant la livraison. Vous savez où est votre colis, à chaque instant.",
+    "bullets": [
+      "Position actualisée toutes les 10 secondes",
+      "Alerte si aucune position n'est reçue depuis 5 minutes",
+      "Appel et messagerie en un geste depuis l'écran de suivi"
+    ],
+    "live": "En direct",
+    "updated": "Mis à jour il y a {{s}} s",
+    "carrier": "Karim B.",
+    "vehicle": "Fourgon, Sétif → Alger",
+    "remaining": "{{km}} km restants"
+  },
+  "trust": {
+    "kicker": "Confiance et sécurité",
+    "title": "Une communauté où l'on se fait confiance",
+    "subtitle": "Des règles claires, appliquées par l'application et par une équipe de modération.",
+    "items": [
+      { "title": "Identités vérifiées", "body": "Carte d'identité, permis, carte grise et assurance contrôlés par l'équipe UCOLIS." },
+      { "title": "Avis en double aveugle", "body": "Chacun note sans voir la note de l'autre : des avis sincères, jamais en représailles." },
+      { "title": "Remise par code", "body": "Sans le bon code, la livraison doit être confirmée par l'expéditeur, ou automatiquement après 72 h." },
+      { "title": "Litiges arbitrés", "body": "Un problème ? Ouvrez un litige avec photos : l'équipe tranche, avec l'historique GPS à l'appui." },
+      { "title": "Vie privée protégée", "body": "Téléphone jamais public, position partagée seulement pendant la livraison, conforme à la loi 18-07." },
+      { "title": "Signalement et blocage", "body": "Signalez une annonce ou un comportement, bloquez un utilisateur en un geste." }
+    ]
+  },
+  "carriers": {
+    "kicker": "Pour les transporteurs",
+    "title": "Remplissez vos trajets, gagnez à chaque kilomètre",
+    "subtitle": "Particulier avec une voiture ou société avec une flotte de camionnettes : chaque place libre devient un revenu.",
+    "bullets": [
+      { "title": "Colis compatibles automatiques", "body": "Publiez votre trajet : les colis qui tombent sur votre route vous sont proposés." },
+      { "title": "Nouveaux colis près de vous", "body": "Une notification dès qu'un colis est publié dans un rayon de 30 km." },
+      { "title": "Votre prix, votre décision", "body": "Acceptez le prix demandé ou proposez le vôtre. Le règlement se fait directement avec l'expéditeur." }
+    ],
+    "earnings": {
+      "title": "Vos gains, en toute transparence",
+      "free": "Gratuit au lancement",
+      "freeBody": "Aucune commission n'est prélevée pour le moment. Si elle est un jour activée, vous serez prévenu à l'avance.",
+      "price": "Prix de la course",
+      "gridTitle": "Grille prévue",
+      "fixedFee": "Frais de dossier fixes : {{amount}}",
+      "below": "Moins de {{amount}}",
+      "between": "De {{from}} à {{to}}",
+      "above": "Plus de {{amount}}",
+      "net": "Vos gains nets",
+      "bonus": "Bonus de bienvenue de {{amount}} sur votre portefeuille"
+    }
+  },
+  "pro": {
+    "kicker": "Comptes professionnels",
+    "title": "Boutiques en ligne et sociétés de transport, passez à la vitesse supérieure",
+    "body": "Le statut pro se demande depuis le profil avec vos justificatifs (registre du commerce, NIF). Une fois validé par l'équipe, vous profitez de :",
+    "perks": [
+      "Badge « Pro vérifié », raison sociale et logo sur vos annonces",
+      "Jusqu'à 20 colis et 10 trajets actifs en même temps",
+      "Duplication d'annonces pour publier en série",
+      "Export CSV de l'historique de vos colis"
+    ],
+    "cta": "Créer mon compte pro",
+    "badge": "Pro vérifié"
+  },
+  "coverage": {
+    "kicker": "Couverture nationale",
+    "title": "D'Alger à Tamanrasset, toute l'Algérie est sur la carte",
+    "subtitle": "Les 58 wilayas et leurs communes, en français et en arabe. Survolez la carte pour découvrir chaque wilaya.",
+    "hover": "Survolez un point"
+  },
+  "stories": {
+    "kicker": "Ils pourraient être vous",
+    "title": "Pensée pour la vie de tous les jours",
+    "subtitle": "Quatre profils types qui ont guidé la conception de l'application.",
+    "items": [
+      { "name": "Amina, 34 ans", "role": "Expéditrice, Alger", "quote": "J'envoie des cadeaux à ma famille à Oran. Je veux un prix juste et savoir où est mon colis." },
+      { "name": "Karim, 41 ans", "role": "Chauffeur de fourgon, Sétif", "quote": "Je fais Sétif - Alger chaque semaine. Au retour, mon fourgon roule à moitié vide." },
+      { "name": "Une boutique en ligne", "role": "Compte pro, Blida", "quote": "Nous expédions plusieurs colis par semaine vers différentes wilayas." },
+      { "name": "Une SARL de transport", "role": "Compte pro, Oran", "quote": "Trois camionnettes, des trajets réguliers, et des places à remplir." }
+    ]
+  },
+  "faq": {
+    "kicker": "Questions fréquentes",
+    "title": "Vous avez des questions ?",
+    "subtitle": "Les réponses aux questions qu'on nous pose le plus souvent.",
+    "groups": [
+      {
+        "title": "Premiers pas",
+        "items": [
+          { "q": "UCOLIS est-il gratuit ?", "a": "Oui. Créer un compte, publier des annonces et faire des offres est gratuit. Le prix de la course est fixé entre l'expéditeur et le transporteur et se règle directement entre eux. L'expéditeur ne paie jamais de commission." },
+          { "q": "Faut-il un compte pour utiliser l'application ?", "a": "Sans compte, vous pouvez parcourir les annonces, les trajets et les profils publics. Pour publier, faire une offre ou écrire un message, il faut un compte avec un email vérifié." },
+          { "q": "Puis-je expédier et transporter avec le même compte ?", "a": "Oui. Votre choix à l'inscription oriente seulement l'interface. Vos droits se décident colis par colis : propriétaire du colis ou transporteur retenu." }
+        ]
+      },
+      {
+        "title": "Envoyer un colis",
+        "items": [
+          { "q": "Comment est calculé le prix suggéré ?", "a": "Il dépend de la distance entre le départ et l'arrivée, de la taille du colis (poids réel ou volume) et de sa fragilité. C'est un point de départ : le prix final se négocie avec le transporteur." },
+          { "q": "Comment fonctionne la négociation ?", "a": "Un transporteur accepte votre prix ou en propose un autre. Vous pouvez accepter, refuser ou faire jusqu'à 3 contre-offres. Dès qu'une offre est acceptée, le prix est figé et la messagerie s'ouvre." },
+          { "q": "Quels objets sont interdits ?", "a": "Argent liquide, armes, produits illicites, matières dangereuses, animaux vivants et denrées périssables non emballées. Vous le certifiez à chaque publication." }
+        ]
+      },
+      {
+        "title": "Livraison et suivi",
+        "items": [
+          { "q": "Qu'est-ce que le code de remise ?", "a": "Un code à 4 chiffres généré à l'acceptation de l'offre, visible par vous seul. Envoyez-le au destinataire : il le donne au transporteur, qui le saisit pour terminer la livraison." },
+          { "q": "Et si le transporteur n'a pas le code ?", "a": "Il peut déclarer la livraison avec une photo. Vous avez alors 72 h pour confirmer la réception ou ouvrir un litige ; sans réponse, la livraison est validée automatiquement." },
+          { "q": "Qui voit mon numéro de téléphone ?", "a": "Personne publiquement. Il n'est visible qu'entre l'expéditeur et le transporteur retenu, de l'acceptation jusqu'à 7 jours après la livraison." }
+        ]
+      },
+      {
+        "title": "Transporter",
+        "items": [
+          { "q": "Comment devenir transporteur ?", "a": "Ajoutez un véhicule depuis votre profil, puis envoyez vos pièces (carte d'identité, permis, carte grise, assurance) pour obtenir le badge « Identité vérifiée »." },
+          { "q": "Combien coûte UCOLIS pour un transporteur ?", "a": "Rien pour le moment. Une commission pourra être activée plus tard ; vous serez prévenu à l'avance, avec une date d'entrée en vigueur et un bonus de bienvenue sur votre portefeuille." },
+          { "q": "Puis-je me désister après avoir été retenu ?", "a": "Oui, tant que la livraison n'a pas démarré. Le désistement est visible sur votre profil et compte dans votre taux de réussite." }
+        ]
+      }
+    ],
+    "more": "Une autre question ? Écrivez-nous à {{email}}"
+  },
+  "download": {
+    "title": "Votre prochain colis part d'ici",
+    "subtitle": "Téléchargez UCOLIS, créez votre compte en deux écrans et publiez votre premier colis aujourd'hui.",
+    "soon": "Bientôt sur",
+    "googlePlay": "Google Play",
+    "appStore": "App Store",
+    "note": "Android 8 et plus, iOS 16.4 et plus."
+  },
+  "footer": {
+    "tagline": "La livraison de colis entre particuliers et transporteurs, partout en Algérie.",
+    "product": "Produit",
+    "help": "Aide",
+    "contact": "Contact",
+    "rights": "© {{year}} UCOLIS. Tous droits réservés.",
+    "made": "Conçu en Algérie, pour l'Algérie.",
+    "backToTop": "Revenir en haut"
+  },
+  "illustration": {
+    "missing": "Illustration à générer"
+  }
+}

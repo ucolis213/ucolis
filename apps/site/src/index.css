@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+/* Mêmes valeurs que packages/shared/src/theme.ts (vérifié par test/theme.test.ts). */
+@theme {
+  --color-primary: #1a73e8;
+  --color-primary-dark: #155ebe;
+  --color-primary-soft: #e8f1fd;
+  --color-navy: #0e1b3d;
+  --color-accent: #0ea5e9;
+  --color-accent-dark: #0369a1;
+  --color-accent-soft: #e0f2fe;
+  --color-danger: #e5484d;
+  --color-warning: #f5a524;
+  --color-warning-soft: #fef5e6;
+  --color-surface: #ffffff;
+  --color-background: #f4f7fc;
+  --color-neutral-soft: #eef2f8;
+  --color-border: #e3e9f3;
+  --color-muted: #5f6b85;
+  --color-subtle: #9aa4b8;
+  /* Cairo prend le relais pour les caractères arabes (Inter n'en a pas). */
+  --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
+  --font-arabic: 'Cairo', 'Inter', system-ui, sans-serif;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shine: shine 6s linear infinite;
+  --animate-ping-slow: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes shine {
+    from { background-position: 0% 50%; }
+    to { background-position: 200% 50%; }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+html[lang='ar'] body {
+  font-family: var(--font-arabic);
+}
+
+body {
+  @apply bg-background text-navy antialiased;
+}
+
+/* En arabe, la bande part du bord droit : elle défile vers la droite pour ne jamais laisser de vide. */
+@keyframes marquee-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+html[dir='rtl'] .marquee-track {
+  animation-name: marquee-rtl;
+}
+
+.text-gradient {
+  background-image: linear-gradient(90deg, var(--color-primary), var(--color-accent), #7c9cff, var(--color-primary));
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  @apply animate-shine;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(14 27 61 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(14 27 61 / 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-marquee, .animate-float, .animate-shine, .animate-ping-slow, .text-gradient {
+    animation: none !important;
+  }
+}

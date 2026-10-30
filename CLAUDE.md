@@ -14,6 +14,7 @@ Place de marché mobile de livraison de colis en Algérie (expéditeurs ↔ tran
 | `apps/api` | Express 5, Mongoose 8, zod. `src/modules/<domaine>/{routes,controller,service,model,schemas}.ts` |
 | `apps/admin` | Back-office React 19 + Vite 6 + React Router 7 + TanStack Query + Tailwind 4 |
 | `apps/mobile` | Expo SDK 58, RN 0.88, Expo Router 58 |
+| `apps/site` | Site vitrine (une page, FR/AR) : React 19 + Vite 6 + Tailwind 4 + motion ; illustrations dans `ILLUSTRATIONS.md` |
 
 `shared` est consommé en TypeScript source (pas de build) ; l'API l'embarque via tsup.
 
@@ -21,8 +22,8 @@ Place de marché mobile de livraison de colis en Algérie (expéditeurs ↔ tran
 
 ```
 pnpm install
-pnpm dev            # les trois applications
-pnpm test           # vitest (shared, api, admin) + jest (mobile)
+pnpm dev            # les quatre applications (site sur le port 5174)
+pnpm test           # vitest (shared, api, admin, site) + jest (mobile)
 pnpm typecheck
 pnpm lint
 ```

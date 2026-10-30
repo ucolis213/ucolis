@@ -1,0 +1,31 @@
+{
+  "name": "@ucolis/site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ucolis/shared": "workspace:*",
+    "lucide-react": "^0.544.0",
+    "motion": "^12.23.12",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tailwindcss": "^4.1.13",
+    "typescript": "~5.9.2",
+    "vite": "^6.3.6",
+    "vitest": "^3.2.4"
+  }
+}

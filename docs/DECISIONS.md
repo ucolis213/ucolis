@@ -521,3 +521,23 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
 - Recherche d'adresse : une commune choisie n'est plus transmise avant l'ouverture de la carte. Un seul lieu
   part par champ (le point placé, ou la commune si la carte est fermée sans point) : une étape de trajet
   n'apparaît plus en double (commune puis adresse exacte).
+
+## 30 octobre 2026 : site vitrine web (`apps/site`)
+
+- Site de présentation de l'application mobile, distinct de l'« application web publique » exclue de la v1
+  (PRD, hors périmètre) : aucune connexion, aucun appel à l'API, aucune fonctionnalité de la place de marché.
+  Une seule page : accueil, chiffres, comment ça marche (expéditeur / transporteur), fonctionnalités,
+  simulateur de prix, suivi en direct, confiance, transporteurs (grille de commission), comptes pro, carte des
+  wilayas, profils types (personas du PRD, présentés comme tels), FAQ, téléchargement.
+- Pile du back-office (React 19, Vite, Tailwind 4) avec `motion` pour les animations et `lucide-react` pour
+  les icônes. Animations désactivées si le système demande de réduire les animations.
+- Les chiffres et calculs viennent de `shared` et ne sont jamais recopiés : `suggestPrice` pour le simulateur
+  (entre les centres des wilayas, 8 km dans une même wilaya), `commissionBreakdown` et la grille par défaut,
+  `WILAYAS` pour la carte et les compteurs, `DEFAULT_SETTINGS.support` pour le contact. Couleurs : jetons de
+  `shared/theme`, vérifiés par test.
+- Textes du site dans `apps/site/src/locales/{fr,ar}.json` (propres au site, hors `shared/i18n`), avec test
+  de parité des clés. Arabe en RTL (`dir="rtl"` sur `<html>`), langue mémorisée dans le navigateur.
+- Illustrations : dessins à générer (prompts et emplacements dans `apps/site/ILLUSTRATIONS.md`), déposés dans
+  `apps/site/public/illustrations/`. Tant qu'un fichier manque, un cadre indique son nom. Un test vérifie que
+  chaque illustration du code a son prompt.
+- Les boutons des stores affichent « Bientôt sur » : aucun lien tant que l'application n'est pas publiée.
