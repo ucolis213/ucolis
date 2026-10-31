@@ -1,6 +1,6 @@
 # Conditions générales d'utilisation
 
-Dernière mise à jour : 26 octobre 2026.
+Dernière mise à jour : 31 octobre 2026.
 
 Les présentes conditions générales d'utilisation (les « CGU ») encadrent l'utilisation de l'application mobile UCOLIS et des services qu'elle propose. Lisez-les attentivement : en créant un compte, vous les acceptez sans réserve.
 
@@ -28,7 +28,7 @@ Pour toute question, vous pouvez nous contacter depuis la page Aide de l'applica
 
 UCOLIS est une place de marché qui met en relation des Expéditeurs et des Transporteurs, particuliers ou professionnels, pour le transport de colis en Algérie. Le Service permet notamment de publier des Annonces et des Trajets, de faire et de négocier des Offres, d'échanger des messages, de suivre une livraison en temps réel, de confirmer la remise par un code et de laisser des avis.
 
-UCOLIS agit uniquement comme intermédiaire technique. UCOLIS n'est ni transporteur, ni commissionnaire de transport, ni vendeur ou acheteur des biens transportés, et n'est pas partie au contrat de transport conclu entre l'Expéditeur et le Transporteur. Ce contrat se forme directement entre eux, sous leur seule responsabilité.
+UCOLIS agit uniquement comme intermédiaire technique. UCOLIS n'est ni transporteur, ni commissionnaire de transport, ni dépositaire des colis, ni vendeur ou acheteur des biens transportés, et n'est pas partie au contrat de transport conclu entre l'Expéditeur et le Transporteur. Ce contrat se forme directement entre eux, sous leur seule responsabilité.
 
 UCOLIS ne prend jamais possession des colis et n'en contrôle ni le contenu, ni l'état, ni la valeur.
 
@@ -179,7 +179,17 @@ En cas de manquement, UCOLIS peut, selon la gravité et après examen : masquer 
 
 UCOLIS met en œuvre les moyens raisonnables pour assurer l'accès au Service et sa sécurité, dans le cadre d'une obligation de moyens.
 
-UCOLIS n'est pas responsable de l'exécution des Courses, du contenu, de l'état ou de la valeur des colis, des paiements entre Utilisateurs, ni du comportement des Utilisateurs. UCOLIS ne garantit pas qu'une Annonce recevra une Offre, ni qu'une Offre sera acceptée.
+UCOLIS n'étant pas partie au contrat de transport (article 3), sa responsabilité ne saurait être engagée, dans les limites permises par la loi, au titre :
+
+- de la perte, du vol, de l'avarie ou du retard d'un colis ;
+- de la nature, de la licéité, de l'état, de la valeur ou de la conformité des objets transportés ;
+- de l'exécution, de la mauvaise exécution ou de l'inexécution d'une Course ;
+- des paiements intervenus entre les Utilisateurs, ou de leur absence ;
+- du comportement des Utilisateurs, avant, pendant ou après une Course.
+
+Les vérifications d'identité, les badges, les avis, le suivi GPS, le Code de remise et l'examen des litiges sont des outils de confiance mis à la disposition des Utilisateurs. Ils ne constituent en aucun cas une garantie de la part de UCOLIS. Tout différend relatif à l'exécution d'une Course se règle directement entre l'Expéditeur et le Transporteur, sous réserve de la procédure de litige de l'article 19.
+
+UCOLIS ne garantit pas qu'une Annonce recevra une Offre, ni qu'une Offre sera acceptée.
 
 UCOLIS ne saurait être tenu responsable des interruptions dues à une maintenance, à une panne des réseaux, des fournisseurs techniques ou des appareils des Utilisateurs, ou à un cas de force majeure.
 
