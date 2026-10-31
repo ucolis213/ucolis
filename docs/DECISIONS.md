@@ -541,3 +541,59 @@ publication). Quand le volume le justifiera, une section « Près de chez vous �
   `apps/site/public/illustrations/`. Tant qu'un fichier manque, un cadre indique son nom. Un test vérifie que
   chaque illustration du code a son prompt.
 - Les boutons des stores affichent « Bientôt sur » : aucun lien tant que l'application n'est pas publiée.
+- Le site n'affiche plus la grille de commission ni le calcul des gains nets : la section transporteurs
+  présente une carte d'avantages (gratuité au lancement, sans montant ni barème).
+- Le site est aussi en anglais (`apps/site/src/locales/en.json`, même test de parité), choisi dans un menu à
+  trois langues. L'anglais est propre au site : l'application reste FR/AR, et le site reprend pour l'anglais
+  les noms de lieux et le format de prix du français.
+- Positionnement du site : d'abord le transport de colis entre particuliers, les professionnels étant
+  bienvenus en second (section pro présentée comme « Vous êtes une entreprise ? », profils types étiquetés
+  particulier ou pro, question dédiée dans la FAQ).
+- Refonte visuelle du site (branche `feat/site-redesign`) : style clair en grands panneaux arrondis, titres en
+  Bricolage Grotesque (Cairo en arabe), recherche « départ → arrivée » dès l'accueil qui pré-remplit le
+  simulateur (état partagé dans `src/route.tsx`), étapes « Comment ça marche » en défilement narratif, bouton de
+  téléchargement fixe sur mobile. Les PNG détourés ont un halo blanc : ils restent toujours sur fond clair.
+
+## 31 octobre 2026 : prix suggéré sous les sociétés de livraison, avertissement juridique
+
+- Barème recalibré (mêmes formule et réglages, PRD F6) pour rester sous les tarifs des sociétés de livraison
+  algériennes (relevés indicatifs 2026, non officiels : 400 à 600 DA en ville, 500 à 750 DA entre wilayas,
+  1 000 à 1 400 DA vers le Grand Sud, environ 50 DA par kilo au-delà de 5 kg). Prise en charge 150 DA, coût
+  kilométrique 1,2 ; 0,8 ; 0,5 ; 0,3 DA/km, manutention 10 ; 6 ; 2 DA/kg, minimum 200 DA. Petit colis :
+  environ 200 DA en ville, 450 DA de Sétif à Alger, 600 DA d'Alger à Oran (contre 1 500), 950 DA d'Alger à
+  Tamanrasset. Un barème déjà enregistré depuis le back-office l'emporte : le réenregistrer.
+- Site : avertissement juridique en pied de page et question de FAQ « Quelle est la responsabilité de
+  UCOLIS ? ». UCOLIS est un intermédiaire technique, ni transporteur, ni commissionnaire, ni dépositaire ; le
+  prix, le transport, la remise et le règlement relèvent des seules parties. La carte « Litiges arbitrés »
+  dit désormais que la modération examine le litige (et non qu'elle tranche). Texte à faire valider par un
+  juriste et à reprendre dans les CGU de l'application.
+- CGU (version du 31 octobre 2026, `apps/api/src/modules/content/defaults/terms.{fr,ar}.md`) : article 3,
+  UCOLIS n'est pas non plus dépositaire des colis ; article 21 détaille l'exclusion de responsabilité (perte,
+  vol, avarie, retard, nature et licéité des objets, exécution de la Course, paiements, comportement des
+  Utilisateurs) et précise que badges, avis, GPS, Code de remise et examen des litiges ne valent pas garantie.
+  La case à cocher de l'inscription le dit en clair (« je reconnais que UCOLIS est un intermédiaire, non
+  responsable des transports convenus entre utilisateurs »). Le script de contenus n'écrase jamais des CGU
+  déjà publiées : sur une base existante, publier cette version depuis la page Contenus du back-office, ce
+  qui crée une nouvelle version que chaque utilisateur devra accepter.
+- Site : l'avertissement juridique du pied de page est retiré (la clause engage par les CGU acceptées à
+  l'inscription, pas par le site). Le pied de page renvoie vers « Conditions d'utilisation » (`#/cgu`) et
+  « Politique de confidentialité » (`#/confidentialite`), affichées par le site à partir des mêmes fichiers
+  Markdown que l'API (`content/defaults`, importés en `?raw`) ; en anglais, la version française s'affiche
+  avec une mention. La question de FAQ sur la responsabilité de UCOLIS reste et renvoie à l'article 21.
+- Backend : `pnpm --filter api migrate:pricing` (`src/modules/pricing/migration.ts`) remplace un barème
+  enregistré en base, qui primerait sur le nouveau barème par défaut (la fusion des réglages se fait clé par
+  clé), et journalise le changement au nom du super-administrateur. Il recalcule aussi le prix suggéré des
+  annonces ouvertes ou en négociation ; le prix demandé, les offres et les annonces déjà attribuées ne changent
+  pas. Sans effet sur une base déjà à jour : relançable sans risque.
+
+## 31 octobre 2026 : application mobile en anglais
+
+- Troisième langue de l'interface : `LOCALES = ['fr', 'ar', 'en']`, traductions dans
+  `packages/shared/src/i18n/en.json` (mêmes clés, mêmes paramètres `{{…}}` : deux tests de parité). Elle sert
+  aussi aux push, aux emails de code et aux erreurs de l'API ; l'utilisateur la choisit à l'accueil ou dans
+  Profil > Langue, et un téléphone réglé en anglais démarre en anglais. Pas de RTL.
+- Les contenus saisis au back-office (FAQ, CGU, confidentialité, message de maintenance, annonces diffusées)
+  et les noms de wilayas et de communes restent en français et en arabe (`CONTENT_LOCALES`) : l'anglais reçoit
+  la version française (`contentLocale()`), y compris `GET /content/:key?locale=en`. Les CGU en français font foi.
+- Dates en `en-GB` (jour/mois), montants « 3 250 DA » comme en français. Textes de permission iOS en anglais
+  (`apps/mobile/locales/en.json`).

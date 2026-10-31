@@ -315,18 +315,18 @@ Un récapitulatif précède la publication. Chaque étape est validée avant la 
 ```
 W = max(P, 200 × V)                       poids taxé
 T = min(8, 1 + W / 50)                    facteur de taille
-Prix suggéré = max(300, 50 × ⌈ (300 + C(d) × T + H(W)) × (1 + 0,1 si fragile) / 50 ⌉)
+Prix suggéré = max(200, 50 × ⌈ (150 + C(d) × T + H(W)) × (1 + 0,1 si fragile) / 50 ⌉)
 ```
 
 - P est le poids réel en kg et V le volume en m³ ; 200 kg/m³ est le facteur de poids volumétrique.
 - d est la distance à vol d'oiseau en km (formule de Haversine) entre les points de départ et d'arrivée.
-- C(d) est le coût kilométrique d'un petit colis, par tranches marginales : 3 DA/km sur les 100 premiers km, 2,5 DA/km de 100 à 300 km, 2 DA/km de 300 à 600 km, 1,5 DA/km au-delà.
+- C(d) est le coût kilométrique d'un petit colis, par tranches marginales : 1,2 DA/km sur les 100 premiers km, 0,8 DA/km de 100 à 300 km, 0,5 DA/km de 300 à 600 km, 0,3 DA/km au-delà.
 - T traduit la taille du véhicule nécessaire : 1 pour un colis sans poids, 2 pour 50 kg taxés, plafonné à 8 (camionnette pleine). Le poids pèse donc surtout par la distance, et non plus au kilo quel que soit le trajet.
-- H(W) est la manutention, par tranches marginales de poids taxé : 20 DA/kg jusqu'à 30 kg, 8 DA/kg de 30 à 200 kg, 3 DA/kg au-delà.
-- Un colis fragile est majoré de 10 %. En publication rapide (poids et volume nuls), le prix ne dépend que de la distance : 300 + C(d).
-- Calibrage sur le pouvoir d'achat algérien (salaire minimum de 20 000 DA) et les tarifs pratiqués : un petit colis dans la ville autour de 350 à 500 DA, entre wilayas proches autour de 600 DA, Alger → Oran autour de 1 500 DA (au-dessus des sociétés de livraison, pour un transport de particulier à particulier), un réfrigérateur dans la ville autour de 2 000 à 2 500 DA, une camionnette pleine dans la ville autour de 3 500 à 4 000 DA.
-- Exemple : Alger → Oran, 352 km, 5 kg, 40 × 30 × 30 cm (0,036 m³). C = 300 + 500 + 104 = 904 DA. Le poids taxé est max(5 ; 7,2) = 7,2 kg, d'où T = 1,144 et H = 144 DA. Le total de 300 + 1 034 + 144 = 1 478 DA est arrondi à 1 500 DA.
-- Exemple : réfrigérateur de 60 kg, 70 × 70 × 180 cm (0,882 m³, soit 176,4 kg taxés), fragile, 2 km dans la même ville. T = 4,528, C = 6 DA, H = 600 + 1 171 = 1 771 DA. (300 + 27 + 1 771) × 1,1 = 2 308 DA, arrondi à 2 350 DA.
+- H(W) est la manutention, par tranches marginales de poids taxé : 10 DA/kg jusqu'à 30 kg, 6 DA/kg de 30 à 200 kg, 2 DA/kg au-delà.
+- Un colis fragile est majoré de 10 %. En publication rapide (poids et volume nuls), le prix ne dépend que de la distance : 150 + C(d).
+- Calibrage : le prix suggéré reste sous les tarifs des sociétés de livraison algériennes (relevés indicatifs 2026 : 400 à 600 DA dans la même ville, 500 à 750 DA entre wilayas, 1 000 à 1 400 DA vers le Grand Sud, plus environ 50 DA par kilo au-delà de 5 kg). Un petit colis coûte environ 200 DA dans la ville, 350 DA entre wilayas proches, 450 DA de Sétif à Alger, 600 DA d'Alger à Oran et 950 DA d'Alger à Tamanrasset ; un réfrigérateur dans la ville environ 1 500 DA, une camionnette pleine dans la ville environ 2 500 DA.
+- Exemple : Alger → Oran, 352 km, 5 kg, 40 × 30 × 30 cm (0,036 m³). C = 120 + 160 + 26 = 306 DA. Le poids taxé est max(5 ; 7,2) = 7,2 kg, d'où T = 1,144 et H = 72 DA. Le total de 150 + 350 + 72 = 572 DA est arrondi à 600 DA.
+- Exemple : réfrigérateur de 60 kg, 70 × 70 × 180 cm (0,882 m³, soit 176,4 kg taxés), fragile, 2 km dans la même ville. T = 4,528, C = 2,4 DA, H = 300 + 878 = 1 178 DA. (150 + 11 + 1 178) × 1,1 = 1 473 DA, arrondi à 1 500 DA.
 
 Règles :
 
@@ -862,7 +862,7 @@ Toutes ces exigences sont obligatoires dès la v1. Chacune se vérifie par un te
 | Disponibilité | API toujours active, GET /health vérifiant MongoDB et Redis ; sauvegardes Atlas quotidiennes conservées 7 jours ; arrêt propre (SIGTERM) avec fin des requêtes en cours |
 | Observabilité | Logs JSON corrélés par requestId ; Sentry avec cartes de sources ; alerte si le taux d'erreurs 5xx dépasse 2 % sur 5 min |
 | Qualité | TypeScript strict partout ; ESLint et Prettier ; tests de toutes les transitions des machines à états, de la négociation, des permissions staff et du masquage ; couverture ≥ 80 % sur shared et sur les services de l'API ; CI bloquante |
-| Internationalisation | Français par défaut, arabe avec bascule RTL complète (rechargement par Updates.reloadAsync) ; chiffres occidentaux dans les deux langues ; montants affichés « 3 250 DA » et « 3 250 دج » ; dates selon la langue |
+| Internationalisation | Français par défaut, arabe avec bascule RTL complète, anglais pour l'interface (contenus du back-office et noms de lieux en français) (rechargement par Updates.reloadAsync) ; chiffres occidentaux dans les deux langues ; montants affichés « 3 250 DA » et « 3 250 دج » ; dates selon la langue |
 | Accessibilité | Cibles tactiles de 44 pt au minimum ; libellés d'accessibilité sur les icônes ; contraste AA ; respect de la taille de police du système jusqu'à 130 % |
 | Plateformes | Android 8 et plus, iOS 16.4 et plus, téléphone et tablette, portrait ; Expo SDK 58 ; builds EAS ; mises à jour OTA par canal (preview, production) |
 | Stores | Suppression de compte dans l'application ; politique de confidentialité accessible sans compte ; déclaration de localisation en arrière-plan pour Google Play ; questionnaires de confidentialité Apple remplis |
@@ -980,7 +980,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 | Type de compte | Tout compte est particulier. Le statut professionnel n'existe qu'après validation par le staff d'un dossier de justificatifs |
 | Administration | Un super-administrateur unique, créé par script. Il crée des modérateurs aux permissions choisies. Le back-office est une application web séparée, utilisable sur téléphone |
 | Vérification des transporteurs | Conseillée, non bloquante par défaut (décision du 25 octobre 2026) : un transporteur non vérifié peut faire une offre et publier un trajet ; il est invité à se faire vérifier et l'expéditeur voit une mention neutre. Le réglage requireCarrierVerification la rend obligatoire |
-| Formule de prix | Une seule : le barème de F6 (coût kilométrique par tranches multiplié par un facteur de taille, manutention dégressive par tranches de poids, majoration fragile), dans shared/pricing.ts, recalculé par l'API. Révisée le 29 octobre 2026 pour le pouvoir d'achat algérien |
+| Formule de prix | Une seule : le barème de F6 (coût kilométrique par tranches multiplié par un facteur de taille, manutention dégressive par tranches de poids, majoration fragile), dans shared/pricing.ts, recalculé par l'API. Révisée le 29 octobre 2026 pour le pouvoir d'achat algérien, puis le 31 octobre 2026 pour rester sous les tarifs des sociétés de livraison |
 | Commission | Gratuit au lancement. Une fois activée par le super-administrateur : 50 DA + taux par tranche du prix convenu, prélevés à la livraison sur un portefeuille prépayé du transporteur, rechargé par virement CCP ou BaridiMob validé par le staff (F19) |
 | Notifications push | Branchées dès le lot 4 : collection PushToken, envoi par expo-server-sdk, nettoyage des jetons invalides |
 | Réinitialisation du mot de passe | Par code à 6 chiffres saisi dans l'application, sans lien web |
@@ -988,7 +988,7 @@ Les décisions ci-dessous tranchent les points restés ouverts dans la version p
 | Fin de livraison | Code de remise à 4 chiffres, ou déclaration suivie d'une validation par l'expéditeur, automatique au bout de 72 h |
 | Annulation après le départ | Impossible ; elle passe par un litige tranché par le staff |
 | Conversations | Une par paire d'utilisateurs et par colis, plus une conversation générale par paire |
-| Identifiants | Code, champs et valeurs d'enum en anglais ; textes affichés en français et en arabe |
+| Identifiants | Code, champs et valeurs d'enum en anglais ; textes affichés en français et en arabe, et en anglais depuis le 31 octobre 2026 (interface seulement, voir docs/DECISIONS.md) |
 | Hébergement | Pas d'offre gratuite qui se met en veille ; API toujours active |
 
 ### Hors périmètre de la v1
