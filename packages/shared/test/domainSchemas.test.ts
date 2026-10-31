@@ -134,7 +134,8 @@ describe('compte et back-office', () => {
   it('vérifie la confirmation du mot de passe et les préférences', () => {
     expect(issues(changePasswordSchema.safeParse({ currentPassword: 'x', password: 'Secret123', passwordConfirm: 'Secret124' }))).toContain('passwordConfirm:validation.passwordMismatch');
     expect(preferencesSchema.safeParse({ language: 'ar' }).success).toBe(true);
-    expect(preferencesSchema.safeParse({ language: 'en' }).success).toBe(false);
+    expect(preferencesSchema.safeParse({ language: 'en' }).success).toBe(true);
+    expect(preferencesSchema.safeParse({ language: 'es' }).success).toBe(false);
   });
 
   it('exige un motif pour toute action du staff, sauf une validation', () => {

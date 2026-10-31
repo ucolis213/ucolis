@@ -1,5 +1,7 @@
 // Catalogue des notifications : catégorie, envoi push, clés de traduction et lien profond.
 
+import type { Locale } from './enums';
+
 export const NOTIFICATION_CATEGORIES = [
   'offers',
   'deliveries',
@@ -153,8 +155,8 @@ export function shouldPush(
 /** Paramètres prêts à insérer dans la traduction : les montants sont formatés dans la langue. */
 export function formatNotificationParams(
   params: Record<string, unknown>,
-  locale: 'fr' | 'ar',
-  format: (amount: number, locale: 'fr' | 'ar') => string,
+  locale: Locale,
+  format: (amount: number, locale: Locale) => string,
 ): Record<string, string | number> {
   return Object.fromEntries(
     Object.entries(params).map(([k, v]) => [

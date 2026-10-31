@@ -24,7 +24,8 @@ describe('pickLocale', () => {
   it('privilégie la langue enregistrée, puis celle de l’appareil, puis le français', () => {
     expect(pickLocale('ar', 'fr')).toBe('ar');
     expect(pickLocale(null, 'ar')).toBe('ar');
-    expect(pickLocale(null, 'en')).toBe('fr');
+    expect(pickLocale(null, 'en')).toBe('en');
+    expect(pickLocale(null, 'es')).toBe('fr');
     expect(pickLocale('xx', undefined)).toBe('fr');
   });
 });

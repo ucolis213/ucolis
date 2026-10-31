@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { contentLocale } from '@ucolis/shared';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { EmptyState } from '@/components/States';
@@ -9,7 +10,7 @@ import { currentLocale } from '@/i18n';
 export default function Maintenance() {
   const { t } = useTranslation();
   const config = useAppConfig();
-  const custom = config.data?.maintenance.message[currentLocale()];
+  const custom = config.data?.maintenance.message[contentLocale(currentLocale())];
 
   return (
     <Screen edges={['top', 'bottom']} contentStyle={{ justifyContent: 'center' }}>

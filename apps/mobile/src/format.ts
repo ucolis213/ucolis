@@ -1,10 +1,11 @@
-// Formats d'affichage : dates selon la langue, chiffres occidentaux dans les deux langues.
+// Formats d'affichage : dates selon la langue, chiffres occidentaux dans toutes les langues.
 
 import i18n from 'i18next';
 import { formatPrice, getCommune, getWilaya, placeName } from '@ucolis/shared';
 import { currentLocale } from './i18n';
 
-const dateLocale = () => (currentLocale() === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-DZ');
+const DATE_LOCALES = { fr: 'fr-DZ', ar: 'ar-DZ-u-nu-latn', en: 'en-GB' } as const;
+const dateLocale = () => DATE_LOCALES[currentLocale()];
 
 /** Heures sur 24 h dans les deux langues, quel que soit le réglage 12 h de l'appareil. */
 const TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };

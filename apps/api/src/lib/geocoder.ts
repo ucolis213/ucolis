@@ -7,6 +7,7 @@ import {
   getCommune,
   getWilaya,
   nearestCommune,
+  placeName,
   type LatLng,
   type Locale,
 } from '@ucolis/shared';
@@ -32,7 +33,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 function localLabel(wilayaCode: string, communeCode: string, locale: Locale) {
   const c = getCommune(communeCode);
   const w = getWilaya(wilayaCode);
-  return [c?.[locale], w?.[locale]].filter(Boolean).join(', ');
+  return [c && placeName(c, locale), w && placeName(w, locale)].filter(Boolean).join(', ');
 }
 
 export function createLocalGeocoder(): Geocoder {
@@ -179,7 +180,7 @@ export function createOsmGeocoder(
     const near = nearestCommune(location);
     return {
       name: name || street || undefined,
-      address: uniqueParts([name, street, quarter, getCommune(near.communeCode)?.[locale], getWilaya(near.wilayaCode)?.[locale]]).join(', '),
+      address: uniqueParts([name, street, quarter, placeName(getCommune(near.communeCode) ?? { fr: '', ar: '' }, locale), placeName(getWilaya(near.wilayaCode) ?? { fr: '', ar: '' }, locale)]).join(', '),
       location,
       wilayaCode: near.wilayaCode,
       commune: near.communeCode,

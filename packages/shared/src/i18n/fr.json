@@ -17,7 +17,8 @@
     "chooseLanguage": "Choisissez votre langue",
     "languages": {
       "fr": "Français",
-      "ar": "العربية"
+      "ar": "العربية",
+      "en": "English"
     },
     "tabs": {
       "home": "Accueil",
@@ -207,7 +208,7 @@
       "value3Title": "Une livraison transparente",
       "value3": "Statuts clairs, suivi GPS et code de remise.",
       "value4Title": "Toute l'Algérie",
-      "value4": "Les {{n}} wilayas, en français et en arabe.",
+      "value4": "Les {{n}} wilayas, en français, en arabe et en anglais.",
       "contactTitle": "Nous contacter",
       "legalTitle": "Informations légales",
       "appTitle": "Application",
@@ -251,7 +252,7 @@
       "both": "Les deux"
     },
     "addPhoto": "Ajouter une photo (facultatif)",
-    "acceptTerms": "J'accepte les conditions d'utilisation et la politique de confidentialité",
+    "acceptTerms": "J'accepte les conditions d'utilisation et la politique de confidentialité, et je reconnais que UCOLIS est un intermédiaire, non responsable des transports convenus entre utilisateurs",
     "businessLink": "Vous êtes une entreprise ?",
     "businessHint": "Le statut professionnel se demande après l'inscription, depuis votre profil, avec vos justificatifs.",
     "verifyTitle": "Vérifiez votre email",

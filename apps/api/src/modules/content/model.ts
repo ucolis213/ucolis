@@ -1,5 +1,5 @@
 import { Schema, model, type FlattenMaps, type InferSchemaType, type Types } from 'mongoose';
-import { LOCALES } from '@ucolis/shared';
+import { CONTENT_LOCALES } from '@ucolis/shared';
 
 export const CONTENT_KEYS = ['faq', 'terms', 'privacy'] as const;
 export type ContentKey = (typeof CONTENT_KEYS)[number];
@@ -8,7 +8,7 @@ export type ContentKey = (typeof CONTENT_KEYS)[number];
 const contentSchema = new Schema(
   {
     key: { type: String, enum: CONTENT_KEYS, required: true },
-    locale: { type: String, enum: LOCALES, required: true },
+    locale: { type: String, enum: CONTENT_LOCALES, required: true },
     body: { type: String, default: '' },
     draft: { type: String, default: null },
     version: { type: Number, default: 0 },

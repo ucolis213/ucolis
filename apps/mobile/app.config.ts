@@ -43,8 +43,8 @@ const config: ExpoConfig = {
     ],
     config: { googleMaps: { apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY ?? '' } },
   },
-  // Textes de permission iOS traduits (InfoPlist.strings) : français par défaut, arabe.
-  locales: { fr: './locales/fr.json', ar: './locales/ar.json' },
+  // Textes de permission iOS traduits (InfoPlist.strings) : français par défaut, arabe, anglais.
+  locales: { fr: './locales/fr.json', ar: './locales/ar.json', en: './locales/en.json' },
   plugins: [
     'expo-router',
     'expo-localization',

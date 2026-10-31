@@ -3,7 +3,7 @@
 // Diffusions du staff : message bilingue vers un segment, immédiat ou programmé.
 
 import type { FilterQuery } from 'mongoose';
-import { LOCALES, type Locale } from '@ucolis/shared';
+import { LOCALES, contentLocale, type ContentLocale, type Locale } from '@ucolis/shared';
 import type { Deps } from '../../deps';
 import { AppError } from '../../lib/errors';
 import { AppSettingModel } from '../settings/model';
@@ -36,7 +36,7 @@ export function segmentFilter(segment: BroadcastInput['segment']): FilterQuery<U
 
 export function createContentService(deps: Deps) {
   return {
-    async getPublished(key: ContentKey, locale: Locale) {
+    async getPublished(key: ContentKey, locale: ContentLocale) {
       const doc = await ContentModel.findOne({ key, locale }).lean();
       if (!doc || !doc.publishedAt) {
         // Repli sur l'autre langue si la traduction n'est pas encore publiée.
@@ -62,11 +62,11 @@ export function createContentService(deps: Deps) {
       };
     },
 
-    async saveDraft(key: ContentKey, locale: Locale, draft: string, staffId: string) {
+    async saveDraft(key: ContentKey, locale: ContentLocale, draft: string, staffId: string) {
       await ContentModel.updateOne({ key, locale }, { $set: { draft, updatedBy: staffId } }, { upsert: true });
     },
 
-    async publish(key: ContentKey, locale: Locale, staffId: string) {
+    async publish(key: ContentKey, locale: ContentLocale, staffId: string) {
       const doc = await ContentModel.findOne({ key, locale });
       if (!doc?.draft) throw new AppError(409, 'INVALID_TRANSITION', 'Aucun brouillon à publier');
       doc.body = doc.draft;
@@ -100,7 +100,7 @@ export function createContentService(deps: Deps) {
       let count = 0;
       const cursor = UserModel.find(segmentFilter({ kind: b.segment!.kind, wilayaCode: b.segment!.wilayaCode }), { _id: 1, preferences: 1 }).cursor();
       for await (const u of cursor) {
-        const locale: Locale = (u.preferences?.language as Locale | undefined) ?? 'fr';
+        const locale = contentLocale((u.preferences?.language as Locale | undefined) ?? 'fr');
         await deps.bus.emit('broadcast.deliver', {
           userId: u._id.toString(),
           title: b.title?.[locale] || b.title?.fr || '',

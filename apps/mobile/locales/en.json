@@ -1,0 +1,7 @@
+{
+  "CFBundleDisplayName": "UCOLIS",
+  "NSLocationWhenInUseUsageDescription": "UCOLIS shares your location with the sender only during a delivery you have started.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "UCOLIS shares your location with the sender only during a delivery you have started, including in the background.",
+  "NSCameraUsageDescription": "UCOLIS uses the camera to take photos of your parcels and documents.",
+  "NSPhotoLibraryUsageDescription": "UCOLIS accesses your photos to illustrate your parcels and send your documents."
+}

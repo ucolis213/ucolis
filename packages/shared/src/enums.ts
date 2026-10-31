@@ -1,7 +1,7 @@
 // Valeurs d'enum partagées par l'API, le mobile et le back-office.
 // Les identifiants restent en anglais ; les libellés sont des clés de traduction.
 
-export const LOCALES = ['fr', 'ar'] as const;
+export const LOCALES = ['fr', 'ar', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const INTENTS = ['sender', 'carrier', 'both'] as const;

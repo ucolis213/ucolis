@@ -5,7 +5,7 @@
 
 import { readFile } from 'node:fs/promises';
 import mongoose from 'mongoose';
-import { LOCALES } from '@ucolis/shared';
+import { CONTENT_LOCALES } from '@ucolis/shared';
 import { loadEnv } from '../config/env';
 import { CONTENT_KEYS, ContentModel } from '../modules/content/model';
 
@@ -16,7 +16,7 @@ async function main() {
   await mongoose.connect(env.MONGODB_URI);
   await ContentModel.init();
   for (const key of CONTENT_KEYS) {
-    for (const locale of LOCALES) {
+    for (const locale of CONTENT_LOCALES) {
       const existing = await ContentModel.findOne({ key, locale }).lean();
       if (existing?.publishedAt) {
         console.log(`${key}.${locale} : déjà publié (v${existing.version}), inchangé.`);

@@ -12,6 +12,7 @@ import { hasOngoingDelivery } from '../users/anonymize';
 import { UserModel } from '../users/model';
 import { toMe, type MeDto } from '../users/serializers';
 import { CONTENT_KEYS, type ContentKey } from './model';
+import { contentLocale, isContentLocale } from '@ucolis/shared';
 import { isLocale, type ContentService } from './service';
 
 const keyOf = (v: unknown): ContentKey => {
@@ -39,7 +40,8 @@ export function contentRoutes(deps: Deps, content: ContentService) {
 
   // Public : la politique de confidentialité doit être accessible sans compte.
   r.get('/content/:key', async (req, res) => {
-    const locale = isLocale(req.query.locale) ? req.query.locale : 'fr';
+    // L'anglais n'a pas de contenus propres : il reçoit la version française.
+    const locale = isLocale(req.query.locale) ? contentLocale(req.query.locale) : 'fr';
     res.json(await content.getPublished(keyOf(req.params.key), locale));
   });
 
@@ -76,13 +78,13 @@ export function contentAdminRoutes(deps: Deps, content: ContentService) {
   });
   r.put('/content/:key/:locale', requirePermission('content.manage'), validate(z.object({ body: z.string().max(100_000) })), async (req, res) => {
     const locale = req.params.locale;
-    if (!isLocale(locale)) throw new AppError(404, 'NOT_FOUND', 'Langue inconnue');
+    if (!isContentLocale(locale)) throw new AppError(404, 'NOT_FOUND', 'Langue inconnue');
     await content.saveDraft(keyOf(req.params.key), locale, req.body.body, currentStaff(req).id);
     res.status(204).end();
   });
   r.post('/content/:key/:locale/publish', requirePermission('content.manage'), validate(z.object({ reason: reasonSchema })), async (req, res) => {
     const locale = req.params.locale;
-    if (!isLocale(locale)) throw new AppError(404, 'NOT_FOUND', 'Langue inconnue');
+    if (!isContentLocale(locale)) throw new AppError(404, 'NOT_FOUND', 'Langue inconnue');
     const result = await content.publish(keyOf(req.params.key), locale, currentStaff(req).id);
     await audit(req, { action: 'content.publish', targetType: 'content', targetId: `${req.params.key}:${locale}`, reason: req.body.reason, after: { version: result.version } });
     res.json(result);
