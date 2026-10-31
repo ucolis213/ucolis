@@ -1,4 +1,3 @@
-import { Clock, KeyRound, Map, MapPinned } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DELIVERY_CODE_LENGTH, WILAYAS } from '@ucolis/shared';
 import { AnimatedNumber } from '../components/AnimatedNumber';
@@ -8,27 +7,31 @@ import { useI18n } from '../i18n';
 const COMMUNES = WILAYAS.reduce((n, w) => n + w.communes.length, 0);
 
 export function Stats() {
-  const { m, number } = useI18n();
+  const { m, number, rtl } = useI18n();
   const items = [
-    { icon: Map, value: WILAYAS.length, label: m.stats.wilayas },
-    { icon: MapPinned, value: COMMUNES, label: m.stats.communes },
-    { icon: Clock, value: 3, prefix: '< ', label: m.stats.minutes },
-    { icon: KeyRound, value: DELIVERY_CODE_LENGTH, label: m.stats.code },
+    { id: 'wilayas', value: WILAYAS.length, label: m.stats.wilayas },
+    { id: 'communes', value: COMMUNES, label: m.stats.communes },
+    { id: 'minutes', value: 3, lessThan: true, label: m.stats.minutes },
+    { id: 'code', value: DELIVERY_CODE_LENGTH, label: m.stats.code },
   ];
 
   return (
-    <section className="px-4 py-16">
-      <Stagger className="relative mx-auto grid max-w-6xl grid-cols-2 gap-4 overflow-hidden rounded-[var(--radius-sheet)] bg-navy p-6 md:grid-cols-4 md:p-10">
-        <div className="absolute -top-20 end-10 size-64 rounded-full bg-primary/40 blur-3xl" aria-hidden />
-        <div className="absolute -bottom-24 start-10 size-64 rounded-full bg-accent/30 blur-3xl" aria-hidden />
-        {items.map(({ icon: Icon, value, prefix, label }) => (
-          <motion.div key={label} variants={staggerItem} className="relative text-center">
-            <Icon className="mx-auto mb-3 size-7 text-accent" aria-hidden />
-            <div className="text-4xl font-extrabold text-white md:text-5xl" dir="ltr">
-              {prefix}
+    <section className="px-4 py-16 md:py-20">
+      <Stagger className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 md:grid-cols-4">
+        {items.map(({ id, value, lessThan, label }, i) => (
+          // Clé fixe : un changement de langue met le libellé à jour sans recréer la carte ni rejouer son apparition.
+          <motion.div
+            key={id}
+            variants={staggerItem}
+            className={`px-4 text-center md:px-6 ${i > 0 ? 'md:border-s md:border-border' : ''} ${i % 2 ? 'max-md:border-s max-md:border-border' : ''}`}
+          >
+            <div className="display text-5xl text-navy md:text-6xl" dir="ltr">
+              {/* « < 3 » se lit de droite à gauche en arabe : le symbole passe après le chiffre et s'inverse. */}
+              {lessThan && !rtl && <span className="text-primary">{'<'} </span>}
               <AnimatedNumber value={value} format={number} />
+              {lessThan && rtl && <span className="text-primary"> {'>'}</span>}
             </div>
-            <div className="mt-1 text-sm font-medium text-white/70">{label}</div>
+            <div className="mt-2 text-sm font-semibold text-muted">{label}</div>
           </motion.div>
         ))}
       </Stagger>

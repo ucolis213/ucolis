@@ -1,0 +1,254 @@
+{
+  "meta": {
+    "title": "UCOLIS - Peer-to-peer parcel delivery anywhere in Algeria",
+    "description": "UCOLIS connects individuals sending a parcel with those who carry it, anywhere in Algeria: negotiated prices, verified carriers, live GPS tracking and code-confirmed handover."
+  },
+  "nav": {
+    "how": "How it works",
+    "features": "Features",
+    "pricing": "Pricing",
+    "carriers": "Carriers",
+    "faq": "FAQ",
+    "download": "Get the app",
+    "menu": "Menu",
+    "close": "Close",
+    "language": "Language"
+  },
+  "hero": {
+    "badge": "Available in all 58 wilayas",
+    "titleStart": "Send and carry parcels",
+    "titleHighlight": "between individuals",
+    "titleEnd": "anywhere in Algeria.",
+    "subtitle": "Post your parcel in under 3 minutes, get offers from people ready to carry it, pick the right price and follow the delivery live until handover.",
+    "ctaPrimary": "Download the app",
+    "ctaSecondary": "Estimate my price",
+    "trust": ["Free for senders", "Cheaper than delivery companies", "Code-confirmed handover"],
+    "cards": {
+      "offerTitle": "New offer",
+      "offerBody": "Karim offers 1 500 DA",
+      "trackTitle": "On the way",
+      "trackBody": "Sétif → Algiers, updated 4 s ago",
+      "doneTitle": "Parcel delivered",
+      "doneBody": "Handover code confirmed",
+      "ratingTitle": "New review",
+      "ratingBody": "5 stars for punctuality"
+    }
+  },
+  "stats": {
+    "wilayas": "wilayas covered",
+    "communes": "communes listed",
+    "minutes": "minutes to post",
+    "code": "digits to confirm handover"
+  },
+  "how": {
+    "kicker": "How it works",
+    "title": "Two ways to use UCOLIS, one single app",
+    "subtitle": "The same account lets you send and carry. Your role is decided parcel by parcel.",
+    "tabSender": "I'm sending a parcel",
+    "tabCarrier": "I'm carrying",
+    "sender": [
+      { "title": "Post your listing", "body": "Departure, destination, a title and your price: you're live. A suggested price, based on distance and weight, guides you." },
+      { "title": "Receive offers", "body": "Carriers accept your price or propose their own. Compare their ratings, badges and vehicles, then negotiate." },
+      { "title": "Follow it live", "body": "As soon as the trip starts, the carrier's position appears on the map. Chat and calls are open between the two of you." },
+      { "title": "Confirm the handover", "body": "The recipient gives the 4-digit code to the carrier. The delivery is complete and you can rate each other." }
+    ],
+    "carrier": [
+      { "title": "Create your profile", "body": "Add your vehicles and get your identity verified: the \"Verified identity\" badge reassures senders." },
+      { "title": "Post your trips", "body": "Sétif → Algiers every Thursday? Post the trip and its stops: matching parcels are suggested to you automatically." },
+      { "title": "Make your offers", "body": "Accept the asking price in one tap or propose yours. Up to 3 rounds of negotiation, no surprises." },
+      { "title": "Deliver and get rated", "body": "Start the delivery, enter the recipient's code, and watch your rating and success rate climb." }
+    ]
+  },
+  "features": {
+    "kicker": "Features",
+    "title": "Everything you need for worry-free shipping",
+    "subtitle": "Designed for Algeria, in French and Arabic, readable even in bright sunlight.",
+    "items": [
+      { "title": "Quick posting", "body": "One screen is enough. Add weight, dimensions, date and recipient later if you wish." },
+      { "title": "Fair suggested price", "body": "A single rate scale computes a starting price from distance, size and fragility, below the rates of delivery companies." },
+      { "title": "Clear negotiation", "body": "Offers, counter-offers and one-tap acceptance. The final price is locked as soon as you choose." },
+      { "title": "Live GPS tracking", "body": "The carrier's marker moves across the map, with the time of the last position received." },
+      { "title": "Built-in messaging", "body": "Text and photos once the offer is accepted. Phone numbers are only shared between the two parties." },
+      { "title": "Handover code", "body": "4 encrypted digits, known only to the sender: the parcel goes to the right person." },
+      { "title": "Alerts and favourites", "body": "Save a Sétif → Algiers search and get notified as soon as a listing matches." },
+      { "title": "Bilingual FR / AR", "body": "The whole app switches to Arabic, right to left, with wilaya and commune names translated." }
+    ]
+  },
+  "simulator": {
+    "kicker": "Price simulator",
+    "title": "How much does your shipment cost?",
+    "subtitle": "The same rate scale as the app, applied as the crow flies between wilaya centres. The final price is negotiated with the carrier.",
+    "from": "From",
+    "to": "To",
+    "size": "Parcel size",
+    "sizes": {
+      "envelope": "Envelope",
+      "small": "Small box",
+      "medium": "Medium box",
+      "large": "Large box",
+      "appliance": "Appliance"
+    },
+    "sizeHints": {
+      "envelope": "0.5 kg, documents",
+      "small": "3 kg, 30 × 20 × 15 cm",
+      "medium": "10 kg, 50 × 40 × 30 cm",
+      "large": "25 kg, 80 × 60 × 50 cm",
+      "appliance": "60 kg, 70 × 70 × 180 cm"
+    },
+    "fragile": "Fragile parcel (+10 %)",
+    "distance": "Distance",
+    "chargeable": "Chargeable weight",
+    "result": "Suggested price",
+    "sameCity": "Within the same wilaya",
+    "disclaimer": "Indicative estimate. In the app, the distance is calculated between your exact addresses.",
+    "cta": "Post this parcel in the app",
+    "swap": "Swap departure and destination"
+  },
+  "tracking": {
+    "kicker": "Real-time tracking",
+    "title": "Your parcel, live on the map",
+    "body": "As soon as the carrier sets off, their position is shared with you, and only during the delivery. You know where your parcel is at every moment.",
+    "bullets": [
+      "Position updated every 10 seconds",
+      "Alert if no position is received for 5 minutes",
+      "Call and chat in one tap from the tracking screen"
+    ],
+    "live": "Live",
+    "updated": "Updated {{s}} s ago",
+    "carrier": "Karim B.",
+    "vehicle": "Van, Sétif → Algiers",
+    "remaining": "{{km}} km to go"
+  },
+  "trust": {
+    "kicker": "Trust and safety",
+    "title": "A community built on trust",
+    "subtitle": "Clear rules, enforced by the app and by a moderation team.",
+    "items": [
+      { "title": "Verified identities", "body": "ID card, driving licence, vehicle registration and insurance checked by the UCOLIS team." },
+      { "title": "Double-blind reviews", "body": "Each side rates without seeing the other's rating: honest reviews, never retaliation." },
+      { "title": "Code-based handover", "body": "Without the right code, the delivery must be confirmed by the sender, or automatically after 72 h." },
+      { "title": "Arbitrated disputes", "body": "A problem? Open a dispute with photos: the moderation team reviews it, backed by the GPS history." },
+      { "title": "Privacy protected", "body": "Phone never public, location shared only during the delivery, compliant with law 18-07." },
+      { "title": "Report and block", "body": "Report a listing or a behaviour, block a user in one tap." }
+    ]
+  },
+  "carriers": {
+    "kicker": "For carriers",
+    "title": "Carry parcels, earn an income",
+    "subtitle": "With your car or van, carry other people's parcels and set your price. Got a regular trip? Post it to receive matching parcels. Transport professionals are welcome too.",
+    "bullets": [
+      { "title": "Matching parcels, automatically", "body": "Post your trip: parcels that fall along your route are suggested to you." },
+      { "title": "New parcels near you", "body": "A notification as soon as a parcel is posted within 30 km." },
+      { "title": "Your price, your call", "body": "Accept the asking price or propose yours. Payment is settled directly with the sender." }
+    ],
+    "join": {
+      "title": "Why drive with UCOLIS?",
+      "free": "Free at launch",
+      "freeBody": "No commission is charged for now. If that ever changes, you will be notified in advance.",
+      "perks": [
+        "No subscription, no sign-up fees",
+        "The sender pays you the delivery price directly",
+        "Optional: post your trips to receive matching parcels",
+        "A rating and badges that grow your customer base"
+      ],
+      "cta": "Become a carrier"
+    }
+  },
+  "pro": {
+    "kicker": "Are you a business?",
+    "title": "Professionals are welcome too",
+    "body": "UCOLIS is built for individuals first, but online shops and transport companies can use it too. Request business status from your profile with your documents (trade register, tax ID). Once approved by the team, you get:",
+    "perks": [
+      "\"Verified pro\" badge, company name and logo on your listings",
+      "Up to 20 parcels and 10 active trips at the same time",
+      "Listing duplication to post in bulk",
+      "CSV export of your parcel history"
+    ],
+    "cta": "Create my business account",
+    "badge": "Verified pro"
+  },
+  "coverage": {
+    "kicker": "Nationwide coverage",
+    "title": "From Algiers to Tamanrasset, all of Algeria is on the map",
+    "subtitle": "All 58 wilayas and their communes, in French and Arabic. Hover over the map to discover each wilaya.",
+    "hover": "Hover over a point"
+  },
+  "stories": {
+    "kicker": "They could be you",
+    "title": "Designed for everyday life",
+    "subtitle": "Individuals first, and professionals who use it too: four typical profiles that guided the design of the app.",
+    "items": [
+      { "name": "Amina, 34", "role": "Individual, sender, Algiers", "quote": "I send gifts to my family in Oran. I want a fair price and to know where my parcel is." },
+      { "name": "Karim, 41", "role": "Individual, carrier, Sétif", "quote": "I drive Sétif - Algiers every week. On the way back, my van runs half empty." },
+      { "name": "An online shop", "role": "Business account, Blida", "quote": "We ship several parcels a week to different wilayas." },
+      { "name": "A transport company", "role": "Business account, Oran", "quote": "Three vans, regular trips, and space to fill." }
+    ]
+  },
+  "faq": {
+    "kicker": "Frequently asked questions",
+    "title": "Got questions?",
+    "subtitle": "Answers to the questions we hear most often.",
+    "groups": [
+      {
+        "title": "Getting started",
+        "items": [
+          { "q": "Is UCOLIS free?", "a": "Yes. Creating an account, posting listings and making offers is free. The delivery price is agreed between the sender and the carrier and paid directly between them. Senders never pay a commission." },
+          { "q": "What is UCOLIS responsible for?", "a": "UCOLIS is a technical intermediary that connects users: the platform is not a party to any agreement between the sender and the carrier and never takes possession of parcels. Price, carriage, delivery and payment are the sole responsibility of the parties. UCOLIS is therefore not liable for the loss, theft, damage or delay of a parcel, for its contents, or for payments between users. The review of a dispute by the moderation team creates no liability on its part. Details are set out in article 21 of the terms of use." },
+          { "q": "Is UCOLIS only for individuals?", "a": "No. UCOLIS is designed for parcels sent between individuals, but online shops and transport companies can use it too. They can request business status to get the \"Verified pro\" badge and higher limits." },
+          { "q": "Do I need an account to use the app?", "a": "Without an account, you can browse listings, trips and public profiles. To post, make an offer or send a message, you need an account with a verified email." },
+          { "q": "Can I send and carry with the same account?", "a": "Yes. Your choice at sign-up only shapes the interface. Your rights are decided parcel by parcel: parcel owner or selected carrier." }
+        ]
+      },
+      {
+        "title": "Sending a parcel",
+        "items": [
+          { "q": "How is the suggested price calculated?", "a": "It depends on the distance between departure and destination, the parcel size (actual weight or volume) and its fragility. It is a starting point: the final price is negotiated with the carrier." },
+          { "q": "How does negotiation work?", "a": "A carrier accepts your price or proposes another. You can accept, decline or make up to 3 counter-offers. Once an offer is accepted, the price is locked and messaging opens." },
+          { "q": "Which items are prohibited?", "a": "Cash, weapons, illegal products, hazardous materials, live animals and unpackaged perishable goods. You confirm this with every listing." }
+        ]
+      },
+      {
+        "title": "Delivery and tracking",
+        "items": [
+          { "q": "What is the handover code?", "a": "A 4-digit code generated when the offer is accepted, visible only to you. Send it to the recipient: they give it to the carrier, who enters it to complete the delivery." },
+          { "q": "What if the carrier doesn't have the code?", "a": "They can declare the delivery with a photo. You then have 72 h to confirm receipt or open a dispute; without a response, the delivery is validated automatically." },
+          { "q": "Who can see my phone number?", "a": "No one publicly. It is only visible between the sender and the selected carrier, from acceptance until 7 days after delivery." }
+        ]
+      },
+      {
+        "title": "Carrying",
+        "items": [
+          { "q": "How do I become a carrier?", "a": "Add a vehicle from your profile, then send your documents (ID card, driving licence, vehicle registration, insurance) to get the \"Verified identity\" badge." },
+          { "q": "How much does UCOLIS cost for a carrier?", "a": "Nothing for now. A commission may be introduced later; you will be notified in advance, with an effective date and a welcome bonus in your wallet." },
+          { "q": "Can I withdraw after being selected?", "a": "Yes, as long as the delivery hasn't started. The withdrawal is visible on your profile and counts towards your success rate." }
+        ]
+      }
+    ],
+    "more": "Another question? Write to us at {{email}}"
+  },
+  "download": {
+    "title": "Your next parcel starts here",
+    "subtitle": "Download UCOLIS, create your account in two screens and post your first parcel today.",
+    "soon": "Coming soon on",
+    "googlePlay": "Google Play",
+    "appStore": "App Store",
+    "note": "Android 8 and later, iOS 16.4 and later."
+  },
+  "footer": {
+    "tagline": "Peer-to-peer parcel delivery, anywhere in Algeria. Open to professionals too.",
+    "product": "Product",
+    "help": "Help",
+    "contact": "Contact",
+    "rights": "© {{year}} UCOLIS. All rights reserved.",
+    "backToTop": "Back to top",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy"
+  },
+  "legalPage": {
+    "back": "Back to the site",
+    "frArOnly": "This document is available in French and Arabic only; the French version is shown below."
+  },
+  "illustration": {
+    "missing": "Illustration to generate"
+  }
+}

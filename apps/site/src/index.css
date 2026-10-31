@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Mêmes valeurs que packages/shared/src/theme.ts (vérifié par test/theme.test.ts). */
+/* Mêmes valeurs que packages/shared/src/theme.ts (vérifié par test/site.test.ts). */
 @theme {
   --color-primary: #1a73e8;
   --color-primary-dark: #155ebe;
@@ -18,13 +18,16 @@
   --color-border: #e3e9f3;
   --color-muted: #5f6b85;
   --color-subtle: #9aa4b8;
-  /* Cairo prend le relais pour les caractères arabes (Inter n'en a pas). */
+  --color-ink: #070f24;
+  /* Cairo prend le relais pour les caractères arabes (Inter et Bricolage n'en ont pas). */
   --font-sans: 'Inter', 'Cairo', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Cairo', 'Inter', system-ui, sans-serif;
   --font-arabic: 'Cairo', 'Inter', system-ui, sans-serif;
-  --radius-card: 20px;
-  --radius-sheet: 28px;
+  --radius-card: 24px;
+  --radius-sheet: 32px;
+  --radius-panel: 40px;
 
-  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee: marquee 60s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shine: shine 6s linear infinite;
   --animate-ping-slow: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -35,7 +38,7 @@
   }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-14px); }
+    50% { transform: translateY(-12px); }
   }
   @keyframes shine {
     from { background-position: 0% 50%; }
@@ -45,7 +48,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 88px;
+  scroll-padding-top: 96px;
 }
 
 html[lang='ar'] body {
@@ -54,6 +57,20 @@ html[lang='ar'] body {
 
 body {
   @apply bg-background text-navy antialiased;
+}
+
+::selection {
+  @apply bg-primary text-white;
+}
+
+/* Titres : police d'affichage resserrée ; l'arabe garde Cairo, sans resserrement. */
+.display {
+  @apply font-display font-extrabold tracking-[-0.035em];
+}
+html[lang='ar'] .display {
+  font-family: var(--font-arabic);
+  letter-spacing: 0;
+  line-height: 1.35;
 }
 
 /* En arabe, la bande part du bord droit : elle défile vers la droite pour ne jamais laisser de vide. */
@@ -74,11 +91,14 @@ html[dir='rtl'] .marquee-track {
   @apply animate-shine;
 }
 
-.bg-grid {
-  background-image:
-    linear-gradient(to right, rgb(14 27 61 / 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(14 27 61 / 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
+.bg-dots {
+  background-image: radial-gradient(rgb(14 27 61 / 0.1) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.bg-dots-light {
+  background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 @media (prefers-reduced-motion: reduce) {

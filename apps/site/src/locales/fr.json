@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "UCOLIS - Envoyez et transportez des colis partout en Algérie",
-    "description": "UCOLIS relie les expéditeurs et les transporteurs de toute l'Algérie : prix négocié, transporteurs vérifiés, suivi GPS en direct et remise confirmée par code."
+    "title": "UCOLIS - Le transport de colis entre particuliers, partout en Algérie",
+    "description": "UCOLIS met en relation les particuliers qui envoient un colis et ceux qui le transportent, partout en Algérie : prix négocié, transporteurs vérifiés, suivi GPS en direct et remise confirmée par code."
   },
   "nav": {
     "how": "Comment ça marche",
@@ -12,17 +12,17 @@
     "download": "Télécharger l'app",
     "menu": "Menu",
     "close": "Fermer",
-    "language": "العربية"
+    "language": "Langue"
   },
   "hero": {
     "badge": "Disponible dans les 58 wilayas",
-    "titleStart": "Vos colis voyagent",
-    "titleHighlight": "avec ceux qui roulent déjà",
-    "titleEnd": "dans votre direction.",
-    "subtitle": "Publiez votre colis en moins de 3 minutes, recevez les offres de transporteurs, choisissez le bon prix et suivez la livraison en direct jusqu'à la remise.",
+    "titleStart": "Envoyez et transportez des colis",
+    "titleHighlight": "entre particuliers",
+    "titleEnd": "partout en Algérie.",
+    "subtitle": "Publiez votre colis en moins de 3 minutes, recevez les offres de particuliers prêts à le transporter, choisissez le bon prix et suivez la livraison en direct jusqu'à la remise.",
     "ctaPrimary": "Télécharger l'application",
     "ctaSecondary": "Estimer mon prix",
-    "trust": ["Gratuit pour les expéditeurs", "Français et arabe", "Remise confirmée par code"],
+    "trust": ["Gratuit pour les expéditeurs", "Moins cher que les sociétés de livraison", "Remise confirmée par code"],
     "cards": {
       "offerTitle": "Nouvelle offre",
       "offerBody": "Karim propose 1 500 DA",
@@ -65,7 +65,7 @@
     "subtitle": "Pensée pour l'Algérie, en français et en arabe, lisible même en plein soleil.",
     "items": [
       { "title": "Publication rapide", "body": "Un seul écran suffit. Ajoutez plus tard poids, dimensions, date et destinataire si vous le souhaitez." },
-      { "title": "Prix suggéré juste", "body": "Un barème unique, calibré sur les tarifs algériens, calcule un prix de départ selon la distance, la taille et la fragilité." },
+      { "title": "Prix suggéré juste", "body": "Un barème unique calcule un prix de départ selon la distance, la taille et la fragilité, sous les tarifs des sociétés de livraison." },
       { "title": "Négociation claire", "body": "Offres, contre-offres et acceptation en un geste. Le prix final est figé dès que vous choisissez." },
       { "title": "Suivi GPS en direct", "body": "Le marqueur du transporteur avance sur la carte, avec l'heure de la dernière position reçue." },
       { "title": "Messagerie intégrée", "body": "Texte et photos dès que l'offre est acceptée. Le téléphone n'est partagé qu'entre les deux parties." },
@@ -127,38 +127,37 @@
       { "title": "Identités vérifiées", "body": "Carte d'identité, permis, carte grise et assurance contrôlés par l'équipe UCOLIS." },
       { "title": "Avis en double aveugle", "body": "Chacun note sans voir la note de l'autre : des avis sincères, jamais en représailles." },
       { "title": "Remise par code", "body": "Sans le bon code, la livraison doit être confirmée par l'expéditeur, ou automatiquement après 72 h." },
-      { "title": "Litiges arbitrés", "body": "Un problème ? Ouvrez un litige avec photos : l'équipe tranche, avec l'historique GPS à l'appui." },
+      { "title": "Litiges arbitrés", "body": "Un problème ? Ouvrez un litige avec photos : l'équipe de modération l'examine, avec l'historique GPS à l'appui." },
       { "title": "Vie privée protégée", "body": "Téléphone jamais public, position partagée seulement pendant la livraison, conforme à la loi 18-07." },
       { "title": "Signalement et blocage", "body": "Signalez une annonce ou un comportement, bloquez un utilisateur en un geste." }
     ]
   },
   "carriers": {
     "kicker": "Pour les transporteurs",
-    "title": "Remplissez vos trajets, gagnez à chaque kilomètre",
-    "subtitle": "Particulier avec une voiture ou société avec une flotte de camionnettes : chaque place libre devient un revenu.",
+    "title": "Transportez des colis, gagnez un revenu",
+    "subtitle": "Avec votre voiture ou votre fourgon, transportez les colis d'autres particuliers et fixez votre prix. Vous faites un trajet régulier ? Publiez-le pour recevoir les colis compatibles. Les professionnels du transport sont aussi les bienvenus.",
     "bullets": [
       { "title": "Colis compatibles automatiques", "body": "Publiez votre trajet : les colis qui tombent sur votre route vous sont proposés." },
       { "title": "Nouveaux colis près de vous", "body": "Une notification dès qu'un colis est publié dans un rayon de 30 km." },
       { "title": "Votre prix, votre décision", "body": "Acceptez le prix demandé ou proposez le vôtre. Le règlement se fait directement avec l'expéditeur." }
     ],
-    "earnings": {
-      "title": "Vos gains, en toute transparence",
+    "join": {
+      "title": "Pourquoi rouler avec UCOLIS ?",
       "free": "Gratuit au lancement",
-      "freeBody": "Aucune commission n'est prélevée pour le moment. Si elle est un jour activée, vous serez prévenu à l'avance.",
-      "price": "Prix de la course",
-      "gridTitle": "Grille prévue",
-      "fixedFee": "Frais de dossier fixes : {{amount}}",
-      "below": "Moins de {{amount}}",
-      "between": "De {{from}} à {{to}}",
-      "above": "Plus de {{amount}}",
-      "net": "Vos gains nets",
-      "bonus": "Bonus de bienvenue de {{amount}} sur votre portefeuille"
+      "freeBody": "Aucune commission n'est prélevée pour le moment. Si cela change un jour, vous serez prévenu à l'avance.",
+      "perks": [
+        "Aucun abonnement, aucun frais d'inscription",
+        "Le prix de la course vous est réglé directement par l'expéditeur",
+        "En option : publiez vos trajets pour recevoir les colis compatibles",
+        "Une note et des badges qui font grandir votre clientèle"
+      ],
+      "cta": "Devenir transporteur"
     }
   },
   "pro": {
-    "kicker": "Comptes professionnels",
-    "title": "Boutiques en ligne et sociétés de transport, passez à la vitesse supérieure",
-    "body": "Le statut pro se demande depuis le profil avec vos justificatifs (registre du commerce, NIF). Une fois validé par l'équipe, vous profitez de :",
+    "kicker": "Vous êtes une entreprise ?",
+    "title": "Les professionnels aussi sont les bienvenus",
+    "body": "UCOLIS est d'abord fait pour les particuliers, mais boutiques en ligne et sociétés de transport peuvent l'utiliser aussi. Le statut pro se demande depuis le profil avec vos justificatifs (registre du commerce, NIF). Une fois validé par l'équipe, vous profitez de :",
     "perks": [
       "Badge « Pro vérifié », raison sociale et logo sur vos annonces",
       "Jusqu'à 20 colis et 10 trajets actifs en même temps",
@@ -177,10 +176,10 @@
   "stories": {
     "kicker": "Ils pourraient être vous",
     "title": "Pensée pour la vie de tous les jours",
-    "subtitle": "Quatre profils types qui ont guidé la conception de l'application.",
+    "subtitle": "Des particuliers d'abord, et des professionnels qui l'utilisent aussi : quatre profils types qui ont guidé la conception de l'application.",
     "items": [
-      { "name": "Amina, 34 ans", "role": "Expéditrice, Alger", "quote": "J'envoie des cadeaux à ma famille à Oran. Je veux un prix juste et savoir où est mon colis." },
-      { "name": "Karim, 41 ans", "role": "Chauffeur de fourgon, Sétif", "quote": "Je fais Sétif - Alger chaque semaine. Au retour, mon fourgon roule à moitié vide." },
+      { "name": "Amina, 34 ans", "role": "Particulière, expéditrice, Alger", "quote": "J'envoie des cadeaux à ma famille à Oran. Je veux un prix juste et savoir où est mon colis." },
+      { "name": "Karim, 41 ans", "role": "Particulier, transporteur, Sétif", "quote": "Je fais Sétif - Alger chaque semaine. Au retour, mon fourgon roule à moitié vide." },
       { "name": "Une boutique en ligne", "role": "Compte pro, Blida", "quote": "Nous expédions plusieurs colis par semaine vers différentes wilayas." },
       { "name": "Une SARL de transport", "role": "Compte pro, Oran", "quote": "Trois camionnettes, des trajets réguliers, et des places à remplir." }
     ]
@@ -194,6 +193,8 @@
         "title": "Premiers pas",
         "items": [
           { "q": "UCOLIS est-il gratuit ?", "a": "Oui. Créer un compte, publier des annonces et faire des offres est gratuit. Le prix de la course est fixé entre l'expéditeur et le transporteur et se règle directement entre eux. L'expéditeur ne paie jamais de commission." },
+          { "q": "Quelle est la responsabilité de UCOLIS ?", "a": "UCOLIS est un intermédiaire technique de mise en relation : la plateforme n'est partie à aucun contrat conclu entre l'expéditeur et le transporteur et ne prend jamais les colis en charge. Le prix, le transport, la remise et le règlement relèvent de la seule responsabilité des parties. UCOLIS ne répond donc ni de la perte, du vol, de l'avarie ou du retard d'un colis, ni de son contenu, ni des paiements entre utilisateurs. L'examen d'un litige par l'équipe de modération n'engage pas sa responsabilité. Le détail figure à l'article 21 des conditions d'utilisation." },
+          { "q": "UCOLIS est-il réservé aux particuliers ?", "a": "Non. UCOLIS est pensé pour les envois entre particuliers, mais les boutiques en ligne et les sociétés de transport peuvent aussi l'utiliser. Elles peuvent demander le statut pro pour obtenir le badge « Pro vérifié » et des limites plus larges." },
           { "q": "Faut-il un compte pour utiliser l'application ?", "a": "Sans compte, vous pouvez parcourir les annonces, les trajets et les profils publics. Pour publier, faire une offre ou écrire un message, il faut un compte avec un email vérifié." },
           { "q": "Puis-je expédier et transporter avec le même compte ?", "a": "Oui. Votre choix à l'inscription oriente seulement l'interface. Vos droits se décident colis par colis : propriétaire du colis ou transporteur retenu." }
         ]
@@ -234,13 +235,18 @@
     "note": "Android 8 et plus, iOS 16.4 et plus."
   },
   "footer": {
-    "tagline": "La livraison de colis entre particuliers et transporteurs, partout en Algérie.",
+    "tagline": "Le transport de colis entre particuliers, partout en Algérie. Ouvert aussi aux professionnels.",
     "product": "Produit",
     "help": "Aide",
     "contact": "Contact",
     "rights": "© {{year}} UCOLIS. Tous droits réservés.",
-    "made": "Conçu en Algérie, pour l'Algérie.",
-    "backToTop": "Revenir en haut"
+    "backToTop": "Revenir en haut",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité"
+  },
+  "legalPage": {
+    "back": "Retour au site",
+    "frArOnly": "Ce document est disponible en français et en arabe."
   },
   "illustration": {
     "missing": "Illustration à générer"

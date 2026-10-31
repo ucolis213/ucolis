@@ -1,23 +1,35 @@
-// Traductions du site vitrine : français par défaut, arabe en RTL. La langue choisie est mémorisée dans le navigateur.
+// Traductions du site vitrine : français par défaut, arabe en RTL, anglais. La langue choisie est mémorisée dans le navigateur.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { DEFAULT_LOCALE, LOCALES, formatPrice, isRtl, placeName, type Locale } from '@ucolis/shared';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { DEFAULT_LOCALE, formatPrice, isRtl, placeName, type Locale } from '@ucolis/shared';
 import ar from './locales/ar.json';
+import en from './locales/en.json';
 import fr from './locales/fr.json';
 
+/** Langues du site : celles de l'application, plus l'anglais (propre au site). */
+export const SITE_LOCALES = ['fr', 'ar', 'en'] as const;
+export type SiteLocale = (typeof SITE_LOCALES)[number];
+
+/** Nom de chaque langue, écrit dans cette langue, pour le sélecteur. */
+export const LOCALE_NAMES: Record<SiteLocale, string> = { fr: 'Français', ar: 'العربية', en: 'English' };
+
 export type Messages = typeof fr;
-const dictionaries: Record<Locale, Messages> = { fr, ar };
+const dictionaries: Record<SiteLocale, Messages> = { fr, ar, en };
+
+/** Langue de l'application utilisée pour les données de shared (prix, noms de lieux) : l'anglais reprend le français. */
+const dataLocale = (l: SiteLocale): Locale => (l === 'ar' ? 'ar' : 'fr');
 
 const STORAGE_KEY = 'ucolis.site.locale';
 
-function initialLocale(): Locale {
+function initialLocale(): SiteLocale {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (LOCALES.includes(stored as Locale)) return stored as Locale;
+    if (SITE_LOCALES.includes(stored as SiteLocale)) return stored as SiteLocale;
   } catch {
     // Stockage indisponible (navigation privée) : on se rabat sur la langue du navigateur.
   }
-  return navigator.language?.startsWith('ar') ? 'ar' : DEFAULT_LOCALE;
+  const browser = navigator.language?.slice(0, 2);
+  return SITE_LOCALES.includes(browser as SiteLocale) ? (browser as SiteLocale) : DEFAULT_LOCALE;
 }
 
 /** Remplace les « {{nom}} » d'un texte par les paramètres donnés. */
@@ -26,51 +38,49 @@ export function interpolate(text: string, params: Record<string, string | number
 }
 
 interface I18nValue {
-  locale: Locale;
+  locale: SiteLocale;
   rtl: boolean;
   m: Messages;
-  setLocale: (l: Locale) => void;
-  toggleLocale: () => void;
+  setLocale: (l: SiteLocale) => void;
   price: (amount: number) => string;
   place: (p: { fr: string; ar: string }) => string;
   number: (n: number) => string;
+  decimal: (n: number) => string;
 }
 
 const I18nContext = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [locale, setLocaleState] = useState<SiteLocale>(initialLocale);
 
   useEffect(() => {
     const root = document.documentElement;
     root.lang = locale;
-    root.dir = isRtl(locale) ? 'rtl' : 'ltr';
+    root.dir = isRtl(dataLocale(locale)) ? 'rtl' : 'ltr';
     document.title = dictionaries[locale].meta.title;
     document.querySelector('meta[name="description"]')?.setAttribute('content', dictionaries[locale].meta.description);
   }, [locale]);
 
-  const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l);
-    try {
-      localStorage.setItem(STORAGE_KEY, l);
-    } catch {
-      // Stockage indisponible : la langue ne sera pas mémorisée.
-    }
-  }, []);
-
   const value = useMemo<I18nValue>(
     () => ({
       locale,
-      rtl: isRtl(locale),
+      rtl: isRtl(dataLocale(locale)),
       m: dictionaries[locale],
-      setLocale,
-      toggleLocale: () => setLocale(locale === 'fr' ? 'ar' : 'fr'),
-      price: (amount) => formatPrice(amount, locale),
-      place: (p) => placeName(p, locale),
-      // Chiffres occidentaux dans les deux langues, groupés par espace fine comme les prix.
-      number: (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+      setLocale: (l) => {
+        setLocaleState(l);
+        try {
+          localStorage.setItem(STORAGE_KEY, l);
+        } catch {
+          // Stockage indisponible : la langue ne sera pas mémorisée.
+        }
+      },
+      price: (amount) => formatPrice(amount, dataLocale(locale)),
+      place: (p) => placeName(p, dataLocale(locale)),
+      // Chiffres occidentaux dans toutes les langues, groupés par espace fine comme les prix.
+      number: (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+      decimal: (n) => n.toLocaleString(locale === 'en' ? 'en-US' : 'fr-FR', { maximumFractionDigits: 1 }),
     }),
-    [locale, setLocale],
+    [locale],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

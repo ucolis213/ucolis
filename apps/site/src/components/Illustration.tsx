@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { useI18n } from '../i18n';
 import { ILLUSTRATIONS, type IllustrationName } from '../illustrations';
 
-/** Image d'illustration ; si le fichier n'est pas encore généré, un emplacement réservé affiche son nom. */
+/**
+ * Image d'illustration ; si le fichier n'est pas encore généré, un emplacement réservé affiche son nom.
+ * Les PNG détourés ont un halo blanc : ils se posent toujours sur un fond clair.
+ */
 export function Illustration({
   name,
   alt = '',
@@ -23,7 +26,7 @@ export function Illustration({
     return (
       <div
         style={{ aspectRatio: ratio }}
-        className={`@container flex w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary-soft via-white to-accent-soft p-4 text-center ${className}`}
+        className={`@container flex w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border-2 border-dashed border-primary/30 bg-primary-soft/60 p-4 text-center ${className}`}
         role={alt ? 'img' : undefined}
         aria-label={alt || undefined}
         aria-hidden={alt ? undefined : true}

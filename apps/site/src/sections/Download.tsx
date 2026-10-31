@@ -8,8 +8,8 @@ function StoreBadge({ icon: Icon, store }: { icon: typeof Apple; store: string }
   const { m } = useI18n();
   return (
     <motion.span
-      whileHover={{ y: -3, scale: 1.03 }}
-      className="flex items-center gap-3 rounded-2xl bg-navy px-5 py-3 text-white shadow-xl"
+      whileHover={{ y: -3 }}
+      className="flex items-center gap-3 rounded-2xl bg-navy px-5 py-3 text-white shadow-xl shadow-navy/20"
       aria-disabled
     >
       <Icon className="size-7" aria-hidden />
@@ -25,36 +25,30 @@ export function Download() {
   const { m } = useI18n();
   return (
     <section id="download" className="px-4 py-20 md:py-28">
-      <div className="relative mx-auto grid max-w-6xl items-center gap-8 overflow-hidden rounded-[40px] bg-gradient-to-br from-primary via-primary to-accent p-8 md:p-14 lg:grid-cols-[1.3fr_1fr]">
-        {/* Halos et colis décoratifs qui flottent. */}
-        <div className="absolute -top-24 -start-24 size-80 rounded-full bg-white/20 blur-3xl" aria-hidden />
-        {[
-          'top-10 end-1/3 size-10 rotate-12',
-          'bottom-12 start-1/2 size-14 -rotate-6',
-          'top-1/2 start-8 size-8 rotate-45',
-        ].map((c, i) => (
-          <span
-            key={c}
-            className={`animate-float absolute rounded-lg bg-white/15 ring-1 ring-white/30 backdrop-blur ${c}`}
-            style={{ animationDelay: `${i * 1.2}s` }}
-            aria-hidden
-          />
-        ))}
+      <div className="relative mx-auto max-w-6xl">
+        {/* Cadre dégradé : la bordure colorée entoure un grand panneau clair, où l'illustration se fond. */}
+        <div className="rounded-[44px] bg-gradient-to-br from-primary via-accent to-warning p-[3px] shadow-2xl shadow-primary/20">
+          <div className="relative grid items-center gap-6 overflow-hidden rounded-[41px] bg-white p-8 md:p-14 lg:grid-cols-[1.3fr_1fr]">
+            <div className="bg-dots absolute inset-0 [mask-image:radial-gradient(ellipse_at_top_left,black_10%,transparent_60%)]" aria-hidden />
+            <div className="absolute -end-24 -bottom-24 size-96 rounded-full bg-accent/20 blur-3xl" aria-hidden />
 
-        <Reveal className="relative text-center lg:text-start">
-          <h2 className="text-3xl font-extrabold tracking-tight text-balance text-white md:text-5xl">{m.download.title}</h2>
-          <p className="mt-4 text-lg text-white/80">{m.download.subtitle}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
-            <StoreBadge icon={Play} store={m.download.googlePlay} />
-            <StoreBadge icon={Apple} store={m.download.appStore} />
+            <Reveal className="relative text-center lg:text-start">
+              <h2 className="display text-[clamp(2.4rem,5.5vw,4.5rem)] leading-[1] text-balance text-navy">{m.download.title}</h2>
+              <p className="mt-5 text-lg text-muted">{m.download.subtitle}</p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <StoreBadge icon={Play} store={m.download.googlePlay} />
+                <StoreBadge icon={Apple} store={m.download.appStore} />
+              </div>
+              <p className="mt-4 text-sm text-subtle">{m.download.note}</p>
+            </Reveal>
+
+            {/* La main sort par le bas du panneau : l'image touche le bord, sans ligne de coupe visible. */}
+            <Reveal delay={0.15} className="relative mx-auto -mb-8 w-full max-w-[18rem] self-end md:-mb-14">
+              {/* Emplacement : téléphone avec l'application (ILLUSTRATIONS.md, n° 19). */}
+              <Illustration name="download" />
+            </Reveal>
           </div>
-          <p className="mt-4 text-sm text-white/70">{m.download.note}</p>
-        </Reveal>
-
-        <Reveal delay={0.15} className="relative mx-auto w-full max-w-xs">
-          {/* Emplacement : téléphone avec l'application (ILLUSTRATIONS.md, n° 19). */}
-          <Illustration name="download" className="drop-shadow-2xl" />
-        </Reveal>
+        </div>
       </div>
     </section>
   );
