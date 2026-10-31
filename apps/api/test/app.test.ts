@@ -55,8 +55,8 @@ describe('POST /api/v1/pricing/suggest', () => {
     expect(res.body.volumeM3).toBe(0.036);
     expect(res.body.distanceKm).toBeGreaterThan(340);
     expect(res.body.suggestedPrice % 50).toBe(0);
-    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(1400);
-    expect(res.body.suggestedPrice).toBeLessThanOrEqual(1650);
+    expect(res.body.suggestedPrice).toBeGreaterThanOrEqual(550);
+    expect(res.body.suggestedPrice).toBeLessThanOrEqual(700);
   });
 
   it('ignore une distance envoyée par le client', async () => {
@@ -73,7 +73,7 @@ describe('POST /api/v1/pricing/suggest', () => {
       settings: { pricing: { ...DEFAULT_SETTINGS.pricing, baseFee: 10_000 } },
     });
     const res = await http().post('/api/v1/pricing/suggest').send(body);
-    expect(res.body.suggestedPrice).toBeGreaterThan(11_000);
+    expect(res.body.suggestedPrice).toBeGreaterThan(10_000);
   });
 
   it('renvoie 400 VALIDATION_ERROR avec le détail des champs', async () => {

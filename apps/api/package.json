@@ -11,7 +11,8 @@
     "lint": "eslint src test",
     "test": "vitest run --coverage",
     "seed:superadmin": "tsx --env-file=.env src/scripts/seedSuperAdmin.ts",
-    "seed:content": "tsx --env-file=.env src/scripts/seedContent.ts"
+    "seed:content": "tsx --env-file=.env src/scripts/seedContent.ts",
+    "migrate:pricing": "tsx --env-file=.env src/scripts/migratePricing.ts"
   },
   "dependencies": {
     "@sentry/node": "^9.40.0",

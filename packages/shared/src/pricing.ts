@@ -7,7 +7,8 @@
 //
 // C(d) : coût kilométrique par tranches marginales. H(W) : manutention par tranches de poids, dégressive.
 // Le poids n'est plus facturé indépendamment de la distance : un objet volumineux coûte surtout par le trajet
-// (un plus gros véhicule), un peu par la manutention. Calibré sur le pouvoir d'achat algérien (voir le PRD).
+// (un plus gros véhicule), un peu par la manutention. Calibré pour rester
+// sous les tarifs des sociétés de livraison algériennes (voir le PRD).
 
 export interface PricingTier {
   /** Borne haute de la tranche en km ; null pour la dernière tranche. */
@@ -41,24 +42,24 @@ export interface PricingSettings {
 }
 
 export const DEFAULT_PRICING: PricingSettings = {
-  baseFee: 300,
+  baseFee: 150,
   tiers: [
-    { upToKm: 100, ratePerKm: 3 },
-    { upToKm: 300, ratePerKm: 2.5 },
-    { upToKm: 600, ratePerKm: 2 },
-    { upToKm: null, ratePerKm: 1.5 },
+    { upToKm: 100, ratePerKm: 1.2 },
+    { upToKm: 300, ratePerKm: 0.8 },
+    { upToKm: 600, ratePerKm: 0.5 },
+    { upToKm: null, ratePerKm: 0.3 },
   ],
   weightTiers: [
-    { upToKg: 30, ratePerKg: 20 },
-    { upToKg: 200, ratePerKg: 8 },
-    { upToKg: null, ratePerKg: 3 },
+    { upToKg: 30, ratePerKg: 10 },
+    { upToKg: 200, ratePerKg: 6 },
+    { upToKg: null, ratePerKg: 2 },
   ],
   sizeStepKg: 50,
   maxSizeFactor: 8,
   volumetricFactor: 200,
   fragileSurcharge: 0.1,
   roundTo: 50,
-  minPrice: 300,
+  minPrice: 200,
 };
 
 export interface PriceInput {

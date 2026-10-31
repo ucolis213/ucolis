@@ -13,21 +13,21 @@ import {
 describe('distanceCost', () => {
   it('applique les tranches marginales', () => {
     expect(distanceCost(0)).toBe(0);
-    expect(distanceCost(50)).toBe(150);
-    expect(distanceCost(100)).toBe(300);
-    expect(distanceCost(300)).toBe(300 + 500);
-    expect(distanceCost(352)).toBe(904);
-    expect(distanceCost(700)).toBe(300 + 500 + 600 + 150);
+    expect(distanceCost(50)).toBe(60);
+    expect(distanceCost(100)).toBe(120);
+    expect(distanceCost(300)).toBe(120 + 160);
+    expect(distanceCost(352)).toBe(306);
+    expect(distanceCost(700)).toBe(120 + 160 + 150 + 30);
   });
 });
 
 describe('handlingCost', () => {
   it('rend la manutention dégressive par tranches de poids', () => {
     expect(handlingCost(0)).toBe(0);
-    expect(handlingCost(10)).toBe(200);
-    expect(handlingCost(30)).toBe(600);
-    expect(handlingCost(200)).toBe(600 + 1360);
-    expect(handlingCost(600)).toBe(600 + 1360 + 1200);
+    expect(handlingCost(10)).toBe(100);
+    expect(handlingCost(30)).toBe(300);
+    expect(handlingCost(200)).toBe(300 + 1020);
+    expect(handlingCost(600)).toBe(300 + 1020 + 800);
   });
 });
 
@@ -44,13 +44,13 @@ describe('suggestPrice', () => {
     const volumeM3 = volumeM3FromCm(40, 30, 30);
     expect(volumeM3).toBe(0.036);
     expect(chargeableWeightKg(5, volumeM3)).toBe(7.2);
-    // 300 + 904 × 1,144 + 7,2 × 20 = 1 478,18 → 1 500
-    expect(suggestPrice({ distanceKm: 352, weightKg: 5, volumeM3 })).toBe(1500);
+    // 150 + 306 × 1,144 + 7,2 × 10 = 572,06 → 600, sous le tarif des sociétés de livraison
+    expect(suggestPrice({ distanceKm: 352, weightKg: 5, volumeM3 })).toBe(600);
   });
 
   it('garde un prix abordable pour un objet volumineux sur un trajet court', () => {
-    // 15 kg mais 3 m³ (600 kg taxés), 1 km, fragile : (300 + 3 × 8 + 3 160) × 1,1 = 3 832,4 → 3 850
-    expect(suggestPrice({ distanceKm: 1, weightKg: 15, volumeM3: 3, fragile: true })).toBe(3850);
+    // 15 kg mais 3 m³ (600 kg taxés), 1 km, fragile : (150 + 1,2 × 8 + 2 120) × 1,1 = 2 507,56 → 2 550
+    expect(suggestPrice({ distanceKm: 1, weightKg: 15, volumeM3: 3, fragile: true })).toBe(2550);
   });
 
   it('majore un colis fragile', () => {
@@ -59,8 +59,8 @@ describe('suggestPrice', () => {
   });
 
   it('ne dépend que de la distance sans poids ni volume (publication rapide)', () => {
-    // 300 + 904 = 1 204 → 1 250
-    expect(suggestPrice({ distanceKm: 352, weightKg: 0, volumeM3: 0 })).toBe(1250);
+    // 150 + 306 = 456 → 500
+    expect(suggestPrice({ distanceKm: 352, weightKg: 0, volumeM3: 0 })).toBe(500);
   });
 
   it('ignore une distance négative et respecte le prix minimum', () => {

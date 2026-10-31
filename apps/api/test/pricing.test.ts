@@ -9,7 +9,7 @@ describe('quotePrice', () => {
       { pickup: p, dropoff: p, weightKg: 1, dimensionsCm: { length: 10, width: 10, height: 10 } },
       DEFAULT_PRICING,
     );
-    // 300 + 0 + 1 kg × 20 = 320 → 350
-    expect(q).toEqual({ distanceKm: 0, volumeM3: 0.001, suggestedPrice: 350 });
+    // 150 + 0 + 1 kg × 10 = 160 → 200
+    expect(q).toEqual({ distanceKm: 0, volumeM3: 0.001, suggestedPrice: 200 });
   });
 });
